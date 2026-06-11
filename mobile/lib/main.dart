@@ -1,15 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'vn/edu/fpt/view/home_screen.dart';
-
-final _router = GoRouter(
-  routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const HomeScreen(),
-    ),
-  ],
-);
+import 'package:myfschoolse1913/vn/edu/fpt/view/main_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,13 +10,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'PRM393',
-      routerConfig: _router,
+    return MaterialApp(
+      title: 'FSchools',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFE65100)),
       ),
+      home: const MainScreen(),
     );
   }
 }
