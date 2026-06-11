@@ -1,0 +1,48 @@
+# ===== Flutter / Dart =====
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/android/.gradle/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+mobile/ios/.symlinks/
+mobile/ios/Pods/
+mobile/ios/Runner.xcworkspace/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/.idea/
+mobile/*.iml
+mobile/pubspec.lock
+
+# ===== .NET =====
+api/bin/
+api/obj/
+api/*.user
+api/.vs/
+api/**/*.user
+api/**/bin/
+api/**/obj/
+api/.idea/
+*.DotSettings.user
+
+# Secrets — never commit
+api/appsettings.Production.json
+api/secrets.json
+.env
+*.pfx
+*.p12
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDEs =====
+.vscode/
+.idea/
+*.suo
+*.swp
+*~
