@@ -7,20 +7,27 @@ namespace PRM393API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UserController(IUserService service) : ControllerBase
 {
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> GetAll() =>
         Ok(await service.GetAllAsync());
 
     [HttpGet("{id:int}")]
-    [Authorize]
     public async Task<IActionResult> GetById(int id)
     {
         var user = await service.GetByIdAsync(id);
         return user is null ? NotFound() : Ok(user);
     }
+
+    [HttpGet("by-role/{roleId:int}")]
+    public async Task<IActionResult> GetByRole(int roleId) =>
+        Ok(await service.GetByRoleAsync(roleId));
+
+    [HttpGet("by-department/{departmentId:int}")]
+    public async Task<IActionResult> GetByDepartment(int departmentId) =>
+        Ok(await service.GetByDepartmentAsync(departmentId));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
@@ -30,7 +37,6 @@ public class UserController(IUserService service) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto dto)
     {
         var updated = await service.UpdateAsync(id, dto);
@@ -38,17 +44,9 @@ public class UserController(IUserService service) : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
-    }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
-    {
-        var result = await service.LoginAsync(dto);
-        return result is null ? Unauthorized() : Ok(result);
     }
 }

@@ -1,0 +1,57 @@
+using PRM393API.DTOs;
+using PRM393API.Models;
+using PRM393API.Repositories.Interfaces;
+using PRM393API.Services.Interfaces;
+
+namespace PRM393API.Services;
+
+public class TeachingAssignmentService(ITeachingAssignmentRepository repo) : ITeachingAssignmentService
+{
+    public async Task<IEnumerable<TeachingAssignmentDto>> GetAllAsync()
+    {
+        var list = await repo.GetAllAsync();
+        return list.Select(ToDto);
+    }
+
+    public async Task<IEnumerable<TeachingAssignmentDto>> GetByTeacherAsync(int teacherId)
+    {
+        var list = await repo.GetByTeacherAsync(teacherId);
+        return list.Select(ToDto);
+    }
+
+    public async Task<IEnumerable<TeachingAssignmentDto>> GetByClassAsync(int classId)
+    {
+        var list = await repo.GetByClassAsync(classId);
+        return list.Select(ToDto);
+    }
+
+    public async Task<IEnumerable<TeachingAssignmentDto>> GetBySemesterAsync(int semesterId)
+    {
+        var list = await repo.GetBySemesterAsync(semesterId);
+        return list.Select(ToDto);
+    }
+
+    public async Task<TeachingAssignmentDto?> GetByIdAsync(int id)
+    {
+        var ta = await repo.GetByIdAsync(id);
+        return ta is null ? null : ToDto(ta);
+    }
+
+    public async Task<TeachingAssignmentDto> CreateAsync(CreateTeachingAssignmentDto dto)
+    {
+        var ta = new TeachingAssignment
+        {
+            TeacherId = dto.TeacherId,
+            ClassId = dto.ClassId,
+            SubjectId = dto.SubjectId,
+            SemesterId = dto.SemesterId,
+        };
+        return ToDto(await repo.CreateAsync(ta));
+    }
+
+    public async Task<bool> DeleteAsync(int id) =>
+        await repo.DeleteAsync(id);
+
+    private static TeachingAssignmentDto ToDto(TeachingAssignment ta) =>
+        new(ta.TeachingAssignmentId, ta.TeacherId, ta.ClassId, ta.SubjectId, ta.SemesterId);
+}
