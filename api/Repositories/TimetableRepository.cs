@@ -32,34 +32,28 @@ public class TimetableRepository(Prm393dbContext db) : ITimetableRepository
                 .ThenInclude(ta => ta.Class)
             .FirstOrDefaultAsync(t => t.TimetableId == id);
 
-    public async Task<IEnumerable<Timetable>> GetWeeklyByClassAsync(int classId, DateOnly date) =>
+    public async Task<IEnumerable<Timetable>> GetWeeklyByClassAsync(int classId, DateOnly weekStart, DateOnly weekEnd) =>
         await db.Timetables
             .Include(t => t.Slot)
-            .Include(t => t.TeachingAssignment)
-                .ThenInclude(ta => ta.Subject)
-            .Include(t => t.TeachingAssignment)
-                .ThenInclude(ta => ta.Teacher)
-            .Include(t => t.TeachingAssignment)
-                .ThenInclude(ta => ta.Class)
+            .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Subject)
+            .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Teacher)
+            .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Class)
             .Where(t => t.TeachingAssignment.ClassId == classId
-                     && t.EffectiveFrom <= date
-                     && (t.EffectiveTo == null || t.EffectiveTo >= date))
+                     && t.EffectiveFrom <= weekEnd
+                     && (t.EffectiveTo == null || t.EffectiveTo >= weekStart))
             .OrderBy(t => t.DayOfWeek)
             .ThenBy(t => t.Slot.StartTime)
             .ToListAsync();
 
-    public async Task<IEnumerable<Timetable>> GetWeeklyByTeacherAsync(int teacherId, DateOnly date) =>
+    public async Task<IEnumerable<Timetable>> GetWeeklyByTeacherAsync(int teacherId, DateOnly weekStart, DateOnly weekEnd) =>
         await db.Timetables
             .Include(t => t.Slot)
-            .Include(t => t.TeachingAssignment)
-                .ThenInclude(ta => ta.Subject)
-            .Include(t => t.TeachingAssignment)
-                .ThenInclude(ta => ta.Teacher)
-            .Include(t => t.TeachingAssignment)
-                .ThenInclude(ta => ta.Class)
+            .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Subject)
+            .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Teacher)
+            .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Class)
             .Where(t => t.TeachingAssignment.TeacherId == teacherId
-                     && t.EffectiveFrom <= date
-                     && (t.EffectiveTo == null || t.EffectiveTo >= date))
+                     && t.EffectiveFrom <= weekEnd
+                     && (t.EffectiveTo == null || t.EffectiveTo >= weekStart))
             .OrderBy(t => t.DayOfWeek)
             .ThenBy(t => t.Slot.StartTime)
             .ToListAsync();

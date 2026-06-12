@@ -39,14 +39,25 @@ public class TimetableService(ITimetableRepository repo) : ITimetableService
 
     public async Task<IEnumerable<TimetableSlotDetailDto>> GetWeeklyByClassAsync(int classId, DateOnly date)
     {
-        var list = await repo.GetWeeklyByClassAsync(classId, date);
+        var (weekStart, weekEnd) = GetWeekRange(date);
+        var list = await repo.GetWeeklyByClassAsync(classId, weekStart, weekEnd);
         return list.Select(ToDetailDto);
     }
 
     public async Task<IEnumerable<TimetableSlotDetailDto>> GetWeeklyByTeacherAsync(int teacherId, DateOnly date)
     {
-        var list = await repo.GetWeeklyByTeacherAsync(teacherId, date);
+        var (weekStart, weekEnd) = GetWeekRange(date);
+        var list = await repo.GetWeeklyByTeacherAsync(teacherId, weekStart, weekEnd);
         return list.Select(ToDetailDto);
+    }
+
+    // DayOfWeek.Monday = 1 (C#) → Thứ 2 đầu tuần
+    private static (DateOnly weekStart, DateOnly weekEnd) GetWeekRange(DateOnly date)
+    {
+        int diff = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        var weekStart = date.AddDays(-diff);
+        var weekEnd = weekStart.AddDays(6);
+        return (weekStart, weekEnd);
     }
 
     public async Task<TimetableDto> CreateAsync(CreateTimetableDto dto)
