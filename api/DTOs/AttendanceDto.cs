@@ -19,3 +19,5 @@ public record CreateAttendanceDto(
     int RecordedBy);
 
 public record UpdateAttendanceDto(string? Status, string? Note);
+
+public record BulkUpdateAttendanceDto(int AttendanceId, string Status, string? Note);

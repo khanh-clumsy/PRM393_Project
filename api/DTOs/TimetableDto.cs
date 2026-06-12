@@ -22,3 +22,18 @@ public record UpdateTimetableDto(
     int? SlotId,
     string? RoomName,
     DateOnly? EffectiveTo);
+
+public record TimetableSlotDetailDto(
+    int TimetableId,
+    int TeachingAssignmentId,
+    byte DayOfWeek,
+    string SlotName,
+    TimeOnly StartTime,
+    TimeOnly EndTime,
+    string? RoomName,
+    int SubjectId,
+    string SubjectName,
+    int TeacherId,
+    string TeacherName,
+    int ClassId,
+    string ClassName);

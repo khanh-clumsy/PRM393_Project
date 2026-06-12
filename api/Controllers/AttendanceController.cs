@@ -36,6 +36,20 @@ public class AttendanceController(IAttendanceService service) : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.AttendanceId }, created);
     }
 
+    [HttpPost("bulk")]
+    public async Task<IActionResult> BulkCreate([FromBody] List<CreateAttendanceDto> dtos)
+    {
+        var created = await service.BulkCreateAsync(dtos);
+        return Ok(created);
+    }
+
+    [HttpPut("bulk")]
+    public async Task<IActionResult> BulkUpdate([FromBody] List<BulkUpdateAttendanceDto> dtos)
+    {
+        var updated = await service.BulkUpdateAsync(dtos);
+        return Ok(updated);
+    }
+
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateAttendanceDto dto)
     {

@@ -31,6 +31,24 @@ public class TimetableService(ITimetableRepository repo) : ITimetableService
         return t is null ? null : ToDto(t);
     }
 
+    public async Task<TimetableSlotDetailDto?> GetDetailAsync(int id)
+    {
+        var t = await repo.GetDetailAsync(id);
+        return t is null ? null : ToDetailDto(t);
+    }
+
+    public async Task<IEnumerable<TimetableSlotDetailDto>> GetWeeklyByClassAsync(int classId, DateOnly date)
+    {
+        var list = await repo.GetWeeklyByClassAsync(classId, date);
+        return list.Select(ToDetailDto);
+    }
+
+    public async Task<IEnumerable<TimetableSlotDetailDto>> GetWeeklyByTeacherAsync(int teacherId, DateOnly date)
+    {
+        var list = await repo.GetWeeklyByTeacherAsync(teacherId, date);
+        return list.Select(ToDetailDto);
+    }
+
     public async Task<TimetableDto> CreateAsync(CreateTimetableDto dto)
     {
         var timetable = new Timetable
@@ -64,4 +82,19 @@ public class TimetableService(ITimetableRepository repo) : ITimetableService
 
     private static TimetableDto ToDto(Timetable t) =>
         new(t.TimetableId, t.TeachingAssignmentId, t.DayOfWeek, t.SlotId, t.RoomName, t.EffectiveFrom, t.EffectiveTo);
+
+    private static TimetableSlotDetailDto ToDetailDto(Timetable t) => new(
+        t.TimetableId,
+        t.TeachingAssignmentId,
+        t.DayOfWeek,
+        t.Slot.SlotName,
+        t.Slot.StartTime,
+        t.Slot.EndTime,
+        t.RoomName,
+        t.TeachingAssignment.SubjectId,
+        t.TeachingAssignment.Subject.SubjectName,
+        t.TeachingAssignment.TeacherId,
+        t.TeachingAssignment.Teacher.FullName,
+        t.TeachingAssignment.ClassId,
+        t.TeachingAssignment.Class.ClassName);
 }

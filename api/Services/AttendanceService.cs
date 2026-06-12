@@ -46,6 +46,29 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
         return ToDto(await repo.CreateAsync(record));
     }
 
+    public async Task<IEnumerable<AttendanceDto>> BulkCreateAsync(IEnumerable<CreateAttendanceDto> dtos)
+    {
+        var records = dtos.Select(dto => new AttendanceRecord
+        {
+            TimetableId = dto.TimetableId,
+            StudentId = dto.StudentId,
+            AttendanceDate = dto.AttendanceDate,
+            Status = dto.Status,
+            Note = dto.Note,
+            RecordedBy = dto.RecordedBy,
+            RecordedAt = DateTime.UtcNow,
+        });
+        var created = await repo.BulkCreateAsync(records);
+        return created.Select(ToDto);
+    }
+
+    public async Task<IEnumerable<AttendanceDto>> BulkUpdateAsync(IEnumerable<BulkUpdateAttendanceDto> dtos)
+    {
+        var updates = dtos.Select(d => (d.AttendanceId, d.Status, d.Note));
+        var updated = await repo.BulkUpdateAsync(updates);
+        return updated.Select(ToDto);
+    }
+
     public async Task<AttendanceDto?> UpdateAsync(int id, UpdateAttendanceDto dto)
     {
         var existing = await repo.GetByIdAsync(id);

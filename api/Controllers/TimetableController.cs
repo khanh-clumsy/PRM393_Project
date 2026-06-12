@@ -21,6 +21,27 @@ public class TimetableController(ITimetableService service) : ControllerBase
         return t is null ? NotFound() : Ok(t);
     }
 
+    [HttpGet("{id:int}/detail")]
+    public async Task<IActionResult> GetDetail(int id)
+    {
+        var detail = await service.GetDetailAsync(id);
+        return detail is null ? NotFound() : Ok(detail);
+    }
+
+    [HttpGet("weekly/by-class/{classId:int}")]
+    public async Task<IActionResult> GetWeeklyByClass(int classId, [FromQuery] DateOnly? date)
+    {
+        var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        return Ok(await service.GetWeeklyByClassAsync(classId, target));
+    }
+
+    [HttpGet("weekly/by-teacher/{teacherId:int}")]
+    public async Task<IActionResult> GetWeeklyByTeacher(int teacherId, [FromQuery] DateOnly? date)
+    {
+        var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        return Ok(await service.GetWeeklyByTeacherAsync(teacherId, target));
+    }
+
     [HttpGet("by-assignment/{teachingAssignmentId:int}")]
     public async Task<IActionResult> GetByAssignment(int teachingAssignmentId) =>
         Ok(await service.GetByAssignmentAsync(teachingAssignmentId));

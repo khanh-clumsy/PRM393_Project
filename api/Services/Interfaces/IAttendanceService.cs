@@ -9,6 +9,8 @@ public interface IAttendanceService
     Task<IEnumerable<AttendanceDto>> GetByStudentAndDateAsync(int studentId, DateOnly date);
     Task<AttendanceDto?> GetByIdAsync(int id);
     Task<AttendanceDto> CreateAsync(CreateAttendanceDto dto);
+    Task<IEnumerable<AttendanceDto>> BulkCreateAsync(IEnumerable<CreateAttendanceDto> dtos);
+    Task<IEnumerable<AttendanceDto>> BulkUpdateAsync(IEnumerable<BulkUpdateAttendanceDto> dtos);
     Task<AttendanceDto?> UpdateAsync(int id, UpdateAttendanceDto dto);
     Task<bool> DeleteAsync(int id);
 }

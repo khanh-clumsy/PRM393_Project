@@ -27,6 +27,31 @@ public class AttendanceRepository(Prm393dbContext db) : IAttendanceRepository
         return record;
     }
 
+    public async Task<IEnumerable<AttendanceRecord>> BulkCreateAsync(IEnumerable<AttendanceRecord> records)
+    {
+        var list = records.ToList();
+        db.AttendanceRecords.AddRange(list);
+        await db.SaveChangesAsync();
+        return list;
+    }
+
+    public async Task<IEnumerable<AttendanceRecord>> BulkUpdateAsync(IEnumerable<(int id, string status, string? note)> updates)
+    {
+        var ids = updates.Select(u => u.id).ToList();
+        var records = await db.AttendanceRecords.Where(a => ids.Contains(a.AttendanceId)).ToListAsync();
+        var map = records.ToDictionary(a => a.AttendanceId);
+
+        foreach (var (id, status, note) in updates)
+        {
+            if (!map.TryGetValue(id, out var record)) continue;
+            record.Status = status;
+            record.Note = note;
+        }
+
+        await db.SaveChangesAsync();
+        return records;
+    }
+
     public async Task<AttendanceRecord?> UpdateAsync(int id, AttendanceRecord updated)
     {
         var record = await db.AttendanceRecords.FindAsync(id);

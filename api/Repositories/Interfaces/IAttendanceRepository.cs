@@ -9,6 +9,8 @@ public interface IAttendanceRepository
     Task<IEnumerable<AttendanceRecord>> GetByStudentAndDateAsync(int studentId, DateOnly date);
     Task<AttendanceRecord?> GetByIdAsync(int id);
     Task<AttendanceRecord> CreateAsync(AttendanceRecord record);
+    Task<IEnumerable<AttendanceRecord>> BulkCreateAsync(IEnumerable<AttendanceRecord> records);
+    Task<IEnumerable<AttendanceRecord>> BulkUpdateAsync(IEnumerable<(int id, string status, string? note)> updates);
     Task<AttendanceRecord?> UpdateAsync(int id, AttendanceRecord record);
     Task<bool> DeleteAsync(int id);
 }
