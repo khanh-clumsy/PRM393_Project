@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myfschoolse1913/vn/edu/fpt/view/main_screen.dart';
+import '../core/constants/asset_paths.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -46,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.asset(
-                        'lib/vn/edu/fpt/view/cropped-logo-fpt-schools-01.jpg',
+                        AssetPaths.logo,
                         height: 120,
                       ),
                     ),
