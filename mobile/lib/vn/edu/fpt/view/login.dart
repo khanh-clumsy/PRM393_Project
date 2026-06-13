@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:myfschoolse1913/vn/edu/fpt/view/main_screen.dart';
+import 'package:get/get.dart';
+import '../controllers/auth_controller.dart';
 import '../core/constants/asset_paths.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,6 +14,13 @@ class _LoginPageState extends State<LoginPage> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  late final AuthController _authController;
+
+  @override
+  void initState() {
+    super.initState();
+    _authController = Get.find<AuthController>();
+  }
 
   @override
   void dispose() {
@@ -156,15 +164,29 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const MainScreen(),
+                      Obx(() {
+                        if (_authController.errorMessage.value.isNotEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(
+                              _authController.errorMessage.value,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           );
-                        },
+                        }
+                        return const SizedBox.shrink();
+                      }),
+                      Obx(() => ElevatedButton(
+                        onPressed: _authController.isLoading.value
+                            ? null
+                            : () => _authController.login(
+                                  _phoneController.text,
+                                  _passwordController.text,
+                                ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE65100),
                           foregroundColor: Colors.white,
@@ -173,11 +195,20 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: const Text(
-                          'Đăng nhập',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
+                        child: _authController.isLoading.value
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Đăng nhập',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                      )),
                     ],
                   ),
                 ),

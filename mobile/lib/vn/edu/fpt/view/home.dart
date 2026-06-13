@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:myfschoolse1913/vn/edu/fpt/view/notifications.dart';
-import 'package:myfschoolse1913/vn/edu/fpt/view/widgets/student_card.dart';
-import 'package:myfschoolse1913/vn/edu/fpt/view/widgets/quick_actions.dart';
-import 'package:myfschoolse1913/vn/edu/fpt/view/widgets/news_card.dart';
+import 'package:prm393_mobile/vn/edu/fpt/view/notifications.dart';
+import 'package:prm393_mobile/vn/edu/fpt/widgets/student_card.dart';
+import 'package:prm393_mobile/vn/edu/fpt/widgets/quick_actions.dart';
+import 'package:prm393_mobile/vn/edu/fpt/widgets/news_card.dart';
 
 class StudentHomePage extends StatelessWidget {
   const StudentHomePage({super.key});

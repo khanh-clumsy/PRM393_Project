@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:myfschoolse1913/vn/edu/fpt/view/notifications.dart';
+import 'package:prm393_mobile/vn/edu/fpt/view/notifications.dart';
 
 class ClassScheduleData {
   final String subjectName;
