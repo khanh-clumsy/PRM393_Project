@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/auth_controller.dart';
-import '../core/constants/asset_paths.dart';
+import '../../controllers/auth_controller.dart';
+import '../../core/constants/asset_paths.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -54,10 +54,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        AssetPaths.logo,
-                        height: 120,
-                      ),
+                      child: Image.asset(AssetPaths.logo, height: 120),
                     ),
                   ],
                 ),
@@ -180,35 +177,37 @@ class _LoginPageState extends State<LoginPage> {
                         }
                         return const SizedBox.shrink();
                       }),
-                      Obx(() => ElevatedButton(
-                        onPressed: _authController.isLoading.value
-                            ? null
-                            : () => _authController.login(
+                      Obx(
+                        () => ElevatedButton(
+                          onPressed: _authController.isLoading.value
+                              ? null
+                              : () => _authController.login(
                                   _phoneController.text,
                                   _passwordController.text,
                                 ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE65100),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE65100),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
-                        ),
-                        child: _authController.isLoading.value
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
+                          child: _authController.isLoading.value
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Đăng nhập',
+                                  style: TextStyle(fontSize: 16),
                                 ),
-                              )
-                            : const Text(
-                                'Đăng nhập',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                      )),
+                        ),
+                      ),
                     ],
                   ),
                 ),

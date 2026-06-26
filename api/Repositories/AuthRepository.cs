@@ -7,7 +7,10 @@ namespace PRM393API.Repositories;
 public class AuthRepository(Prm393dbContext db) : IAuthRepository
 {
     public async Task<User?> GetByPhoneAsync(string phoneNumber) =>
-        await db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+        await db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+
+    public async Task<User?> GetUserByIdAsync(int id) =>
+        await db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == id);
 
     public async Task<RefreshToken?> GetRefreshTokenAsync(string token) =>
         await db.RefreshTokens.FirstOrDefaultAsync(t => t.Token == token);

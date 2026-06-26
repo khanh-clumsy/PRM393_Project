@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:prm393_mobile/vn/edu/fpt/view/notifications.dart';
+import 'package:prm393_mobile/vn/edu/fpt/view/student/notifications_view.dart';
 
 class SubjectGradeData {
   final String subjectName;

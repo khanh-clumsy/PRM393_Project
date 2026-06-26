@@ -51,6 +51,7 @@ CREATE TABLE Users (
     UpdatedAt       DATETIME2       NOT NULL DEFAULT GETUTCDATE(),
     CONSTRAINT PK_Users PRIMARY KEY (UserId),
     CONSTRAINT UQ_Users_Username UNIQUE (Username),
+    CONSTRAINT UQ_Users_PhoneNumber UNIQUE (PhoneNumber),
     CONSTRAINT FK_Users_Roles FOREIGN KEY (RoleId) REFERENCES Roles(RoleId),
     CONSTRAINT FK_Users_Departments FOREIGN KEY (DepartmentId) REFERENCES Departments(DepartmentId)
 );

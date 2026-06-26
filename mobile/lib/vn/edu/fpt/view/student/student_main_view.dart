@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:prm393_mobile/vn/edu/fpt/view/home.dart';
-import 'package:prm393_mobile/vn/edu/fpt/view/academic.dart';
-import 'package:prm393_mobile/vn/edu/fpt/view/timetable.dart';
-import 'package:prm393_mobile/vn/edu/fpt/view/leave_request.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/custom_bottom_nav_bar.dart';
+import 'student_home_view.dart';
+import 'academic_view.dart';
+import 'timetable_view.dart';
+import 'leave_request_view.dart';
+import '../shared/account_view.dart';
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class StudentMainView extends StatefulWidget {
+  const StudentMainView({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<StudentMainView> createState() => _StudentMainViewState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _StudentMainViewState extends State<StudentMainView> {
   int _currentIndex = 0;
 
-  // Danh sách các trang để chuyển đổi qua lại
   final List<Widget> _pages = [
-    const StudentHomePage(),
+    const StudentHomeView(),
     const AcademicPage(),
     const TimetablePage(),
     const PlaceholderScreen(
@@ -26,6 +26,7 @@ class _MainScreenState extends State<MainScreen> {
       icon: Icons.chat_bubble_rounded,
     ),
     const LeaveRequestListPage(),
+    const AccountView(), // Add this
   ];
 
   @override
@@ -35,7 +36,6 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentIndex,
         children: _pages,
       ),
-      // Footer Bottom Navigation Bar tái sử dụng cao cấp
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -63,12 +63,17 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icons.chat_bubble_outline_rounded,
             activeIcon: Icons.chat_bubble_rounded,
             label: 'Messages',
-            badgeCount: 3, // Thử nghiệm hiển thị Badge cho tab Tin nhắn
+            badgeCount: 3,
           ),
           CustomBottomNavBarItem(
-            icon: Icons.more_horiz_outlined,
-            activeIcon: Icons.more_horiz_rounded,
-            label: 'More',
+            icon: Icons.assignment_outlined,
+            activeIcon: Icons.assignment,
+            label: 'Request',
+          ),
+          CustomBottomNavBarItem(
+            icon: Icons.person_outline,
+            activeIcon: Icons.person,
+            label: 'Account',
           ),
         ],
       ),
@@ -76,7 +81,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-/// Màn hình mẫu để điền các phần chưa thiết kế
 class PlaceholderScreen extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -94,10 +98,7 @@ class PlaceholderScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
       appBar: AppBar(
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -115,49 +116,12 @@ class PlaceholderScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFFFCC80), width: 1),
                 ),
-                child: Icon(
-                  icon,
-                  size: 64,
-                  color: const Color(0xFFE65100),
-                ),
+                child: Icon(icon, size: 64, color: const Color(0xFFE65100)),
               ),
               const SizedBox(height: 24),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF212121),
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Accessing $title details...')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE65100),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Text('Explore Details'),
-              ),
+              Text(subtitle, style: TextStyle(fontSize: 14, color: Colors.grey.shade600), textAlign: TextAlign.center),
             ],
           ),
         ),

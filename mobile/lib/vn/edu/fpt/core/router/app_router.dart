@@ -1,7 +1,18 @@
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
-import '../../view/login.dart';
-import '../../view/main_screen.dart';
+import '../../view/auth/login_view.dart';
+import '../../view/student/student_main_view.dart';
+import '../../view/teacher/teacher_main_view.dart';
+import '../../view/admin/admin_main_view.dart';
+import '../../view/admin/department_management_view.dart';
+import '../../view/admin/academic_year_management_view.dart';
+import '../../view/admin/semester_management_view.dart';
+import '../../view/admin/subject_management_view.dart';
+import '../../view/admin/timetable_slot_management_view.dart';
+import '../../view/admin/user_management_view.dart';
+import '../../view/admin/class_management_view.dart';
+import '../../view/admin/academic_rank_management_view.dart';
+import '../../view/admin/announcement_management_view.dart';
 
 // Placeholder screens cho các role chưa có UI
 import 'package:flutter/material.dart';
@@ -9,14 +20,50 @@ import 'package:flutter/material.dart';
 class AppPages {
   static final routes = [
     GetPage(name: '/login', page: () => const LoginPage()),
-    GetPage(name: '/student', page: () => const MainScreen()),
+    GetPage(name: '/student', page: () => const StudentMainView()),
     GetPage(
       name: '/teacher',
-      page: () => const _PlaceholderScreen(title: 'Giáo viên'),
+      page: () => const TeacherMainView(),
     ),
     GetPage(
       name: '/admin',
-      page: () => const _PlaceholderScreen(title: 'Quản trị viên'),
+      page: () => const AdminMainView(),
+    ),
+    GetPage(
+      name: '/admin/departments',
+      page: () => const DepartmentManagementView(),
+    ),
+    GetPage(
+      name: '/admin/academic-years',
+      page: () => const AcademicYearManagementView(),
+    ),
+    GetPage(
+      name: '/admin/semesters',
+      page: () => const SemesterManagementView(),
+    ),
+    GetPage(
+      name: '/admin/subjects',
+      page: () => const SubjectManagementView(),
+    ),
+    GetPage(
+      name: '/admin/slots',
+      page: () => const TimetableSlotManagementView(),
+    ),
+    GetPage(
+      name: '/admin/users',
+      page: () => const UserManagementView(),
+    ),
+    GetPage(
+      name: '/admin/classes',
+      page: () => const ClassManagementView(),
+    ),
+    GetPage(
+      name: '/admin/ranks',
+      page: () => const AcademicRankManagementView(),
+    ),
+    GetPage(
+      name: '/admin/announcements',
+      page: () => const AnnouncementManagementView(),
     ),
     GetPage(
       name: '/head',

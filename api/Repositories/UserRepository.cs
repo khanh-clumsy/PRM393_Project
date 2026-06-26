@@ -10,7 +10,7 @@ public class UserRepository(Prm393dbContext db) : IUserRepository
         await db.Users.ToListAsync();
 
     public async Task<User?> GetByIdAsync(int id) =>
-        await db.Users.FindAsync(id);
+        await db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == id);
 
     public async Task<User?> GetByEmailAsync(string email) =>
         await db.Users.FirstOrDefaultAsync(u => u.Email == email);

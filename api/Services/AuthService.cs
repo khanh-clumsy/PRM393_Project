@@ -27,7 +27,7 @@ public class AuthService(IAuthRepository repo, IUserRepository userRepo, JwtHelp
 
         await repo.RevokeRefreshTokenAsync(existing);
 
-        var user = await userRepo.GetByIdAsync(existing.UserId);
+        var user = await repo.GetUserByIdAsync(existing.UserId);
         if (user is null) return null;
 
         var accessToken = jwt.GenerateToken(user);
@@ -51,5 +51,7 @@ public class AuthService(IAuthRepository repo, IUserRepository userRepo, JwtHelp
 
     private static UserDto ToDto(User u) => new(
         u.UserId, u.Username, u.FullName, u.Email, u.PhoneNumber,
-        u.RoleId, u.DepartmentId, u.IsActive, u.CreatedAt);
+        u.RoleId, u.Role?.RoleName ?? "", u.DepartmentId,
+        u.DateOfBirth, u.Gender, u.Address, u.AvatarUrl,
+        u.IsActive, u.CreatedAt);
 }

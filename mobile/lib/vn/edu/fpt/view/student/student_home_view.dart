@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:prm393_mobile/vn/edu/fpt/view/notifications.dart';
+import 'package:prm393_mobile/vn/edu/fpt/view/student/notifications_view.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/student_card.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/quick_actions.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/news_card.dart';
 
-class StudentHomePage extends StatelessWidget {
-  const StudentHomePage({super.key});
+class StudentHomeView extends StatelessWidget {
+  const StudentHomeView({super.key});
 
   @override
   Widget build(BuildContext context) {

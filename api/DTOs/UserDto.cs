@@ -7,7 +7,12 @@ public record UserDto(
     string? Email,
     string? PhoneNumber,
     int RoleId,
+    string RoleName,
     int? DepartmentId,
+    DateOnly? DateOfBirth,
+    string? Gender,
+    string? Address,
+    string? AvatarUrl,
     bool IsActive,
     DateTime CreatedAt);
 

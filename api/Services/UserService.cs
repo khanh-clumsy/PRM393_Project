@@ -70,5 +70,7 @@ public class UserService(IUserRepository repo) : IUserService
 
     internal static UserDto ToDto(User u) => new(
         u.UserId, u.Username, u.FullName, u.Email, u.PhoneNumber,
-        u.RoleId, u.DepartmentId, u.IsActive, u.CreatedAt);
+        u.RoleId, u.Role?.RoleName ?? "", u.DepartmentId,
+        u.DateOfBirth, u.Gender, u.Address, u.AvatarUrl,
+        u.IsActive, u.CreatedAt);
 }

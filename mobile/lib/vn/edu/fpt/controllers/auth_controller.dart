@@ -8,8 +8,8 @@ class AuthController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  Future<void> login(String username, String password) async {
-    if (username.trim().isEmpty || password.trim().isEmpty) {
+  Future<void> login(String phoneNumber, String password) async {
+    if (phoneNumber.trim().isEmpty || password.trim().isEmpty) {
       errorMessage.value = 'Vui lòng nhập đầy đủ thông tin.';
       return;
     }
@@ -20,7 +20,7 @@ class AuthController extends GetxController {
     try {
       final response = await ApiClient.instance.post(
         '/api/auth/login',
-        data: {'username': username.trim(), 'password': password},
+        data: {'phoneNumber': phoneNumber.trim(), 'password': password},
       );
 
       if (response.statusCode == 200) {
@@ -36,12 +36,16 @@ class AuthController extends GetxController {
         _navigateByRole(auth.roleName);
       }
     } on DioException catch (e) {
+      print(
+        'DIO ERROR: type=${e.type} | msg=${e.message} | status=${e.response?.statusCode} | data=${e.response?.data}',
+      );
       if (e.response?.statusCode == 401 || e.response?.statusCode == 400) {
         errorMessage.value = 'Tên đăng nhập hoặc mật khẩu không đúng.';
       } else {
         errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';
       }
-    } catch (_) {
+    } catch (e) {
+      print('UNKNOWN ERROR: $e');
       errorMessage.value = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
     } finally {
       isLoading.value = false;

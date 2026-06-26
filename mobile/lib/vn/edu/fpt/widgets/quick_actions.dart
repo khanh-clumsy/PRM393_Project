@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:prm393_mobile/vn/edu/fpt/view/leave_request.dart';
+import 'package:prm393_mobile/vn/edu/fpt/view/student/leave_request_view.dart';
 
 class QuickActionItemData {
   final IconData icon;
