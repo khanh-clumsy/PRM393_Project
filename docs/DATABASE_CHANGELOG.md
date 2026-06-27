@@ -29,3 +29,10 @@ Nhằm đáp ứng đúng nghiệp vụ quản lý trường THPT thực tế v�
 ## 5. Tối ưu Hiệu năng (Performance) & Ràng buộc (Constraints)
 - **Tối ưu Token:** Đánh `INDEX` cho cột `Token` và `UserId` trong bảng `RefreshTokens`. Tránh tình trạng Full Table Scan khi lượng học sinh dùng App đồng thời lớn.
 - **Chặt chẽ Cặp định danh:** Thêm ràng buộc `UNIQUE (AcademicYearId, SemesterName)` vào bảng `Semesters`. Đảm bảo hệ thống không bao giờ bị rác dữ liệu do tồn tại hai "Học kỳ 1" trong cùng một "Năm học".
+
+## 6. Chuyển đổi Thời khóa biểu & Điểm danh sang mô hình Ngày học thực tế
+- **Vấn đề ban đầu:** Bảng `Timetables` lưu cấu hình tuần lặp lại (`DayOfWeek`, `EffectiveFrom`, `EffectiveTo`). Điều này khiến tuần nào cũng giống tuần nào, không thể đổi lịch, nghỉ học, dạy bù cho ngày cụ thể. Bảng `AttendanceRecords` dùng `TimetableId` + `AttendanceDate` gây nguy cơ mất an toàn dữ liệu điểm danh khi lịch mẫu thay đổi.
+- **Giải pháp áp dụng:**
+  - Sửa đổi bảng `Timetables` để lưu tiết học thực tế theo từng ngày dương lịch cụ thể (thay `DayOfWeek`, `EffectiveFrom`, `EffectiveTo` bằng cột `Date` kiểu `DATE`, thêm `Status` và `Note`).
+  - Sửa đổi bảng `AttendanceRecords` để bỏ cột `AttendanceDate` (ngày điểm danh trùng với ngày học trong `Timetables`), cập nhật ràng buộc duy nhất thành `UNIQUE (TimetableId, StudentId)`.
+  - Hỗ trợ cơ chế tự động sinh lịch học hàng loạt cho học kỳ từ lịch tuần mẫu trên Backend.

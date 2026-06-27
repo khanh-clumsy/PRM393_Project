@@ -89,6 +89,7 @@ class SubjectManagementView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showFormDialog(context, controller),
         backgroundColor: const Color(0xFFE65100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -104,6 +105,7 @@ class SubjectManagementView extends StatelessWidget {
       StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(isEditing ? 'Sửa Môn Học' : 'Thêm Môn Học', style: const TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
@@ -111,12 +113,26 @@ class SubjectManagementView extends StatelessWidget {
               children: [
                 TextField(
                   controller: codeController,
-                  decoration: const InputDecoration(labelText: 'Mã môn (VD: PRM393)', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Mã môn (VD: PRM393)',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Tên môn', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Tên môn',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 CheckboxListTile(
@@ -137,7 +153,11 @@ class SubjectManagementView extends StatelessWidget {
               child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 final code = codeController.text.trim();
                 final name = nameController.text.trim();
@@ -162,12 +182,18 @@ class SubjectManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, SubjectController controller, SubjectModel subject) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa môn học "${subject.subjectCode}" không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteSubject(subject.subjectId);
             },

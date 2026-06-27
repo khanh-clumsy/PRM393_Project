@@ -4,7 +4,6 @@ public record AttendanceDto(
     int AttendanceId,
     int TimetableId,
     int StudentId,
-    DateOnly AttendanceDate,
     string Status,
     string? Note,
     int RecordedBy,
@@ -13,7 +12,6 @@ public record AttendanceDto(
 public record CreateAttendanceDto(
     int TimetableId,
     int StudentId,
-    DateOnly AttendanceDate,
     string Status,
     string? Note,
     int RecordedBy);

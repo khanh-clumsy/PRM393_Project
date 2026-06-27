@@ -56,8 +56,8 @@ class AnnouncementManagementView extends StatelessWidget {
             final dateStr = date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : announcement.createdAt;
             
             Color priorityColor = Colors.green;
-            if (announcement.priority.toLowerCase() == 'high') priorityColor = Colors.red;
-            if (announcement.priority.toLowerCase() == 'medium') priorityColor = Colors.orange;
+            if (announcement.priority.toLowerCase() == 'urgent') priorityColor = Colors.red;
+            if (announcement.priority.toLowerCase() == 'high') priorityColor = Colors.orange;
 
             return Card(
               color: Colors.white,
@@ -124,6 +124,7 @@ class AnnouncementManagementView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showFormDialog(context, controller),
         backgroundColor: const Color(0xFFE65100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -134,14 +135,15 @@ class AnnouncementManagementView extends StatelessWidget {
     final titleController = TextEditingController(text: announcement?.title ?? '');
     final contentController = TextEditingController(text: announcement?.content ?? '');
     
-    String selectedType = announcement?.announcementType ?? 'General';
-    String selectedPriority = announcement?.priority ?? 'Low';
+    String selectedType = announcement?.announcementType.toLowerCase() ?? 'global';
+    String selectedPriority = announcement?.priority.toLowerCase() ?? 'normal';
     List<int> selectedClassIds = [];
 
     Get.dialog(
       StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(isEditing ? 'Sửa Bảng tin' : 'Tạo Bảng tin', style: const TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
@@ -150,41 +152,62 @@ class AnnouncementManagementView extends StatelessWidget {
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Tiêu đề', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Tiêu đề',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: contentController,
                   maxLines: 4,
-                  decoration: const InputDecoration(labelText: 'Nội dung', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Nội dung',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 if (!isEditing) ...[
                   const Text('Loại thông báo:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  DropdownButton<String>(
-                    isExpanded: true,
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                     value: selectedType,
                     items: const [
-                      DropdownMenuItem(value: 'General', child: Text('Thông báo chung (Toàn trường)')),
-                      DropdownMenuItem(value: 'Class', child: Text('Thông báo lớp (Chọn lớp)')),
+                      DropdownMenuItem(value: 'global', child: Text('Thông báo chung (Toàn trường)')),
+                      DropdownMenuItem(value: 'class', child: Text('Thông báo lớp (Chọn lớp)')),
                     ],
                     onChanged: (val) {
                       setState(() {
                         selectedType = val!;
-                        if (selectedType == 'General') {
+                        if (selectedType == 'global') {
                           selectedClassIds.clear();
                         }
                       });
                     },
                   ),
                   const SizedBox(height: 16),
-                  if (selectedType == 'Class') ...[
+                  if (selectedType == 'class') ...[
                     const Text('Chọn lớp nhận thông báo:', style: TextStyle(fontWeight: FontWeight.bold)),
                     Container(
                       height: 150,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListView.builder(
                         itemCount: controller.classes.length,
@@ -211,13 +234,19 @@ class AnnouncementManagementView extends StatelessWidget {
                   ],
                 ],
                 const Text('Mức độ ưu tiên:', style: TextStyle(fontWeight: FontWeight.bold)),
-                DropdownButton<String>(
-                  isExpanded: true,
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                   value: selectedPriority,
                   items: const [
-                    DropdownMenuItem(value: 'Low', child: Text('Thấp (Low)')),
-                    DropdownMenuItem(value: 'Medium', child: Text('Trung bình (Medium)')),
-                    DropdownMenuItem(value: 'High', child: Text('Cao (High)')),
+                    DropdownMenuItem(value: 'normal', child: Text('Bình thường (Normal)')),
+                    DropdownMenuItem(value: 'high', child: Text('Cao (High)')),
+                    DropdownMenuItem(value: 'urgent', child: Text('Khẩn cấp (Urgent)')),
                   ],
                   onChanged: (val) {
                     setState(() {
@@ -234,7 +263,11 @@ class AnnouncementManagementView extends StatelessWidget {
               child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 final title = titleController.text.trim();
                 final content = contentController.text.trim();
@@ -244,7 +277,7 @@ class AnnouncementManagementView extends StatelessWidget {
                   return;
                 }
 
-                if (!isEditing && selectedType == 'Class' && selectedClassIds.isEmpty) {
+                if (!isEditing && selectedType == 'class' && selectedClassIds.isEmpty) {
                   Get.snackbar('Lỗi', 'Vui lòng chọn ít nhất 1 lớp', backgroundColor: Colors.redAccent, colorText: Colors.white);
                   return;
                 }
@@ -266,12 +299,18 @@ class AnnouncementManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, AnnouncementController controller, AnnouncementModel announcement) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Bạn có chắc chắn muốn xóa bản tin này không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteAnnouncement(announcement.announcementId);
             },

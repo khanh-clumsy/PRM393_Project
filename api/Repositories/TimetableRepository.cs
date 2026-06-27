@@ -39,9 +39,9 @@ public class TimetableRepository(Prm393dbContext db) : ITimetableRepository
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Teacher)
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Class)
             .Where(t => t.TeachingAssignment.ClassId == classId
-                     && t.EffectiveFrom <= weekEnd
-                     && (t.EffectiveTo == null || t.EffectiveTo >= weekStart))
-            .OrderBy(t => t.DayOfWeek)
+                     && t.Date >= weekStart
+                     && t.Date <= weekEnd)
+            .OrderBy(t => t.Date)
             .ThenBy(t => t.Slot.StartTime)
             .ToListAsync();
 
@@ -52,9 +52,9 @@ public class TimetableRepository(Prm393dbContext db) : ITimetableRepository
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Teacher)
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Class)
             .Where(t => t.TeachingAssignment.TeacherId == teacherId
-                     && t.EffectiveFrom <= weekEnd
-                     && (t.EffectiveTo == null || t.EffectiveTo >= weekStart))
-            .OrderBy(t => t.DayOfWeek)
+                     && t.Date >= weekStart
+                     && t.Date <= weekEnd)
+            .OrderBy(t => t.Date)
             .ThenBy(t => t.Slot.StartTime)
             .ToListAsync();
 
@@ -65,15 +65,23 @@ public class TimetableRepository(Prm393dbContext db) : ITimetableRepository
         return timetable;
     }
 
+    public async Task<IEnumerable<Timetable>> BulkCreateAsync(IEnumerable<Timetable> timetables)
+    {
+        db.Timetables.AddRange(timetables);
+        await db.SaveChangesAsync();
+        return timetables;
+    }
+
     public async Task<Timetable?> UpdateAsync(int id, Timetable updated)
     {
         var timetable = await db.Timetables.FindAsync(id);
         if (timetable is null) return null;
 
-        timetable.DayOfWeek = updated.DayOfWeek;
+        timetable.Date = updated.Date;
         timetable.SlotId = updated.SlotId;
         timetable.RoomName = updated.RoomName;
-        timetable.EffectiveTo = updated.EffectiveTo;
+        timetable.Status = updated.Status;
+        timetable.Note = updated.Note;
         await db.SaveChangesAsync();
         return timetable;
     }

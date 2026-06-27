@@ -7,19 +7,34 @@ namespace PRM393API.Repositories;
 public class TeachingAssignmentRepository(Prm393dbContext db) : ITeachingAssignmentRepository
 {
     public async Task<IEnumerable<TeachingAssignment>> GetAllAsync() =>
-        await db.TeachingAssignments.ToListAsync();
+        await db.TeachingAssignments
+            .Include(ta => ta.Class)
+            .Include(ta => ta.Subject)
+            .ToListAsync();
 
     public async Task<IEnumerable<TeachingAssignment>> GetByTeacherAsync(int teacherId) =>
-        await db.TeachingAssignments.Where(ta => ta.TeacherId == teacherId).ToListAsync();
+        await db.TeachingAssignments
+            .Include(ta => ta.Class)
+            .Include(ta => ta.Subject)
+            .Where(ta => ta.TeacherId == teacherId).ToListAsync();
 
     public async Task<IEnumerable<TeachingAssignment>> GetByClassAsync(int classId) =>
-        await db.TeachingAssignments.Where(ta => ta.ClassId == classId).ToListAsync();
+        await db.TeachingAssignments
+            .Include(ta => ta.Class)
+            .Include(ta => ta.Subject)
+            .Where(ta => ta.ClassId == classId).ToListAsync();
 
     public async Task<IEnumerable<TeachingAssignment>> GetBySemesterAsync(int semesterId) =>
-        await db.TeachingAssignments.Where(ta => ta.SemesterId == semesterId).ToListAsync();
+        await db.TeachingAssignments
+            .Include(ta => ta.Class)
+            .Include(ta => ta.Subject)
+            .Where(ta => ta.SemesterId == semesterId).ToListAsync();
 
     public async Task<TeachingAssignment?> GetByIdAsync(int id) =>
-        await db.TeachingAssignments.FindAsync(id);
+        await db.TeachingAssignments
+            .Include(ta => ta.Class)
+            .Include(ta => ta.Subject)
+            .FirstOrDefaultAsync(ta => ta.TeachingAssignmentId == id);
 
     public async Task<TeachingAssignment> CreateAsync(TeachingAssignment ta)
     {

@@ -46,6 +46,24 @@ public class GradeService(IGradeRepository repo) : IGradeService
 
     public async Task<bool> DeleteAsync(int id) => await repo.DeleteAsync(id);
 
+    public async Task<AcademicTranscriptDto> GetStudentTranscriptAsync(int studentId, int academicYearId) =>
+        await repo.GetStudentTranscriptAsync(studentId, academicYearId);
+
+    public async Task<YearlyTranscriptDto> GetYearlyTranscriptAsync(int studentId, int academicYearId) =>
+        await repo.GetYearlyTranscriptAsync(studentId, academicYearId);
+
+    public async Task<IEnumerable<StudentGradeEntryDto>> GetClassGradesAsync(int teachingAssignmentId, int assessmentId) =>
+        await repo.GetClassGradesAsync(teachingAssignmentId, assessmentId);
+
+    public async Task SaveBulkGradesAsync(List<BulkGradeDto> grades) =>
+        await repo.SaveBulkGradesAsync(grades);
+
+    public async Task<IEnumerable<StudentGradeByTypeDto>> GetClassGradesByTypeAsync(int teachingAssignmentId, int assessmentTypeId) =>
+        await repo.GetClassGradesByTypeAsync(teachingAssignmentId, assessmentTypeId);
+
+    public async Task SaveBulkGradesByTypeAsync(BulkGradeByTypeDto dto, int teacherId) =>
+        await repo.SaveBulkGradesByTypeAsync(dto, teacherId);
+
     private static GradeDto ToDto(Grade g) =>
         new(g.GradeId, g.AssessmentId, g.StudentId, g.Score, g.Comment, g.EnteredBy, g.EnteredAt);
 }

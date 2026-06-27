@@ -4,8 +4,8 @@ namespace PRM393API.Services.Interfaces;
 
 public interface IStudentClassService
 {
-    Task<IEnumerable<StudentClassDto>> GetByClassAsync(int classId);
-    Task<IEnumerable<StudentClassDto>> GetByStudentAsync(int studentId);
-    Task<StudentClassDto> CreateAsync(CreateStudentClassDto dto);
+    Task<IEnumerable<StudentClassResponseDto>> GetByClassAsync(int classId);
+    Task<IEnumerable<StudentClassResponseDto>> GetByStudentAsync(int studentId);
+    Task<StudentClassResponseDto> CreateAsync(CreateStudentClassDto dto);
     Task<bool> DeleteAsync(int id);
 }

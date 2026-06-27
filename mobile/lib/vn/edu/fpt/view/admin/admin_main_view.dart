@@ -71,8 +71,27 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text(subtitle)),
+      backgroundColor: const Color(0xFFF9FAFC),
+      appBar: AppBar(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 64, color: const Color(0xFFE65100).withOpacity(0.5)),
+            const SizedBox(height: 16),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 16, color: Colors.black54),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

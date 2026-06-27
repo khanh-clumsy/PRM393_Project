@@ -12,6 +12,13 @@ class SemesterController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
 
+  final RxnInt selectedYearId = RxnInt();
+
+  List<SemesterModel> get filteredSemesters {
+    if (selectedYearId.value == null) return [];
+    return semesters.where((s) => s.academicYearId == selectedYearId.value).toList();
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -30,9 +37,11 @@ class SemesterController extends GetxController {
         semesters.value = data.map((json) => SemesterModel.fromJson(json)).toList();
       }
     } on DioException catch (e) {
-      errorMessage.value = 'Lỗi kết nối: ${e.message}';
+      print('DioException: $e');
+      errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
     } catch (e) {
-      errorMessage.value = 'Đã xảy ra lỗi: $e';
+      print('Error: $e');
+      errorMessage.value = 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
     } finally {
       isLoading.value = false;
     }
@@ -44,6 +53,9 @@ class SemesterController extends GetxController {
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         academicYears.value = data.map((json) => AcademicYearModel.fromJson(json)).toList();
+        if (academicYears.isNotEmpty) {
+          selectedYearId.value = academicYears.first.academicYearId;
+        }
       }
     } catch (e) {
       // Bỏ qua lỗi, vì list sẽ trống và dropdown không hiển thị

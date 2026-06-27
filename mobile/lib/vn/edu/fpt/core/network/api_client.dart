@@ -40,7 +40,7 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
-          if (e.response?.statusCode == 401) {
+          if (e.response?.statusCode == 401 && !e.requestOptions.path.contains('/api/auth/refresh')) {
             final refreshed = await _tryRefreshToken();
             if (refreshed) {
               // Retry request với token mới

@@ -12,6 +12,13 @@ public interface ITimetableService
     Task<IEnumerable<TimetableSlotDetailDto>> GetWeeklyByClassAsync(int classId, DateOnly date);
     Task<IEnumerable<TimetableSlotDetailDto>> GetWeeklyByTeacherAsync(int teacherId, DateOnly date);
     Task<TimetableDto> CreateAsync(CreateTimetableDto dto);
+    Task<int> GenerateTimetablesForSemesterAsync(int semesterId, List<TimetableTemplateDto> templates);
+    Task<int> GenerateFromTemplatesAsync(int semesterId, int classId);
+    Task<int> ClearGeneratedTimetablesAsync(int semesterId, int classId);
+    Task<IEnumerable<TimetableTemplateResponseDto>> GetTemplatesByClassAsync(int classId, int? semesterId = null);
+    Task<TimetableTemplateResponseDto> CreateTemplateAsync(CreateTimetableTemplateDto dto);
+    Task<TimetableTemplateResponseDto?> UpdateTemplateAsync(int id, UpdateTimetableTemplateDto dto);
+    Task<bool> DeleteTemplateAsync(int id);
     Task<TimetableDto?> UpdateAsync(int id, UpdateTimetableDto dto);
     Task<bool> DeleteAsync(int id);
 }

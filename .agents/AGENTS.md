@@ -23,9 +23,8 @@ All API endpoints and business logic must enforce strict authorization checks ba
 * **Announcements:** Admin manages global, school-wide news feed articles.
 
 ### Trưởng bộ môn (HeadOfDept - RoleId = 2)
-* **Read-only Scope:** View-only access within their own department (`Users.DepartmentId`).
-* **Quyền hạn:** Có thể xem danh sách giáo viên, thời khóa biểu, phân công giảng dạy, và báo cáo điểm số của các môn học thuộc tổ chuyên môn của mình.
-* **Ràng buộc:** **Không được phép** tạo lớp học mới, sửa thời khóa biểu hoặc trực tiếp thực hiện phân công giảng dạy (không có POST/PUT endpoints cho các nghiệp vụ này được gán cho Trưởng bộ môn).
+* **Write/Modify Scope:** Full CRUD operations on Classes, TeachingAssignments, and Timetables for their department.
+* **Quyền hạn:** Có thể xem danh sách giáo viên, thời khóa biểu, phân công giảng dạy, và báo cáo điểm số của các môn học thuộc tổ chuyên môn của mình. Trưởng bộ môn được quyền tạo lớp học, phân công giảng dạy và xếp thời khóa biểu.
 * **Kiêm nhiệm:** Nếu Trưởng bộ môn trực tiếp giảng dạy lớp nào đó, họ có các quyền của Giáo viên đối với lớp đó.
 
 ### Giáo viên (Teacher - RoleId = 3)
@@ -65,7 +64,6 @@ Agents must adhere strictly to these physical database rules defined in [001_ini
 
 ## 🚫 4. Out of Scope Features
 * **Chat module** (1-1 chat, group chat) đã được loại bỏ hoàn toàn. Tuyệt đối không sinh code, không thiết lập WebSocket hay tạo các bảng/endpoint liên quan đến nhắn tin.
-* **HeadOfDept class updates:** Trưởng bộ môn tuyệt đối không có quyền write đối với cấu trúc lớp hay phân công giảng dạy.
 
 ---
 ---

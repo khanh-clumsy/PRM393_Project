@@ -5,7 +5,7 @@ using PRM393API.Services.Interfaces;
 
 namespace PRM393API.Services;
 
-public class AcademicYearService(IAcademicYearRepository repo) : IAcademicYearService
+public class AcademicYearService(IAcademicYearRepository repo, ISemesterRepository semesterRepo) : IAcademicYearService
 {
     public async Task<IEnumerable<AcademicYearDto>> GetAllAsync()
     {
@@ -29,6 +29,35 @@ public class AcademicYearService(IAcademicYearRepository repo) : IAcademicYearSe
             IsActive = dto.IsActive,
         };
         var created = await repo.CreateAsync(year);
+
+        // Auto-create Semesters
+        var startYear = created.StartDate.Year;
+        var endYear = created.EndDate.Year;
+        
+        // Học kỳ 1: 01/09 (năm bắt đầu) đến 15/01 (năm kết thúc)
+        var sem1Start = new DateOnly(startYear, 9, 1);
+        var sem1End = new DateOnly(endYear, 1, 15);
+        
+        // Học kỳ 2: 16/01 (năm kết thúc) đến 31/05 (năm kết thúc)
+        var sem2Start = new DateOnly(endYear, 1, 16);
+        var sem2End = new DateOnly(endYear, 5, 31);
+
+        await semesterRepo.CreateAsync(new Semester
+        {
+            AcademicYearId = created.AcademicYearId,
+            SemesterName = "Học kỳ 1",
+            StartDate = sem1Start,
+            EndDate = sem1End
+        });
+
+        await semesterRepo.CreateAsync(new Semester
+        {
+            AcademicYearId = created.AcademicYearId,
+            SemesterName = "Học kỳ 2",
+            StartDate = sem2Start,
+            EndDate = sem2End
+        });
+
         return ToDto(created);
     }
 

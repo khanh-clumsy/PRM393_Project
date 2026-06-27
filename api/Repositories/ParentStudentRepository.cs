@@ -7,13 +7,13 @@ namespace PRM393API.Repositories;
 public class ParentStudentRepository(Prm393dbContext db) : IParentStudentRepository
 {
     public async Task<IEnumerable<ParentStudent>> GetByParentAsync(int parentId) =>
-        await db.ParentStudents.Where(ps => ps.ParentId == parentId).ToListAsync();
+        await db.ParentStudents.Include(ps => ps.Student).Include(ps => ps.Parent).Where(ps => ps.ParentId == parentId).ToListAsync();
 
     public async Task<IEnumerable<ParentStudent>> GetByStudentAsync(int studentId) =>
-        await db.ParentStudents.Where(ps => ps.StudentId == studentId).ToListAsync();
+        await db.ParentStudents.Include(ps => ps.Parent).Include(ps => ps.Student).Where(ps => ps.StudentId == studentId).ToListAsync();
 
     public async Task<ParentStudent?> GetByIdAsync(int id) =>
-        await db.ParentStudents.FindAsync(id);
+        await db.ParentStudents.Include(ps => ps.Student).Include(ps => ps.Parent).FirstOrDefaultAsync(ps => ps.ParentStudentId == id);
 
     public async Task<ParentStudent> CreateAsync(ParentStudent ps)
     {

@@ -12,6 +12,7 @@ public interface ITimetableRepository
     Task<IEnumerable<Timetable>> GetWeeklyByClassAsync(int classId, DateOnly weekStart, DateOnly weekEnd);
     Task<IEnumerable<Timetable>> GetWeeklyByTeacherAsync(int teacherId, DateOnly weekStart, DateOnly weekEnd);
     Task<Timetable> CreateAsync(Timetable timetable);
+    Task<IEnumerable<Timetable>> BulkCreateAsync(IEnumerable<Timetable> timetables);
     Task<Timetable?> UpdateAsync(int id, Timetable timetable);
     Task<bool> DeleteAsync(int id);
 }

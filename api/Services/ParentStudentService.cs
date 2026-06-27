@@ -51,5 +51,5 @@ public class ParentStudentService(IParentStudentRepository repo) : IParentStuden
         await repo.DeleteAsync(id);
 
     private static ParentStudentDto ToDto(ParentStudent ps) =>
-        new(ps.ParentStudentId, ps.ParentId, ps.StudentId, ps.Relationship);
+        new(ps.ParentStudentId, ps.ParentId, ps.StudentId, ps.Relationship, ps.Student?.FullName, ps.Parent?.FullName, ps.Student?.Username, ps.Parent?.Username);
 }

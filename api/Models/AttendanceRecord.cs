@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -6,9 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace PRM393API.Models;
 
-[Index("AttendanceDate", Name = "IX_Att_Date")]
 [Index("StudentId", Name = "IX_Att_StudentId")]
-[Index("TimetableId", "StudentId", "AttendanceDate", Name = "UQ_AttendanceRecords", IsUnique = true)]
+[Index("TimetableId", "StudentId", Name = "UQ_AttendanceRecords", IsUnique = true)]
 public partial class AttendanceRecord
 {
     [Key]
@@ -17,8 +16,6 @@ public partial class AttendanceRecord
     public int TimetableId { get; set; }
 
     public int StudentId { get; set; }
-
-    public DateOnly AttendanceDate { get; set; }
 
     [StringLength(1)]
     [Unicode(false)]

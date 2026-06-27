@@ -87,6 +87,7 @@ class AcademicRankManagementView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showFormDialog(context, controller),
         backgroundColor: const Color(0xFFE65100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -101,6 +102,7 @@ class AcademicRankManagementView extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(isEditing ? 'Sửa Xếp Loại' : 'Thêm Xếp Loại', style: const TextStyle(fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
           child: Column(
@@ -108,19 +110,40 @@ class AcademicRankManagementView extends StatelessWidget {
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Tên xếp loại (VD: Giỏi)', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: 'Tên xếp loại (VD: Giỏi)',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: minController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Điểm tối thiểu (VD: 8.0)', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: 'Điểm tối thiểu (VD: 8.0)',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: maxController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Điểm tối đa (VD: 10.0)', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: 'Điểm tối đa (VD: 10.0)',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
               ),
             ],
           ),
@@ -131,7 +154,11 @@ class AcademicRankManagementView extends StatelessWidget {
             child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE65100),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               final name = nameController.text.trim();
               final minText = minController.text.trim();
@@ -171,12 +198,18 @@ class AcademicRankManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, AcademicRankController controller, AcademicRankModel rank) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa xếp loại "${rank.rankName}" không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteRank(rank.rankId);
             },

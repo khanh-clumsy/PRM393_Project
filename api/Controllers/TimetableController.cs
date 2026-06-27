@@ -50,6 +50,13 @@ public class TimetableController(ITimetableService service) : ControllerBase
     public async Task<IActionResult> GetByClass(int classId) =>
         Ok(await service.GetByClassAsync(classId));
 
+    [HttpPost("generate/{semesterId:int}")]
+    public async Task<IActionResult> Generate(int semesterId, [FromBody] List<TimetableTemplateDto> templates)
+    {
+        var count = await service.GenerateTimetablesForSemesterAsync(semesterId, templates);
+        return Ok(new { Count = count });
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTimetableDto dto)
     {
@@ -69,5 +76,44 @@ public class TimetableController(ITimetableService service) : ControllerBase
     {
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpGet("template/by-class/{classId:int}")]
+    public async Task<IActionResult> GetTemplatesByClass(int classId, [FromQuery] int? semesterId) =>
+        Ok(await service.GetTemplatesByClassAsync(classId, semesterId));
+
+    [HttpPost("template")]
+    public async Task<IActionResult> CreateTemplate([FromBody] CreateTimetableTemplateDto dto)
+    {
+        var created = await service.CreateTemplateAsync(dto);
+        return Ok(created);
+    }
+
+    [HttpPut("template/{id:int}")]
+    public async Task<IActionResult> UpdateTemplate(int id, [FromBody] UpdateTimetableTemplateDto dto)
+    {
+        var updated = await service.UpdateTemplateAsync(id, dto);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [HttpDelete("template/{id:int}")]
+    public async Task<IActionResult> DeleteTemplate(int id)
+    {
+        var deleted = await service.DeleteTemplateAsync(id);
+        return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpPost("generate-from-template/{semesterId:int}/{classId:int}")]
+    public async Task<IActionResult> GenerateFromTemplate(int semesterId, int classId)
+    {
+        var count = await service.GenerateFromTemplatesAsync(semesterId, classId);
+        return Ok(new { Count = count });
+    }
+
+    [HttpPost("clear-generated/{semesterId:int}/{classId:int}")]
+    public async Task<IActionResult> ClearGenerated(int semesterId, int classId)
+    {
+        var count = await service.ClearGeneratedTimetablesAsync(semesterId, classId);
+        return Ok(new { Count = count });
     }
 }

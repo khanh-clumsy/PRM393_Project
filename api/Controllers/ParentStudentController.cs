@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PRM393API.DTOs;
 using PRM393API.Services.Interfaces;
 
@@ -44,5 +45,44 @@ public class ParentStudentController(IParentStudentService service) : Controller
     {
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpGet("dashboard/{parentId:int}")]
+    public async Task<IActionResult> GetDashboard(int parentId, [FromServices] PRM393API.Models.Prm393dbContext db)
+    {
+        var parent = await db.Users.FindAsync(parentId);
+        if (parent == null) return NotFound("Phụ huynh không tồn tại.");
+
+        var children = await db.ParentStudents
+            .Where(ps => ps.ParentId == parentId)
+            .Include(ps => ps.Student)
+            .Select(ps => new
+            {
+                ps.ParentStudentId,
+                ps.StudentId,
+                StudentName = ps.Student.FullName,
+                ps.Relationship,
+                ClassId = db.StudentClasses
+                    .Where(sc => sc.StudentId == ps.StudentId)
+                    .Select(sc => sc.ClassId)
+                    .FirstOrDefault(),
+                ClassName = db.StudentClasses
+                    .Where(sc => sc.StudentId == ps.StudentId)
+                    .Include(sc => sc.Class)
+                    .Select(sc => sc.Class.ClassName)
+                    .FirstOrDefault(),
+                AttendanceToday = db.AttendanceRecords
+                    .Where(a => a.StudentId == ps.StudentId && a.RecordedAt.Date == DateTime.Today)
+                    .Select(a => new { a.AttendanceId, a.TimetableId, a.Status, a.Note })
+                    .ToList()
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            ParentId = parent.UserId,
+            ParentName = parent.FullName,
+            Children = children
+        });
     }
 }

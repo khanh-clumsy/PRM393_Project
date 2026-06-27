@@ -42,15 +42,61 @@ class ClassManagementView extends StatelessWidget {
           );
         }
 
-        if (controller.classes.isEmpty) {
-          return const Center(child: Text('Chưa có dữ liệu lớp học.'));
-        }
+        return Column(
+          children: [
+            // Dropdown chọn Năm học
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.school, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  const Text('Năm học:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        value: controller.selectedYearId.value,
+                        hint: const Text('Chọn năm học'),
+                        items: controller.academicYears.map((y) {
+                          return DropdownMenuItem<int>(
+                            value: y.academicYearId,
+                            child: Text(y.yearName, style: const TextStyle(fontSize: 14)),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            controller.selectedYearId.value = val;
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            
+            Expanded(
+              child: Builder(builder: (context) {
+                if (controller.filteredClasses.isEmpty) {
+                  return const Center(child: Text('Chưa có dữ liệu lớp học cho năm này.'));
+                }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.classes.length,
-          itemBuilder: (context, index) {
-            final cls = controller.classes[index];
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: controller.filteredClasses.length,
+                  itemBuilder: (context, index) {
+                    final cls = controller.filteredClasses[index];
             final year = controller.academicYears.firstWhereOrNull((y) => y.academicYearId == cls.academicYearId);
             final teacher = controller.teachers.firstWhereOrNull((t) => t.userId == cls.homeroomTeacherId);
             
@@ -87,9 +133,13 @@ class ClassManagementView extends StatelessWidget {
           },
         );
       }),
+      )
+    ]);
+    }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showFormDialog(context, controller),
         backgroundColor: const Color(0xFFE65100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -109,6 +159,7 @@ class ClassManagementView extends StatelessWidget {
       StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(isEditing ? 'Sửa Lớp Học' : 'Thêm Lớp Học', style: const TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
@@ -116,7 +167,14 @@ class ClassManagementView extends StatelessWidget {
               children: [
                 if (!isEditing)
                   DropdownButtonFormField<int>(
-                    decoration: const InputDecoration(labelText: 'Năm học', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: 'Năm học',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                     value: selectedYearId,
                     items: controller.academicYears.map((y) {
                       return DropdownMenuItem<int>(
@@ -127,24 +185,45 @@ class ClassManagementView extends StatelessWidget {
                     onChanged: (val) {
                       setState(() {
                         selectedYearId = val;
+                        // Khi đổi năm học, reset GVCN nếu GVCN hiện tại đã có lớp trong năm học mới
+                        if (selectedTeacherId != null) {
+                          final valid = controller.getAvailableTeachers(selectedYearId ?? 0, cls?.classId).any((t) => t.userId == selectedTeacherId);
+                          if (!valid) {
+                            selectedTeacherId = null;
+                          }
+                        }
                       });
                     },
                   ),
                 if (!isEditing) const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Tên lớp (VD: 10A1)', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Tên lớp (VD: 10A1)',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int?>(
-                  decoration: const InputDecoration(labelText: 'Giáo viên chủ nhiệm (Có thể để trống)', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Giáo viên chủ nhiệm (Có thể để trống)',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                   value: selectedTeacherId,
                   items: [
                     const DropdownMenuItem<int?>(
                       value: null,
                       child: Text('--- Chọn GVCN ---', style: TextStyle(color: Colors.grey)),
                     ),
-                    ...controller.teachers.map((t) {
+                    ...controller.getAvailableTeachers(selectedYearId ?? 0, cls?.classId).map((t) {
                       return DropdownMenuItem<int?>(
                         value: t.userId,
                         child: Text(t.fullName),
@@ -166,7 +245,11 @@ class ClassManagementView extends StatelessWidget {
               child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 final name = nameController.text.trim();
                 if (name.isEmpty) {
@@ -195,12 +278,18 @@ class ClassManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, ClassController controller, ClassModel cls) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa lớp "${cls.className}" không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteClass(cls.classId);
             },

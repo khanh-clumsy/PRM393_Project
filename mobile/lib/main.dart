@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'vn/edu/fpt/core/network/api_client.dart';
 import 'vn/edu/fpt/core/router/app_router.dart';
 import 'vn/edu/fpt/controllers/auth_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting(); // Khởi tạo dữ liệu locale (vi_VN, en, ...)
   ApiClient.init();
   runApp(const MyApp());
 }

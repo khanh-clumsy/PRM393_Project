@@ -185,15 +185,29 @@ GO
 CREATE TABLE Timetables (
     TimetableId             INT             NOT NULL IDENTITY(1,1),
     TeachingAssignmentId    INT             NOT NULL,
+    Date                    DATE            NOT NULL,   -- Ngày học thực tế
+    SlotId                  INT             NOT NULL,
+    RoomName                NVARCHAR(50)    NULL,
+    Status                  TINYINT         NOT NULL DEFAULT 1, -- 1: Bình thường, 2: Đổi lịch, 3: Nghỉ học, 4: Dạy bù
+    Note                    NVARCHAR(200)   NULL,
+    CONSTRAINT PK_Timetables PRIMARY KEY (TimetableId),
+    CONSTRAINT FK_Timetables_TA    FOREIGN KEY (TeachingAssignmentId) REFERENCES TeachingAssignments(TeachingAssignmentId),
+    CONSTRAINT FK_Timetables_Slots FOREIGN KEY (SlotId) REFERENCES TimetableSlots(SlotId)
+);
+GO
+CREATE INDEX IX_Timetables_Date ON Timetables(Date);
+GO
+
+CREATE TABLE TimetableTemplates (
+    TemplateId              INT             NOT NULL IDENTITY(1,1),
+    TeachingAssignmentId    INT             NOT NULL,
     DayOfWeek               TINYINT         NOT NULL,   -- 2=Thứ Hai ... 8=Chủ Nhật
     SlotId                  INT             NOT NULL,
     RoomName                NVARCHAR(50)    NULL,
-    EffectiveFrom           DATE            NOT NULL,
-    EffectiveTo             DATE            NULL,
-    CONSTRAINT PK_Timetables PRIMARY KEY (TimetableId),
-    CONSTRAINT FK_Timetables_TA    FOREIGN KEY (TeachingAssignmentId) REFERENCES TeachingAssignments(TeachingAssignmentId),
-    CONSTRAINT FK_Timetables_Slots FOREIGN KEY (SlotId) REFERENCES TimetableSlots(SlotId),
-    CONSTRAINT CHK_Timetables_Day  CHECK (DayOfWeek BETWEEN 2 AND 8)
+    CONSTRAINT PK_TimetableTemplates PRIMARY KEY (TemplateId),
+    CONSTRAINT FK_Templates_TA    FOREIGN KEY (TeachingAssignmentId) REFERENCES TeachingAssignments(TeachingAssignmentId),
+    CONSTRAINT FK_Templates_Slots FOREIGN KEY (SlotId) REFERENCES TimetableSlots(SlotId),
+    CONSTRAINT CHK_Templates_Day  CHECK (DayOfWeek BETWEEN 2 AND 8)
 );
 GO
 
@@ -205,7 +219,6 @@ CREATE TABLE AttendanceRecords (
     AttendanceId    INT             NOT NULL IDENTITY(1,1),
     TimetableId     INT             NOT NULL,
     StudentId       INT             NOT NULL,
-    AttendanceDate  DATE            NOT NULL,
     Status          CHAR(1)         NOT NULL,   -- 'P'=Present, 'A'=Absent, 'L'=Late
     Note            NVARCHAR(200)   NULL,
     RecordedBy      INT             NOT NULL,
@@ -215,7 +228,7 @@ CREATE TABLE AttendanceRecords (
     CONSTRAINT FK_Att_Students   FOREIGN KEY (StudentId)    REFERENCES Users(UserId),
     CONSTRAINT FK_Att_RecordedBy FOREIGN KEY (RecordedBy)   REFERENCES Users(UserId),
     CONSTRAINT CHK_Att_Status    CHECK (Status IN ('P', 'A', 'L')),
-    CONSTRAINT UQ_AttendanceRecords UNIQUE (TimetableId, StudentId, AttendanceDate)
+    CONSTRAINT UQ_AttendanceRecords UNIQUE (TimetableId, StudentId)
 );
 GO
 

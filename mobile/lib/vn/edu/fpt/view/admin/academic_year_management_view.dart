@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/academic_year_controller.dart';
 import '../../models/academic_year_model.dart';
+import 'package:intl/intl.dart';
 
 class AcademicYearManagementView extends StatelessWidget {
   const AcademicYearManagementView({super.key});
@@ -90,6 +91,7 @@ class AcademicYearManagementView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showFormDialog(context, controller),
         backgroundColor: const Color(0xFFE65100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -98,14 +100,16 @@ class AcademicYearManagementView extends StatelessWidget {
   void _showFormDialog(BuildContext context, AcademicYearController controller, {AcademicYearModel? year}) {
     final isEditing = year != null;
     final nameController = TextEditingController(text: year?.yearName ?? '');
-    final startDateController = TextEditingController(text: year?.startDate ?? '');
-    final endDateController = TextEditingController(text: year?.endDate ?? '');
+
     bool isActive = year?.isActive ?? false;
+    DateTime selectedStartDate = year != null ? DateTime.parse(year.startDate) : DateTime.now();
+    DateTime selectedEndDate = year != null ? DateTime.parse(year.endDate) : DateTime.now().add(const Duration(days: 270));
 
     Get.dialog(
       StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(isEditing ? 'Sửa Năm Học' : 'Thêm Năm Học', style: const TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
@@ -113,21 +117,59 @@ class AcademicYearManagementView extends StatelessWidget {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Tên năm học (VD: 2023-2024)', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Tên năm học (VD: 2023-2024)',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: startDateController,
-                  decoration: const InputDecoration(labelText: 'Ngày bắt đầu (YYYY-MM-DD)', border: OutlineInputBorder()),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Ngày bắt đầu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  subtitle: Text(DateFormat('dd/MM/yyyy').format(selectedStartDate)),
+                  trailing: const Icon(Icons.calendar_month, color: Color(0xFFE65100)),
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedStartDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setState(() {
+                        selectedStartDate = date;
+                      });
+                    }
+                  },
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: endDateController,
-                  decoration: const InputDecoration(labelText: 'Ngày kết thúc (YYYY-MM-DD)', border: OutlineInputBorder()),
+                const Divider(height: 1),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Ngày kết thúc', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  subtitle: Text(DateFormat('dd/MM/yyyy').format(selectedEndDate)),
+                  trailing: const Icon(Icons.calendar_month, color: Color(0xFFE65100)),
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedEndDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setState(() {
+                        selectedEndDate = date;
+                      });
+                    }
+                  },
                 ),
-                const SizedBox(height: 16),
+                const Divider(height: 1),
                 CheckboxListTile(
-                  title: const Text("Trạng thái Hoạt động"),
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text("Trạng thái Hoạt động", style: TextStyle(fontSize: 14)),
                   value: isActive,
                   onChanged: (val) {
                     setState(() {
@@ -144,19 +186,47 @@ class AcademicYearManagementView extends StatelessWidget {
               child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 final name = nameController.text.trim();
-                final start = startDateController.text.trim();
-                final end = endDateController.text.trim();
-                if (name.isEmpty || start.isEmpty || end.isEmpty) {
-                  Get.snackbar('Lỗi', 'Vui lòng nhập đủ thông tin', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                
+                if (name.isEmpty) {
+                  Get.snackbar('Lỗi', 'Vui lòng nhập Tên năm học', backgroundColor: Colors.redAccent, colorText: Colors.white);
                   return;
                 }
+
+                // Format validation: YYYY-YYYY
+                final regex = RegExp(r'^\d{4}-\d{4}$');
+                if (!regex.hasMatch(name)) {
+                  Get.snackbar('Lỗi', 'Tên năm học phải có định dạng YYYY-YYYY (VD: 2024-2025)', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
+
+                final parts = name.split('-');
+                final startYear = int.parse(parts[0]);
+                final endYear = int.parse(parts[1]);
+
+                if (endYear <= startYear) {
+                  Get.snackbar('Lỗi', 'Năm kết thúc phải lớn hơn năm bắt đầu', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
+
+                if (selectedEndDate.isBefore(selectedStartDate)) {
+                  Get.snackbar('Lỗi', 'Ngày kết thúc phải sau ngày bắt đầu', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
+
+                final startStr = DateFormat('yyyy-MM-dd').format(selectedStartDate);
+                final endStr = DateFormat('yyyy-MM-dd').format(selectedEndDate);
+
                 if (isEditing) {
-                  controller.updateAcademicYear(year.academicYearId, name, start, end, isActive);
+                  controller.updateAcademicYear(year.academicYearId, name, startStr, endStr, isActive);
                 } else {
-                  controller.createAcademicYear(name, start, end, isActive);
+                  controller.createAcademicYear(name, startStr, endStr, isActive);
                 }
               },
               child: Text(isEditing ? 'Lưu' : 'Thêm'),
@@ -170,12 +240,18 @@ class AcademicYearManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, AcademicYearController controller, AcademicYearModel year) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa năm học "${year.yearName}" không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteAcademicYear(year.academicYearId);
             },

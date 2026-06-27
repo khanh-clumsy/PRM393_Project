@@ -87,6 +87,7 @@ class TimetableSlotManagementView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showFormDialog(context, controller),
         backgroundColor: const Color(0xFFE65100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -101,6 +102,7 @@ class TimetableSlotManagementView extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(isEditing ? 'Sửa Ca Học' : 'Thêm Ca Học', style: const TextStyle(fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
           child: Column(
@@ -108,17 +110,60 @@ class TimetableSlotManagementView extends StatelessWidget {
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Tên ca học (VD: Slot 1)', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: 'Tên ca học (VD: Slot 1)',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: startController,
-                decoration: const InputDecoration(labelText: 'Giờ bắt đầu (HH:mm)', border: OutlineInputBorder()),
+                readOnly: true,
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (picked != null) {
+                    startController.text = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}:00";
+                  }
+                },
+                decoration: InputDecoration(
+                  labelText: 'Giờ bắt đầu (HH:mm)',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  suffixIcon: const Icon(Icons.access_time, color: Colors.blue),
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: endController,
-                decoration: const InputDecoration(labelText: 'Giờ kết thúc (HH:mm)', border: OutlineInputBorder()),
+                readOnly: true,
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (picked != null) {
+                    endController.text = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}:00";
+                  }
+                },
+                decoration: InputDecoration(
+                  labelText: 'Giờ kết thúc (HH:mm)',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  suffixIcon: const Icon(Icons.access_time, color: Colors.blue),
+                ),
               ),
             ],
           ),
@@ -129,13 +174,31 @@ class TimetableSlotManagementView extends StatelessWidget {
             child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE65100),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               final name = nameController.text.trim();
               final start = startController.text.trim();
               final end = endController.text.trim();
               if (name.isEmpty || start.isEmpty || end.isEmpty) {
                 Get.snackbar('Lỗi', 'Vui lòng nhập đủ thông tin', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                return;
+              }
+              
+              try {
+                final startParts = start.split(':');
+                final endParts = end.split(':');
+                final startMins = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+                final endMins = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+                if (startMins >= endMins) {
+                  Get.snackbar('Lỗi', 'Giờ bắt đầu phải nhỏ hơn giờ kết thúc', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
+              } catch (e) {
+                Get.snackbar('Lỗi', 'Định dạng giờ không hợp lệ', backgroundColor: Colors.redAccent, colorText: Colors.white);
                 return;
               }
               if (isEditing) {
@@ -154,12 +217,18 @@ class TimetableSlotManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, TimetableSlotController controller, TimetableSlotModel slot) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa "${slot.slotName}" không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteSlot(slot.slotId);
             },

@@ -65,6 +65,8 @@ public partial class Prm393dbContext : DbContext
 
     public virtual DbSet<TimetableSlot> TimetableSlots { get; set; }
 
+    public virtual DbSet<TimetableTemplate> TimetableTemplates { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -322,6 +324,17 @@ public partial class Prm393dbContext : DbContext
             entity.HasOne(d => d.TeachingAssignment).WithMany(p => p.Timetables)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Timetables_TA");
+        });
+
+        modelBuilder.Entity<TimetableTemplate>(entity =>
+        {
+            entity.HasOne(d => d.Slot).WithMany(p => p.TimetableTemplates)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Templates_Slots");
+
+            entity.HasOne(d => d.TeachingAssignment).WithMany(p => p.TimetableTemplates)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Templates_TA");
         });
 
         modelBuilder.Entity<User>(entity =>

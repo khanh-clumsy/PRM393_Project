@@ -7,10 +7,10 @@ namespace PRM393API.Repositories;
 public class StudentClassRepository(Prm393dbContext db) : IStudentClassRepository
 {
     public async Task<IEnumerable<StudentClass>> GetByClassAsync(int classId) =>
-        await db.StudentClasses.Where(sc => sc.ClassId == classId).ToListAsync();
+        await db.StudentClasses.Include(sc => sc.Student).Where(sc => sc.ClassId == classId).ToListAsync();
 
     public async Task<IEnumerable<StudentClass>> GetByStudentAsync(int studentId) =>
-        await db.StudentClasses.Where(sc => sc.StudentId == studentId).ToListAsync();
+        await db.StudentClasses.Include(sc => sc.Student).Where(sc => sc.StudentId == studentId).ToListAsync();
 
     public async Task<StudentClass?> GetByIdAsync(int id) =>
         await db.StudentClasses.FindAsync(id);

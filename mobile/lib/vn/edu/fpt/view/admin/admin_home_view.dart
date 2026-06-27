@@ -15,6 +15,10 @@ class AdminHomeView extends StatelessWidget {
       {'title': 'Lớp học', 'icon': Icons.class_, 'color': Colors.teal, 'route': '/admin/classes'},
       {'title': 'Xếp loại', 'icon': Icons.grade, 'color': Colors.orange, 'route': '/admin/ranks'},
       {'title': 'Ca học (Slot)', 'icon': Icons.schedule, 'color': Colors.red, 'route': '/admin/slots'},
+      {'title': 'Phân công GV', 'icon': Icons.assignment_ind, 'color': Colors.blueGrey, 'route': '/admin/teaching-assignments'},
+      {'title': 'Thời khóa biểu', 'icon': Icons.calendar_month, 'color': Colors.brown, 'route': '/admin/timetables'},
+      {'title': 'Phân lớp HS', 'icon': Icons.group_add, 'color': Colors.lightBlue, 'route': '/admin/student-classes'},
+      {'title': 'Phụ huynh - HS', 'icon': Icons.family_restroom, 'color': Colors.amber, 'route': '/admin/parent-student'},
       {'title': 'Bảng tin', 'icon': Icons.announcement, 'color': Colors.pink, 'route': '/admin/announcements'},
     ];
 
@@ -24,15 +28,44 @@ class AdminHomeView extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text(
-          'Quản trị hệ thống',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFE65100),
-          ),
+        title: Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFFFCC80), width: 1.5),
+              ),
+              child: const CircleAvatar(
+                radius: 18,
+                backgroundColor: Color(0xFFFFE0B2),
+                child: Icon(Icons.admin_panel_settings, color: Color(0xFFE65100), size: 24),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'FSchool Admin',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE65100), // Cam FSchools thương hiệu
+                  ),
+                ),
+                Text(
+                  'Quản trị hệ thống',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        centerTitle: true,
       ),
       body: SafeArea(
         child: Padding(
@@ -41,7 +74,7 @@ class AdminHomeView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Danh mục Master Data',
+                'Danh mục cấu hình',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
               const SizedBox(height: 16),
@@ -78,6 +111,10 @@ class AdminHomeView extends StatelessWidget {
             module['route'] == '/admin/users' ||
             module['route'] == '/admin/classes' ||
             module['route'] == '/admin/ranks' ||
+            module['route'] == '/admin/teaching-assignments' ||
+            module['route'] == '/admin/timetables' ||
+            module['route'] == '/admin/student-classes' ||
+            module['route'] == '/admin/parent-student' ||
             module['route'] == '/admin/announcements') {
           Get.toNamed(module['route']);
         } else {
@@ -105,12 +142,12 @@ class AdminHomeView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (module['color'] as Color).withOpacity(0.1),
+                color: const Color(0xFFFFF3E0), // Nền cam nhạt
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 module['icon'] as IconData,
-                color: module['color'] as Color,
+                color: const Color(0xFFE65100), // Đồng bộ màu cam
                 size: 28,
               ),
             ),

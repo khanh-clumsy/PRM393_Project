@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -13,16 +13,17 @@ public partial class Timetable
 
     public int TeachingAssignmentId { get; set; }
 
-    public byte DayOfWeek { get; set; }
+    public DateOnly Date { get; set; }
 
     public int SlotId { get; set; }
 
     [StringLength(50)]
     public string? RoomName { get; set; }
+    
+    public byte Status { get; set; }
 
-    public DateOnly EffectiveFrom { get; set; }
-
-    public DateOnly? EffectiveTo { get; set; }
+    [StringLength(200)]
+    public string? Note { get; set; }
 
     [InverseProperty("Timetable")]
     public virtual ICollection<AttendanceRecord> AttendanceRecords { get; set; } = new List<AttendanceRecord>();

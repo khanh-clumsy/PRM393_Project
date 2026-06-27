@@ -39,6 +39,12 @@ public class TeachingAssignmentService(ITeachingAssignmentRepository repo) : ITe
 
     public async Task<TeachingAssignmentDto> CreateAsync(CreateTeachingAssignmentDto dto)
     {
+        var existing = await repo.GetByClassAsync(dto.ClassId);
+        if (existing.Any(taInfo => taInfo.TeacherId == dto.TeacherId && taInfo.SubjectId == dto.SubjectId && taInfo.SemesterId == dto.SemesterId))
+        {
+            throw new InvalidOperationException("Giáo viên này đã được phân công dạy môn học này tại lớp trong học kỳ.");
+        }
+
         var ta = new TeachingAssignment
         {
             TeacherId = dto.TeacherId,
@@ -53,5 +59,5 @@ public class TeachingAssignmentService(ITeachingAssignmentRepository repo) : ITe
         await repo.DeleteAsync(id);
 
     private static TeachingAssignmentDto ToDto(TeachingAssignment ta) =>
-        new(ta.TeachingAssignmentId, ta.TeacherId, ta.ClassId, ta.SubjectId, ta.SemesterId);
+        new(ta.TeachingAssignmentId, ta.TeacherId, ta.ClassId, ta.SubjectId, ta.SemesterId, ta.Class?.ClassName, ta.Subject?.SubjectName);
 }

@@ -36,8 +36,15 @@ public class TeachingAssignmentController(ITeachingAssignmentService service) : 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTeachingAssignmentDto dto)
     {
-        var created = await service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.TeachingAssignmentId }, created);
+        try
+        {
+            var created = await service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.TeachingAssignmentId }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id:int}")]

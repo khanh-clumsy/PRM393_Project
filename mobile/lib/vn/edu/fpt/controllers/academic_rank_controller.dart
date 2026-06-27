@@ -26,9 +26,11 @@ class AcademicRankController extends GetxController {
         ranks.value = data.map((json) => AcademicRankModel.fromJson(json)).toList();
       }
     } on DioException catch (e) {
-      errorMessage.value = 'Lỗi kết nối: ${e.message}';
+      print('DioException: $e');
+      errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
     } catch (e) {
-      errorMessage.value = 'Đã xảy ra lỗi: $e';
+      print('Error: $e');
+      errorMessage.value = 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
     } finally {
       isLoading.value = false;
     }

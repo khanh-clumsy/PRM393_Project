@@ -42,16 +42,62 @@ class SemesterManagementView extends StatelessWidget {
           );
         }
 
-        if (controller.semesters.isEmpty) {
-          return const Center(child: Text('Chưa có dữ liệu học kỳ.'));
-        }
+        return Column(
+          children: [
+            // Dropdown chọn Năm học
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.school, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  const Text('Năm học:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        value: controller.selectedYearId.value,
+                        hint: const Text('Chọn năm học'),
+                        items: controller.academicYears.map((y) {
+                          return DropdownMenuItem<int>(
+                            value: y.academicYearId,
+                            child: Text(y.yearName, style: const TextStyle(fontSize: 14)),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            controller.selectedYearId.value = val;
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            
+            Expanded(
+              child: Builder(builder: (context) {
+                if (controller.filteredSemesters.isEmpty) {
+                  return const Center(child: Text('Chưa có học kỳ nào cho năm học này.'));
+                }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.semesters.length,
-          itemBuilder: (context, index) {
-            final sem = controller.semesters[index];
-            final year = controller.academicYears.firstWhereOrNull((y) => y.academicYearId == sem.academicYearId);
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: controller.filteredSemesters.length,
+                  itemBuilder: (context, index) {
+                    final sem = controller.filteredSemesters[index];
+                    final year = controller.academicYears.firstWhereOrNull((y) => y.academicYearId == sem.academicYearId);
             
             return Card(
               color: Colors.white,
@@ -86,9 +132,13 @@ class SemesterManagementView extends StatelessWidget {
           },
         );
       }),
+      )
+    ]);
+    }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showFormDialog(context, controller),
         backgroundColor: const Color(0xFFE65100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -109,6 +159,7 @@ class SemesterManagementView extends StatelessWidget {
       StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(isEditing ? 'Sửa Học Kỳ' : 'Thêm Học Kỳ', style: const TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
@@ -116,7 +167,14 @@ class SemesterManagementView extends StatelessWidget {
               children: [
                 if (!isEditing)
                   DropdownButtonFormField<int>(
-                    decoration: const InputDecoration(labelText: 'Năm học', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: 'Năm học',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                     value: selectedYearId,
                     items: controller.academicYears.map((y) {
                       return DropdownMenuItem<int>(
@@ -133,17 +191,64 @@ class SemesterManagementView extends StatelessWidget {
                 if (!isEditing) const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Tên học kỳ (VD: Fall 2024)', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Tên học kỳ (VD: Fall 2024)',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: startDateController,
-                  decoration: const InputDecoration(labelText: 'Ngày bắt đầu (YYYY-MM-DD)', border: OutlineInputBorder()),
+                  readOnly: true,
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      startDateController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    suffixIcon: const Icon(Icons.calendar_today, color: Colors.blue),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: endDateController,
-                  decoration: const InputDecoration(labelText: 'Ngày kết thúc (YYYY-MM-DD)', border: OutlineInputBorder()),
+                  readOnly: true,
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      endDateController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Ngày kết thúc (YYYY-MM-DD)',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    suffixIcon: const Icon(Icons.calendar_today, color: Colors.blue),
+                  ),
                 ),
               ],
             ),
@@ -154,7 +259,11 @@ class SemesterManagementView extends StatelessWidget {
               child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 final name = nameController.text.trim();
                 final start = startDateController.text.trim();
@@ -162,6 +271,18 @@ class SemesterManagementView extends StatelessWidget {
                 
                 if (name.isEmpty || start.isEmpty || end.isEmpty) {
                   Get.snackbar('Lỗi', 'Vui lòng nhập đủ thông tin', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
+                
+                try {
+                  final parsedStart = DateTime.parse(start);
+                  final parsedEnd = DateTime.parse(end);
+                  if (parsedStart.isAfter(parsedEnd)) {
+                    Get.snackbar('Lỗi', 'Ngày bắt đầu không được lớn hơn ngày kết thúc', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                    return;
+                  }
+                } catch (e) {
+                  Get.snackbar('Lỗi', 'Định dạng ngày không hợp lệ', backgroundColor: Colors.redAccent, colorText: Colors.white);
                   return;
                 }
                 
@@ -186,12 +307,18 @@ class SemesterManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, SemesterController controller, SemesterModel semester) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa học kỳ "${semester.semesterName}" không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteSemester(semester.semesterId);
             },

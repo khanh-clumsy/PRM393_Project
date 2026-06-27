@@ -28,7 +28,8 @@ class AnnouncementController extends GetxController {
         _fetchClasses(),
       ]);
     } catch (e) {
-      errorMessage.value = 'Đã xảy ra lỗi khi tải dữ liệu.';
+      print('Error: $e');
+      errorMessage.value = 'Đã xảy ra lỗi hệ thống khi tải dữ liệu. Vui lòng thử lại sau.';
     } finally {
       isLoading.value = false;
     }
@@ -39,7 +40,8 @@ class AnnouncementController extends GetxController {
       isLoading.value = true;
       await _fetchAnnouncements();
     } catch (e) {
-      errorMessage.value = 'Lỗi kết nối';
+      print('Error: $e');
+      errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
     } finally {
       isLoading.value = false;
     }

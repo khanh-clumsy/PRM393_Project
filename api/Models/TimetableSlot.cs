@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -20,4 +20,7 @@ public partial class TimetableSlot
 
     [InverseProperty("Slot")]
     public virtual ICollection<Timetable> Timetables { get; set; } = new List<Timetable>();
+
+    [InverseProperty("Slot")]
+    public virtual ICollection<TimetableTemplate> TimetableTemplates { get; set; } = new List<TimetableTemplate>();
 }

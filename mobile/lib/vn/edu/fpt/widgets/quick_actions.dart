@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../view/shared/attendance_view.dart';
+import '../view/shared/timetable_view.dart';
 import 'package:prm393_mobile/vn/edu/fpt/view/student/leave_request_view.dart';
+import '../view/student/student_grade_view.dart';
+import '../view/student/student_assignment_view.dart';
 
 class QuickActionItemData {
   final IconData icon;
@@ -28,27 +33,21 @@ class QuickActions extends StatelessWidget {
         icon: Icons.fact_check_outlined,
         label: 'Attendance',
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Attendance selected')),
-          );
+          Get.to(() => const AttendanceView());
         },
       ),
       QuickActionItemData(
         icon: Icons.bar_chart_rounded,
         label: 'Grades',
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Grades selected')),
-          );
+          Get.to(() => const StudentGradeView());
         },
       ),
       QuickActionItemData(
         icon: Icons.calendar_month_outlined,
         label: 'Timetable',
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Timetable selected')),
-          );
+          Get.to(() => const TimetablePage());
         },
       ),
       QuickActionItemData(
@@ -64,12 +63,10 @@ class QuickActions extends StatelessWidget {
         },
       ),
       QuickActionItemData(
-        icon: Icons.groups_outlined,
-        label: 'Clubs',
+        icon: Icons.assignment_outlined,
+        label: 'Assignments',
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Clubs selected')),
-          );
+          Get.to(() => const StudentAssignmentView());
         },
       ),
       QuickActionItemData(
@@ -175,7 +172,7 @@ class _QuickActionWidgetState extends State<QuickActionWidget>
                 boxShadow: widget.item.backgroundColor == const Color(0xFFE65100)
                     ? [
                         BoxShadow(
-                          color: const Color(0xFFE65100).withOpacity(0.2),
+                          color: const Color(0xFFE65100).withValues(alpha: 0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         )

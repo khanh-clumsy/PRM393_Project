@@ -13,7 +13,13 @@ import '../../view/admin/user_management_view.dart';
 import '../../view/admin/class_management_view.dart';
 import '../../view/admin/academic_rank_management_view.dart';
 import '../../view/admin/announcement_management_view.dart';
-
+import '../../view/head_of_dept/head_of_dept_main_view.dart';
+import '../../view/shared/teaching_assignment_management_view.dart';
+import '../../view/shared/timetable_management_view.dart';
+import '../../view/shared/student_class_management_view.dart';
+import '../../view/shared/parent_student_management_view.dart';
+import '../../view/parent/parent_main_view.dart';
+import '../../view/shared/attendance_view.dart';
 // Placeholder screens cho các role chưa có UI
 import 'package:flutter/material.dart';
 
@@ -36,6 +42,14 @@ class AppPages {
     GetPage(
       name: '/admin/academic-years',
       page: () => const AcademicYearManagementView(),
+    ),
+    GetPage(
+      name: '/admin/student-classes',
+      page: () => const StudentClassManagementView(),
+    ),
+    GetPage(
+      name: '/admin/parent-student',
+      page: () => const ParentStudentManagementView(),
     ),
     GetPage(
       name: '/admin/semesters',
@@ -66,12 +80,44 @@ class AppPages {
       page: () => const AnnouncementManagementView(),
     ),
     GetPage(
+      name: '/admin/teaching-assignments',
+      page: () => const TeachingAssignmentManagementView(),
+    ),
+    GetPage(
+      name: '/admin/timetables',
+      page: () => const TimetableManagementView(),
+    ),
+    GetPage(
       name: '/head',
-      page: () => const _PlaceholderScreen(title: 'Trưởng bộ môn'),
+      page: () => const HeadOfDeptMainView(),
+    ),
+    GetPage(
+      name: '/head/classes',
+      page: () => const ClassManagementView(),
+    ),
+    GetPage(
+      name: '/head/teaching-assignments',
+      page: () => const TeachingAssignmentManagementView(),
+    ),
+    GetPage(
+      name: '/head/timetables',
+      page: () => const TimetableManagementView(),
+    ),
+    GetPage(
+      name: '/head/student-classes',
+      page: () => const StudentClassManagementView(),
+    ),
+    GetPage(
+      name: '/head/parent-student',
+      page: () => const ParentStudentManagementView(),
     ),
     GetPage(
       name: '/parent',
-      page: () => const _PlaceholderScreen(title: 'Phụ huynh'),
+      page: () => const ParentMainView(),
+    ),
+    GetPage(
+      name: '/attendance',
+      page: () => const AttendanceView(),
     ),
   ];
 }

@@ -14,6 +14,22 @@ class ClassController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
 
+  final RxnInt selectedYearId = RxnInt();
+
+  List<ClassModel> get filteredClasses {
+    if (selectedYearId.value == null) return [];
+    return classes.where((c) => c.academicYearId == selectedYearId.value).toList();
+  }
+
+  List<UserModel> getAvailableTeachers(int academicYearId, int? currentClassId) {
+    final assignedTeacherIds = classes
+        .where((c) => c.academicYearId == academicYearId && c.homeroomTeacherId != null && c.classId != currentClassId)
+        .map((c) => c.homeroomTeacherId!)
+        .toSet();
+    
+    return teachers.where((t) => !assignedTeacherIds.contains(t.userId)).toList();
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -30,7 +46,8 @@ class ClassController extends GetxController {
         _fetchTeachers(),
       ]);
     } catch (e) {
-      errorMessage.value = 'Đã xảy ra lỗi khi tải dữ liệu.';
+      print('Error: $e');
+      errorMessage.value = 'Đã xảy ra lỗi hệ thống khi tải dữ liệu. Vui lòng thử lại sau.';
     } finally {
       isLoading.value = false;
     }
@@ -41,7 +58,8 @@ class ClassController extends GetxController {
       isLoading.value = true;
       await _fetchClasses();
     } catch (e) {
-      errorMessage.value = 'Lỗi kết nối';
+      print('Error: $e');
+      errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
     } finally {
       isLoading.value = false;
     }
@@ -57,10 +75,13 @@ class ClassController extends GetxController {
 
   Future<void> _fetchAcademicYears() async {
     final response = await ApiClient.instance.get('/api/academicyear');
-    if (response.statusCode == 200) {
-      final List<dynamic> data = response.data;
-      academicYears.value = data.map((json) => AcademicYearModel.fromJson(json)).toList();
-    }
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        academicYears.value = data.map((json) => AcademicYearModel.fromJson(json)).toList();
+        if (academicYears.isNotEmpty) {
+          selectedYearId.value = academicYears.first.academicYearId;
+        }
+      }
   }
 
   Future<void> _fetchTeachers() async {

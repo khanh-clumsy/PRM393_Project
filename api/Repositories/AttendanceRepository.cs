@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PRM393API.Models;
 using PRM393API.Repositories.Interfaces;
+using PRM393API.DTOs;
 
 namespace PRM393API.Repositories;
 
@@ -14,7 +15,8 @@ public class AttendanceRepository(Prm393dbContext db) : IAttendanceRepository
 
     public async Task<IEnumerable<AttendanceRecord>> GetByStudentAndDateAsync(int studentId, DateOnly date) =>
         await db.AttendanceRecords
-            .Where(a => a.StudentId == studentId && a.AttendanceDate == date)
+            .Include(a => a.Timetable)
+            .Where(a => a.StudentId == studentId && a.Timetable.Date == date)
             .ToListAsync();
 
     public async Task<AttendanceRecord?> GetByIdAsync(int id) =>
@@ -71,5 +73,129 @@ public class AttendanceRepository(Prm393dbContext db) : IAttendanceRepository
         db.AttendanceRecords.Remove(record);
         await db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<SemesterAttendanceSummaryDto> GetStudentAttendanceSummaryAsync(int studentId, int semesterId)
+    {
+        var emptyResult = new SemesterAttendanceSummaryDto();
+        var semester = await db.Semesters.FindAsync(semesterId);
+        if (semester == null) return emptyResult;
+
+        var studentClass = await db.StudentClasses
+            .Include(sc => sc.Class)
+            .FirstOrDefaultAsync(sc => sc.StudentId == studentId && sc.Class.AcademicYearId == semester.AcademicYearId);
+
+        if (studentClass == null) return emptyResult;
+
+        var classId = studentClass.ClassId;
+
+        // Lấy tất cả teaching assignments thuộc class & semester đó
+        var teachingAssignments = await db.TeachingAssignments
+            .Include(ta => ta.Subject)
+            .Where(ta => ta.ClassId == classId && ta.SemesterId == semesterId)
+            .ToListAsync();
+
+        var teachingAssignmentIds = teachingAssignments.Select(ta => ta.TeachingAssignmentId).ToList();
+
+        // Lấy tất cả timetables tương ứng (loại bỏ Status = 3 - Cancelled)
+        var timetables = await db.Timetables
+            .Include(t => t.Slot)
+            .Where(t => teachingAssignmentIds.Contains(t.TeachingAssignmentId) && t.Status != 3)
+            .ToListAsync();
+
+        var timetableIds = timetables.Select(t => t.TimetableId).ToList();
+
+        // Lấy tất cả attendance records của học sinh cho các timetables này
+        var attendanceRecords = await db.AttendanceRecords
+            .Where(ar => ar.StudentId == studentId && timetableIds.Contains(ar.TimetableId))
+            .ToListAsync();
+
+        var attendanceMap = attendanceRecords.ToDictionary(ar => ar.TimetableId);
+
+        var result = new List<StudentSubjectAttendanceDto>();
+
+        foreach (var assignment in teachingAssignments)
+        {
+            var assignmentTimetables = timetables
+                .Where(t => t.TeachingAssignmentId == assignment.TeachingAssignmentId)
+                .OrderBy(t => t.Date)
+                .ThenBy(t => t.Slot.StartTime)
+                .ToList();
+
+            var details = new List<StudentAttendanceDetailDto>();
+            int present = 0, absent = 0, late = 0, excused = 0;
+
+            foreach (var timetable in assignmentTimetables)
+            {
+                string status = "Not Checked";
+                string? note = null;
+
+                if (attendanceMap.TryGetValue(timetable.TimetableId, out var ar))
+                {
+                    status = ar.Status; // "Present", "Absent", "Late", "Excused"
+                    note = ar.Note;
+
+                    switch (status.ToLower())
+                    {
+                        case "present":
+                            present++;
+                            break;
+                        case "absent":
+                            absent++;
+                            break;
+                        case "late":
+                            late++;
+                            break;
+                        case "excused":
+                            excused++;
+                            break;
+                    }
+                }
+                else
+                {
+                    var today = DateOnly.FromDateTime(DateTime.Today);
+                    if (timetable.Date > today)
+                    {
+                        status = "Future";
+                    }
+                }
+
+                details.Add(new StudentAttendanceDetailDto
+                {
+                    TimetableId = timetable.TimetableId,
+                    Date = timetable.Date,
+                    SlotName = timetable.Slot.SlotName,
+                    RoomName = timetable.RoomName,
+                    Status = status,
+                    Note = note
+                });
+            }
+
+            result.Add(new StudentSubjectAttendanceDto
+            {
+                SubjectId = assignment.SubjectId,
+                SubjectName = assignment.Subject.SubjectName,
+                PresentCount = present,
+                AbsentCount = absent,
+                LateCount = late,
+                ExcusedCount = excused,
+                TotalCount = assignmentTimetables.Count,
+                Details = details
+            });
+        }
+
+        var totalPresent = result.Sum(s => s.PresentCount);
+        var totalAbsent = result.Sum(s => s.AbsentCount);
+        var totalLate = result.Sum(s => s.LateCount);
+        var totalExcused = result.Sum(s => s.ExcusedCount);
+
+        return new SemesterAttendanceSummaryDto
+        {
+            TotalPresent = totalPresent,
+            TotalAbsent = totalAbsent,
+            TotalLate = totalLate,
+            TotalExcused = totalExcused,
+            Subjects = result
+        };
     }
 }

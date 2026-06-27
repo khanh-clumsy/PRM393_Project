@@ -37,7 +37,6 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
         {
             TimetableId = dto.TimetableId,
             StudentId = dto.StudentId,
-            AttendanceDate = dto.AttendanceDate,
             Status = dto.Status,
             Note = dto.Note,
             RecordedBy = dto.RecordedBy,
@@ -52,7 +51,6 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
         {
             TimetableId = dto.TimetableId,
             StudentId = dto.StudentId,
-            AttendanceDate = dto.AttendanceDate,
             Status = dto.Status,
             Note = dto.Note,
             RecordedBy = dto.RecordedBy,
@@ -84,6 +82,9 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
     public async Task<bool> DeleteAsync(int id) =>
         await repo.DeleteAsync(id);
 
+    public async Task<SemesterAttendanceSummaryDto> GetStudentAttendanceSummaryAsync(int studentId, int semesterId) =>
+        await repo.GetStudentAttendanceSummaryAsync(studentId, semesterId);
+
     private static AttendanceDto ToDto(AttendanceRecord a) =>
-        new(a.AttendanceId, a.TimetableId, a.StudentId, a.AttendanceDate, a.Status, a.Note, a.RecordedBy, a.RecordedAt);
+        new(a.AttendanceId, a.TimetableId, a.StudentId, a.Status, a.Note, a.RecordedBy, a.RecordedAt);
 }

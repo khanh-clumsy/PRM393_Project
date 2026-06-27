@@ -21,8 +21,19 @@ public class StudentClassController(IStudentClassService service) : ControllerBa
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStudentClassDto dto)
     {
-        var created = await service.CreateAsync(dto);
-        return CreatedAtAction(null, new { id = created.StudentClassId }, created);
+        try
+        {
+            var created = await service.CreateAsync(dto);
+            return CreatedAtAction(null, new { id = created.StudentClassId }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id:int}")]

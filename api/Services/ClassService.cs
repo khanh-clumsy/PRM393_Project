@@ -27,6 +27,15 @@ public class ClassService(IClassRepository repo) : IClassService
 
     public async Task<ClassDto> CreateAsync(CreateClassDto dto)
     {
+        if (dto.HomeroomTeacherId.HasValue)
+        {
+            var existingClassesInYear = await repo.GetByAcademicYearAsync(dto.AcademicYearId);
+            if (existingClassesInYear.Any(c => c.HomeroomTeacherId == dto.HomeroomTeacherId))
+            {
+                throw new InvalidOperationException("Giáo viên này đã chủ nhiệm một lớp khác trong năm học này.");
+            }
+        }
+
         var cls = new Class
         {
             ClassName = dto.ClassName,
@@ -41,6 +50,15 @@ public class ClassService(IClassRepository repo) : IClassService
     {
         var existing = await repo.GetByIdAsync(id);
         if (existing is null) return null;
+
+        if (dto.HomeroomTeacherId.HasValue && dto.HomeroomTeacherId != existing.HomeroomTeacherId)
+        {
+            var existingClassesInYear = await repo.GetByAcademicYearAsync(existing.AcademicYearId);
+            if (existingClassesInYear.Any(c => c.HomeroomTeacherId == dto.HomeroomTeacherId && c.ClassId != id))
+            {
+                throw new InvalidOperationException("Giáo viên này đã chủ nhiệm một lớp khác trong năm học này.");
+            }
+        }
 
         existing.ClassName = dto.ClassName ?? existing.ClassName;
         existing.HomeroomTeacherId = dto.HomeroomTeacherId ?? existing.HomeroomTeacherId;

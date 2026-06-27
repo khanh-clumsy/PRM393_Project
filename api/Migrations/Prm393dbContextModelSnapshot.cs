@@ -276,9 +276,6 @@ namespace PRM393API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttendanceId"));
 
-                    b.Property<DateOnly>("AttendanceDate")
-                        .HasColumnType("date");
-
                     b.Property<string>("Note")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -308,11 +305,9 @@ namespace PRM393API.Migrations
 
                     b.HasIndex("RecordedBy");
 
-                    b.HasIndex(new[] { "AttendanceDate" }, "IX_Att_Date");
-
                     b.HasIndex(new[] { "StudentId" }, "IX_Att_StudentId");
 
-                    b.HasIndex(new[] { "TimetableId", "StudentId", "AttendanceDate" }, "UQ_AttendanceRecords")
+                    b.HasIndex(new[] { "TimetableId", "StudentId" }, "UQ_AttendanceRecords")
                         .IsUnique();
 
                     b.ToTable("AttendanceRecords");
@@ -896,14 +891,12 @@ namespace PRM393API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TimetableId"));
 
-                    b.Property<byte>("DayOfWeek")
-                        .HasColumnType("tinyint");
-
-                    b.Property<DateOnly>("EffectiveFrom")
+                    b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
-                    b.Property<DateOnly?>("EffectiveTo")
-                        .HasColumnType("date");
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("RoomName")
                         .HasMaxLength(50)
@@ -911,6 +904,9 @@ namespace PRM393API.Migrations
 
                     b.Property<int>("SlotId")
                         .HasColumnType("int");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
 
                     b.Property<int>("TeachingAssignmentId")
                         .HasColumnType("int");
@@ -946,6 +942,36 @@ namespace PRM393API.Migrations
                     b.HasKey("SlotId");
 
                     b.ToTable("TimetableSlots");
+                });
+
+            modelBuilder.Entity("PRM393API.Models.TimetableTemplate", b =>
+                {
+                    b.Property<int>("TemplateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TemplateId"));
+
+                    b.Property<byte>("DayOfWeek")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("RoomName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("SlotId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TeachingAssignmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TemplateId");
+
+                    b.HasIndex("SlotId");
+
+                    b.HasIndex("TeachingAssignmentId");
+
+                    b.ToTable("TimetableTemplates");
                 });
 
             modelBuilder.Entity("PRM393API.Models.User", b =>
@@ -1422,6 +1448,25 @@ namespace PRM393API.Migrations
                     b.Navigation("TeachingAssignment");
                 });
 
+            modelBuilder.Entity("PRM393API.Models.TimetableTemplate", b =>
+                {
+                    b.HasOne("PRM393API.Models.TimetableSlot", "Slot")
+                        .WithMany("TimetableTemplates")
+                        .HasForeignKey("SlotId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Templates_Slots");
+
+                    b.HasOne("PRM393API.Models.TeachingAssignment", "TeachingAssignment")
+                        .WithMany("TimetableTemplates")
+                        .HasForeignKey("TeachingAssignmentId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Templates_TA");
+
+                    b.Navigation("Slot");
+
+                    b.Navigation("TeachingAssignment");
+                });
+
             modelBuilder.Entity("PRM393API.Models.User", b =>
                 {
                     b.HasOne("PRM393API.Models.Department", "Department")
@@ -1515,6 +1560,8 @@ namespace PRM393API.Migrations
 
                     b.Navigation("Assignments");
 
+                    b.Navigation("TimetableTemplates");
+
                     b.Navigation("Timetables");
                 });
 
@@ -1525,6 +1572,8 @@ namespace PRM393API.Migrations
 
             modelBuilder.Entity("PRM393API.Models.TimetableSlot", b =>
                 {
+                    b.Navigation("TimetableTemplates");
+
                     b.Navigation("Timetables");
                 });
 

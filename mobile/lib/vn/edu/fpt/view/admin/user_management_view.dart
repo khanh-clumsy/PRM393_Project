@@ -123,6 +123,7 @@ class UserManagementView extends StatelessWidget {
                 _showFormDialog(context, controller, defaultRoleId: defaultRoleId);
               },
               backgroundColor: const Color(0xFFE65100),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: const Icon(Icons.add, color: Colors.white),
             );
           }
@@ -146,6 +147,7 @@ class UserManagementView extends StatelessWidget {
       StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(isEditing ? 'Sửa Tài Khoản' : 'Thêm Tài Khoản', style: const TextStyle(fontWeight: FontWeight.bold)),
           content: SizedBox(
             width: double.maxFinite,
@@ -156,25 +158,53 @@ class UserManagementView extends StatelessWidget {
                   if (!isEditing)
                     TextField(
                       controller: usernameController,
-                      decoration: const InputDecoration(labelText: 'Tên đăng nhập (Username) *', border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                        labelText: 'Tên đăng nhập (Username) *',
+                        filled: true,
+                        fillColor: const Color(0xFFF5F5F5),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
                     ),
                   if (!isEditing) const SizedBox(height: 16),
                   if (!isEditing)
                     TextField(
                       controller: passwordController,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Mật khẩu *', border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                        labelText: 'Mật khẩu *',
+                        filled: true,
+                        fillColor: const Color(0xFFF5F5F5),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
                     ),
                   if (!isEditing) const SizedBox(height: 16),
                   
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Họ và tên *', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: 'Họ và tên *',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   
                   DropdownButtonFormField<int>(
-                    decoration: const InputDecoration(labelText: 'Vai trò (Role) *', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: 'Vai trò (Role) *',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                     value: selectedRoleId,
                     items: controller.roles.map((r) {
                       return DropdownMenuItem<int>(
@@ -195,7 +225,14 @@ class UserManagementView extends StatelessWidget {
                   
                   if ((selectedRoleId == 2 || selectedRoleId == 3) && controller.departments.isNotEmpty)
                     DropdownButtonFormField<int>(
-                      decoration: const InputDecoration(labelText: 'Phòng ban (Bắt buộc cho Giáo viên/Trưởng khoa)', border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                        labelText: 'Phòng ban (Bắt buộc cho Giáo viên/Trưởng khoa)',
+                        filled: true,
+                        fillColor: const Color(0xFFF5F5F5),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
                       value: selectedDepartmentId,
                       items: controller.departments.map((d) {
                         return DropdownMenuItem<int>(
@@ -214,12 +251,26 @@ class UserManagementView extends StatelessWidget {
 
                   TextField(
                     controller: emailController,
-                    decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: phoneController,
-                    decoration: const InputDecoration(labelText: 'Số điện thoại', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: 'Số điện thoại',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                   ),
                 ],
               ),
@@ -231,7 +282,11 @@ class UserManagementView extends StatelessWidget {
               child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 final username = usernameController.text.trim();
                 final password = passwordController.text.trim();
@@ -286,12 +341,18 @@ class UserManagementView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, UserController controller, UserModel user) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận xóa'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa tài khoản "${user.username}" không?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               controller.deleteUser(user.userId);
             },

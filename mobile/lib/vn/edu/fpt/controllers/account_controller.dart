@@ -33,10 +33,12 @@ class AccountController extends GetxController {
         isLoading.value = false;
       }
     } on DioException catch (e) {
-      errorMessage.value = "Lỗi khi lấy thông tin người dùng: ${e.message}";
+      print('DioException: $e');
+      errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
       isLoading.value = false;
     } catch (e) {
-      errorMessage.value = "Đã xảy ra lỗi: $e";
+      print('Error: $e');
+      errorMessage.value = 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
       isLoading.value = false;
     }
   }

@@ -1,10 +1,12 @@
 using PRM393API.Models;
+using PRM393API.DTOs;
 
 namespace PRM393API.Repositories.Interfaces;
 
 public interface IAttendanceRepository
 {
     Task<IEnumerable<AttendanceRecord>> GetByStudentAsync(int studentId);
+    Task<SemesterAttendanceSummaryDto> GetStudentAttendanceSummaryAsync(int studentId, int semesterId);
     Task<IEnumerable<AttendanceRecord>> GetByTimetableAsync(int timetableId);
     Task<IEnumerable<AttendanceRecord>> GetByStudentAndDateAsync(int studentId, DateOnly date);
     Task<AttendanceRecord?> GetByIdAsync(int id);

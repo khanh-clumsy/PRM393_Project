@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/custom_bottom_nav_bar.dart';
 import 'student_home_view.dart';
-import 'academic_view.dart';
-import 'timetable_view.dart';
+import 'student_grade_view.dart';
+import '../shared/timetable_view.dart';
 import 'leave_request_view.dart';
 import '../shared/account_view.dart';
 
@@ -18,7 +18,7 @@ class _StudentMainViewState extends State<StudentMainView> {
 
   final List<Widget> _pages = [
     const StudentHomeView(),
-    const AcademicPage(),
+    const StudentGradeView(),
     const TimetablePage(),
     const PlaceholderScreen(
       title: 'Messages',
@@ -47,33 +47,33 @@ class _StudentMainViewState extends State<StudentMainView> {
           CustomBottomNavBarItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
-            label: 'Home',
+            label: 'Trang chủ',
           ),
           CustomBottomNavBarItem(
             icon: Icons.school_outlined,
             activeIcon: Icons.school_rounded,
-            label: 'Academic',
+            label: 'Học tập',
           ),
           CustomBottomNavBarItem(
             icon: Icons.calendar_today_outlined,
             activeIcon: Icons.calendar_today_rounded,
-            label: 'Timetable',
+            label: 'Lịch học',
           ),
           CustomBottomNavBarItem(
             icon: Icons.chat_bubble_outline_rounded,
             activeIcon: Icons.chat_bubble_rounded,
-            label: 'Messages',
+            label: 'Tin nhắn',
             badgeCount: 3,
           ),
           CustomBottomNavBarItem(
             icon: Icons.assignment_outlined,
             activeIcon: Icons.assignment,
-            label: 'Request',
+            label: 'Đơn từ',
           ),
           CustomBottomNavBarItem(
             icon: Icons.person_outline,
             activeIcon: Icons.person,
-            label: 'Account',
+            label: 'Tài khoản',
           ),
         ],
       ),

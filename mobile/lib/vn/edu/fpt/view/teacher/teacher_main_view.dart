@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/custom_bottom_nav_bar.dart';
 import 'teacher_home_view.dart';
+import '../shared/account_view.dart';
 // TODO: import other teacher views here
 
 class TeacherMainView extends StatefulWidget {
@@ -20,6 +21,7 @@ class _TeacherMainViewState extends State<TeacherMainView> {
       subtitle: 'Lớp học của tôi',
       icon: Icons.class_,
     ),
+    const AccountView(),
   ];
 
   @override
@@ -37,12 +39,17 @@ class _TeacherMainViewState extends State<TeacherMainView> {
           CustomBottomNavBarItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
-            label: 'Home',
+            label: 'Trang chủ',
           ),
           CustomBottomNavBarItem(
             icon: Icons.class_outlined,
             activeIcon: Icons.class_,
-            label: 'Classes',
+            label: 'Lớp học',
+          ),
+          CustomBottomNavBarItem(
+            icon: Icons.person_outline,
+            activeIcon: Icons.person,
+            label: 'Tài khoản',
           ),
         ],
       ),

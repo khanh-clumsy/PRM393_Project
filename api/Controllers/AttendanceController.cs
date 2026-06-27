@@ -21,6 +21,13 @@ public class AttendanceController(IAttendanceService service) : ControllerBase
     public async Task<IActionResult> GetByStudent(int studentId) =>
         Ok(await service.GetByStudentAsync(studentId));
 
+    [HttpGet("student/{studentId:int}/semester/{semesterId:int}")]
+    public async Task<IActionResult> GetStudentAttendanceSummary(int studentId, int semesterId)
+    {
+        var summary = await service.GetStudentAttendanceSummaryAsync(studentId, semesterId);
+        return Ok(summary);
+    }
+
     [HttpGet("by-timetable/{timetableId:int}")]
     public async Task<IActionResult> GetByTimetable(int timetableId) =>
         Ok(await service.GetByTimetableAsync(timetableId));
