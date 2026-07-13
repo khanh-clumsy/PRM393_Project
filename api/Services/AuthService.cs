@@ -8,15 +8,18 @@ namespace PRM393API.Services;
 
 public class AuthService(IAuthRepository repo, IUserRepository userRepo, JwtHelper jwt) : IAuthService
 {
-    public async Task<AuthTokenDto?> LoginAsync(LoginRequestDto dto)
+    public async Task<LoginResultDto> LoginAsync(LoginRequestDto dto)
     {
         var user = await repo.GetByPhoneAsync(dto.PhoneNumber);
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-            return null;
+            return new LoginResultDto(null, LoginFailureReason.InvalidCredentials);
+
+        if (!user.IsActive)
+            return new LoginResultDto(null, LoginFailureReason.AccountLocked);
 
         var accessToken = jwt.GenerateToken(user);
         var refreshToken = await CreateRefreshToken(user.UserId);
-        return new AuthTokenDto(accessToken, refreshToken.Token, ToDto(user));
+        return new LoginResultDto(new AuthTokenDto(accessToken, refreshToken.Token, ToDto(user)));
     }
 
     public async Task<AuthTokenDto?> RefreshAsync(RefreshRequestDto dto)
@@ -28,7 +31,7 @@ public class AuthService(IAuthRepository repo, IUserRepository userRepo, JwtHelp
         await repo.RevokeRefreshTokenAsync(existing);
 
         var user = await repo.GetUserByIdAsync(existing.UserId);
-        if (user is null) return null;
+        if (user is null || !user.IsActive) return null;
 
         var accessToken = jwt.GenerateToken(user);
         var newRefresh = await CreateRefreshToken(user.UserId);

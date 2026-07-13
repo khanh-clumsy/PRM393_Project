@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/custom_bottom_nav_bar.dart';
+import '../../controllers/user_controller.dart';
 import 'student_home_view.dart';
 import 'student_grade_view.dart';
 import '../shared/timetable_view.dart';
@@ -16,13 +18,19 @@ class StudentMainView extends StatefulWidget {
 class _StudentMainViewState extends State<StudentMainView> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    Get.put(UserController(profileOnly: true), permanent: true);
+  }
+
   final List<Widget> _pages = [
     const StudentHomeView(),
     const StudentGradeView(),
     const TimetablePage(),
     const PlaceholderScreen(
-      title: 'Messages',
-      subtitle: 'Connect with teachers, clubs, and classmates. You have 3 unread messages.',
+      title: 'Tin nhắn',
+      subtitle: 'Kết nối với giáo viên, câu lạc bộ và bạn cùng lớp. Tính năng đang phát triển.',
       icon: Icons.chat_bubble_rounded,
     ),
     const LeaveRequestListPage(),

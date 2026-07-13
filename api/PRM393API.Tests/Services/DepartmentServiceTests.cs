@@ -12,12 +12,11 @@ public class DepartmentServiceTests
     private readonly Mock<IDepartmentRepository> _repo = new();
     private readonly Mock<IUserRepository> _userRepo = new();
     private readonly Mock<ITeachingAssignmentRepository> _taRepo = new();
-    private readonly Mock<IGradeRepository> _gradeRepo = new();
     private readonly DepartmentService _sut;
 
     public DepartmentServiceTests()
     {
-        _sut = new DepartmentService(_repo.Object, _userRepo.Object, _taRepo.Object, _gradeRepo.Object);
+        _sut = new DepartmentService(_repo.Object, _userRepo.Object, _taRepo.Object);
     }
 
     private static Department SampleDept() => new()

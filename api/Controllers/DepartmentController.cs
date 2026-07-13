@@ -41,4 +41,12 @@ public class DepartmentController(IDepartmentService service) : ControllerBase
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+
+    [HttpGet("{id:int}/teachers")]
+    public async Task<IActionResult> GetTeachers(int id) =>
+        Ok(await service.GetTeachersAsync(id));
+
+    [HttpGet("{id:int}/assignments")]
+    public async Task<IActionResult> GetAssignments(int id) =>
+        Ok(await service.GetAssignmentsAsync(id));
 }

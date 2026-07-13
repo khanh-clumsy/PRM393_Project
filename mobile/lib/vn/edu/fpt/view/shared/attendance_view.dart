@@ -84,7 +84,7 @@ class AttendanceView extends StatelessWidget {
                     child: DropdownButton<int>(
                       isExpanded: true,
                       value: controller.targetStudentId.value,
-                      hint: const Text('Chọn học sinh'),
+                      hint: const Text('Chọn con'),
                       items: controller.linkedStudents.map((s) {
                         return DropdownMenuItem<int>(
                           value: s['studentId'],

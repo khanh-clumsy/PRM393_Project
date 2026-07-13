@@ -24,15 +24,29 @@ public class AcademicRankController(IAcademicRankService service) : ControllerBa
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAcademicRankDto dto)
     {
-        var created = await service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.RankId }, created);
+        try
+        {
+            var created = await service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.RankId }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateAcademicRankDto dto)
     {
-        var updated = await service.UpdateAsync(id, dto);
-        return updated is null ? NotFound() : Ok(updated);
+        try
+        {
+            var updated = await service.UpdateAsync(id, dto);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id:int}")]

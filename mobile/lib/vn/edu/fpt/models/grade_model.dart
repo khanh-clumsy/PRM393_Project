@@ -15,12 +15,16 @@ class YearlyTranscriptModel {
 
   factory YearlyTranscriptModel.fromJson(Map<String, dynamic> json) {
     var semestersList = json['semesters'] as List? ?? [];
+    final semesters = semestersList
+        .map((e) => SemesterTranscriptModel.fromJson(e))
+        .toList()
+      ..sort((a, b) => a.semesterId.compareTo(b.semesterId));
     return YearlyTranscriptModel(
       studentId: json['studentId'] ?? 0,
       academicYearId: json['academicYearId'] ?? 0,
       yearlyCumulativeGpa: json['yearlyCumulativeGpa'] != null ? (json['yearlyCumulativeGpa'] as num).toDouble() : null,
       yearlyConduct: json['yearlyConduct'],
-      semesters: semestersList.map((e) => SemesterTranscriptModel.fromJson(e)).toList(),
+      semesters: semesters,
     );
   }
 }

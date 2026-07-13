@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/announcement_controller.dart';
 import '../../models/announcement_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 import 'package:intl/intl.dart';
 
 class AnnouncementManagementView extends StatelessWidget {
@@ -34,10 +36,7 @@ class AnnouncementManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchInitialData,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchInitialData),
               ],
             ),
           );
@@ -121,11 +120,8 @@ class AnnouncementManagementView extends StatelessWidget {
           },
         );
       }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab.add(
         onPressed: () => _showFormDialog(context, controller),
-        backgroundColor: const Color(0xFFE65100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -258,17 +254,11 @@ class AnnouncementManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: isEditing ? AppDialogLabels.save : AppDialogLabels.publish,
+              onSubmit: () {
                 final title = titleController.text.trim();
                 final content = contentController.text.trim();
 
@@ -288,7 +278,6 @@ class AnnouncementManagementView extends StatelessWidget {
                   controller.createAnnouncement(title, content, selectedType, selectedPriority, selectedClassIds);
                 }
               },
-              child: Text(isEditing ? 'Lưu' : 'Đăng tải'),
             ),
           ],
         );
@@ -304,17 +293,12 @@ class AnnouncementManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Bạn có chắc chắn muốn xóa bản tin này không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteAnnouncement(announcement.announcementId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteAnnouncement(announcement.announcementId),
           ),
         ],
       ),

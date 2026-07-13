@@ -1,12 +1,92 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/timetable_controller.dart';
+import '../../core/parent_relationship_helper.dart';
+import '../../widgets/app_button.dart';
 import '../student/notifications_view.dart';
 import '../shared/attendance_view.dart';
 import '../shared/timetable_view.dart';
+import '../student/student_grade_view.dart';
 
 class ParentHomeView extends StatelessWidget {
   const ParentHomeView({super.key});
+
+  void _showChildInfoModal(Map<String, dynamic> child) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: const Color(0xFFFFE0B2),
+              child: const Icon(Icons.person_outline_rounded, color: Color(0xFFE65100)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                child['studentName'] ?? 'Học sinh',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if ((child['relationship'] as String?)?.isNotEmpty == true) ...[
+              _infoTile(
+                Icons.family_restroom_outlined,
+                'Quan hệ',
+                ParentRelationshipHelper.displayLabel(child['relationship']),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 30, bottom: 12),
+                child: Text(
+                  ParentRelationshipHelper.displayDescription(child['relationship']),
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ),
+            ],
+            if ((child['className'] as String?)?.isNotEmpty == true)
+              _infoTile(Icons.class_outlined, 'Lớp học', child['className']),
+          ],
+        ),
+        actions: [
+          AppButton(
+            label: 'Đóng',
+            variant: AppButtonVariant.text,
+            onPressed: () => Get.back(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoTile(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade600),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                const SizedBox(height: 2),
+                Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildActionCard(
     BuildContext context, {
@@ -188,8 +268,8 @@ class ParentHomeView extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             controller.linkedStudents.isEmpty
-                                ? 'Chưa liên kết học sinh'
-                                : '${controller.linkedStudents.length} học sinh được liên kết',
+                                ? 'Chưa liên kết con'
+                                : '${controller.linkedStudents.length} con được liên kết',
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 13,
@@ -205,7 +285,7 @@ class ParentHomeView extends StatelessWidget {
                 // Danh sách con
                 if (controller.linkedStudents.isNotEmpty) ...[
                   const Text(
-                    'Học sinh của bạn',
+                    'Con của bạn',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -214,23 +294,16 @@ class ParentHomeView extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   ...controller.linkedStudents.map((s) {
-                    final isSelected =
-                        controller.targetStudentId.value == s['studentId'];
-                    return GestureDetector(
-                      onTap: () =>
-                          controller.switchToStudent(s['studentId']),
+                    return InkWell(
+                      onTap: () => _showChildInfoModal(s),
+                      borderRadius: BorderRadius.circular(16),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFFE65100)
-                                : Colors.grey.shade100,
-                            width: isSelected ? 2 : 1,
-                          ),
+                          border: Border.all(color: Colors.grey.shade100),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.04),
@@ -243,14 +316,10 @@ class ParentHomeView extends StatelessWidget {
                           children: [
                             CircleAvatar(
                               radius: 22,
-                              backgroundColor: isSelected
-                                  ? const Color(0xFFFFE0B2)
-                                  : Colors.grey.shade100,
+                              backgroundColor: Colors.grey.shade100,
                               child: Icon(
                                 Icons.person_outline_rounded,
-                                color: isSelected
-                                    ? const Color(0xFFE65100)
-                                    : Colors.grey.shade500,
+                                color: Colors.grey.shade600,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -260,17 +329,15 @@ class ParentHomeView extends StatelessWidget {
                                 children: [
                                   Text(
                                     s['studentName'] ?? 'Học sinh',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
-                                      color: isSelected
-                                          ? const Color(0xFFE65100)
-                                          : const Color(0xFF212121),
+                                      color: Color(0xFF212121),
                                     ),
                                   ),
-                                  if ((s['relationship'] as String).isNotEmpty)
+                                  if ((s['relationship'] as String?)?.isNotEmpty == true)
                                     Text(
-                                      s['relationship'],
+                                      ParentRelationshipHelper.displaySubtitle(s['relationship']),
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey.shade500,
@@ -279,9 +346,7 @@ class ParentHomeView extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            if (isSelected)
-                              const Icon(Icons.check_circle,
-                                  color: Color(0xFFE65100), size: 20),
+                            Icon(Icons.info_outline_rounded, color: Colors.grey.shade400, size: 20),
                           ],
                         ),
                       ),
@@ -297,7 +362,7 @@ class ParentHomeView extends StatelessWidget {
                               size: 60, color: Colors.grey.shade300),
                           const SizedBox(height: 16),
                           Text(
-                            'Chưa có học sinh được liên kết',
+                            'Chưa có con được liên kết',
                             style: TextStyle(
                                 color: Colors.grey.shade500, fontSize: 14),
                           ),
@@ -342,6 +407,24 @@ class ParentHomeView extends StatelessWidget {
                     Expanded(
                       child: _buildActionCard(
                         context,
+                        title: 'Xem bảng điểm',
+                        subtitle: 'Kết quả học tập',
+                        icon: Icons.grade_outlined,
+                        color: const Color(0xFF1565C0),
+                        bgColor: const Color(0xFFE3F2FD),
+                        onTap: () {
+                          Get.to(() => const StudentGradeView());
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionCard(
+                        context,
                         title: 'Xem lịch học',
                         subtitle: 'Thời khóa biểu con',
                         icon: Icons.calendar_month_outlined,
@@ -352,6 +435,7 @@ class ParentHomeView extends StatelessWidget {
                         },
                       ),
                     ),
+                    const Expanded(child: SizedBox()),
                   ],
                 ),
               ],

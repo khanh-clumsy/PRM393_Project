@@ -39,7 +39,8 @@ public record TimetableSlotDetailDto(
     int ClassId,
     string ClassName,
     byte Status,
-    string? Note);
+    string? Note,
+    bool IsAttendanceTaken = false);
 
 public record TimetableTemplateDto(
     int TeachingAssignmentId,

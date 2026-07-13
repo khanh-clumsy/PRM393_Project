@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../core/network/api_client.dart';
+import '../core/network/api_error_helper.dart';
+import '../core/submit/submit_guard_mixin.dart';
 import '../core/storage/local_storage.dart';
 import '../models/auth_model.dart';
 
-class AuthController extends GetxController {
+class AuthController extends GetxController with SubmitGuardMixin {
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
@@ -32,6 +34,7 @@ class AuthController extends GetxController {
         );
         await LocalStorage.saveRole(auth.roleName);
         await LocalStorage.saveUserId(auth.userId.toString());
+        await LocalStorage.saveDepartmentId(auth.departmentId?.toString());
 
         _navigateByRole(auth.roleName);
       }
@@ -39,11 +42,14 @@ class AuthController extends GetxController {
       print(
         'DIO ERROR: type=${e.type} | msg=${e.message} | status=${e.response?.statusCode} | data=${e.response?.data}',
       );
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 400) {
-        errorMessage.value = 'Tên đăng nhập hoặc mật khẩu không đúng.';
-      } else {
-        errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';
-      }
+      errorMessage.value = ApiErrorHelper.messageFrom(
+        e,
+        fallback: switch (e.response?.statusCode) {
+          401 || 400 => 'Tên đăng nhập hoặc mật khẩu không đúng.',
+          403 => 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.',
+          _ => 'Không thể kết nối đến máy chủ. Vui lòng thử lại.',
+        },
+      );
     } catch (e) {
       print('UNKNOWN ERROR: $e');
       errorMessage.value = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
@@ -53,11 +59,13 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
-    try {
-      await ApiClient.instance.post('/api/auth/logout');
-    } catch (_) {}
-    await LocalStorage.clearAll();
-    Get.offAllNamed('/login');
+    await runSubmitting(() async {
+      try {
+        await ApiClient.instance.post('/api/auth/logout');
+      } catch (_) {}
+      await LocalStorage.clearAll();
+      Get.offAllNamed('/login');
+    });
   }
 
   // Kiểm tra token khi khởi động app

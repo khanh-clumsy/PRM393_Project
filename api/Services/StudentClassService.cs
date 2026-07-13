@@ -5,7 +5,10 @@ using PRM393API.Services.Interfaces;
 
 namespace PRM393API.Services;
 
-public class StudentClassService(IStudentClassRepository repo, IClassRepository classRepo) : IStudentClassService
+public class StudentClassService(
+    IStudentClassRepository repo,
+    IClassRepository classRepo,
+    IAcademicContextService academicContext) : IStudentClassService
 {
     public async Task<IEnumerable<StudentClassResponseDto>> GetByClassAsync(int classId)
     {
@@ -18,6 +21,9 @@ public class StudentClassService(IStudentClassRepository repo, IClassRepository 
         var list = await repo.GetByStudentAsync(studentId);
         return list.Select(ToDto);
     }
+
+    public Task<StudentEnrollmentAtDateDto> GetEnrollmentAtDateAsync(int studentId, DateOnly date) =>
+        academicContext.GetStudentEnrollmentAtDateAsync(studentId, date);
 
     public async Task<StudentClassResponseDto> CreateAsync(CreateStudentClassDto dto)
     {

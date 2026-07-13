@@ -6,7 +6,10 @@ using PRM393API.Services.Interfaces;
 
 namespace PRM393API.Services;
 
-public class TimetableService(ITimetableRepository repo, Prm393dbContext db) : ITimetableService
+public class TimetableService(
+    ITimetableRepository repo,
+    Prm393dbContext db,
+    IAcademicContextService academicContext) : ITimetableService
 {
     public async Task<IEnumerable<TimetableDto>> GetAllAsync()
     {
@@ -52,6 +55,55 @@ public class TimetableService(ITimetableRepository repo, Prm393dbContext db) : I
         return list.Select(ToDetailDto);
     }
 
+    public async Task<StudentWeeklyTimetableDto?> GetWeeklyByStudentAsync(int studentId, DateOnly date)
+    {
+        var enrollmentContext = await academicContext.GetStudentEnrollmentAtDateAsync(studentId, date);
+        if (enrollmentContext.Enrollment is null)
+            return null;
+
+        var (weekStart, weekEnd) = GetWeekRange(date);
+        var classId = enrollmentContext.Enrollment.ClassId;
+        var slots = (await repo.GetWeeklyByClassAsync(classId, weekStart, weekEnd))
+            .Select(ToDetailDto)
+            .ToList();
+
+        var timetableIds = slots.Select(s => s.TimetableId).ToList();
+        var attendance = timetableIds.Count == 0
+            ? []
+            : await db.AttendanceRecords
+                .Where(a => a.StudentId == studentId && timetableIds.Contains(a.TimetableId))
+                .Select(a => new StudentTimetableAttendanceDto(
+                    a.AttendanceId,
+                    a.TimetableId,
+                    a.StudentId,
+                    ToDisplayAttendanceStatus(a.Status),
+                    a.Note,
+                    a.RecordedBy,
+                    a.RecordedAt))
+                .ToListAsync();
+
+        return new StudentWeeklyTimetableDto(
+            studentId,
+            date,
+            weekStart,
+            weekEnd,
+            enrollmentContext.AcademicYear,
+            enrollmentContext.Semester,
+            enrollmentContext.Enrollment,
+            slots,
+            attendance);
+    }
+
+    private static string ToDisplayAttendanceStatus(string status) =>
+        status.Trim().ToUpperInvariant() switch
+        {
+            "P" or "PRESENT" => "Present",
+            "A" or "ABSENT" => "Absent",
+            "L" or "LATE" => "Late",
+            "E" or "EXCUSED" => "Excused",
+            _ => status,
+        };
+
     private static (DateOnly weekStart, DateOnly weekEnd) GetWeekRange(DateOnly date)
     {
         int diff = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
@@ -62,6 +114,8 @@ public class TimetableService(ITimetableRepository repo, Prm393dbContext db) : I
 
     public async Task<TimetableDto> CreateAsync(CreateTimetableDto dto)
     {
+        await EnsureTimetableNoConflictAsync(dto.TeachingAssignmentId, dto.Date, dto.SlotId);
+
         var timetable = new Timetable
         {
             TeachingAssignmentId = dto.TeachingAssignmentId,
@@ -236,6 +290,8 @@ public class TimetableService(ITimetableRepository repo, Prm393dbContext db) : I
 
     public async Task<TimetableTemplateResponseDto> CreateTemplateAsync(CreateTimetableTemplateDto dto)
     {
+        await EnsureTemplateNoConflictAsync(dto.TeachingAssignmentId, dto.DayOfWeek, dto.SlotId);
+
         var template = new TimetableTemplate
         {
             TeachingAssignmentId = dto.TeachingAssignmentId,
@@ -262,9 +318,15 @@ public class TimetableService(ITimetableRepository repo, Prm393dbContext db) : I
         var existing = await db.TimetableTemplates.FindAsync(id);
         if (existing is null) return null;
 
-        existing.TeachingAssignmentId = dto.TeachingAssignmentId ?? existing.TeachingAssignmentId;
-        existing.DayOfWeek = dto.DayOfWeek ?? existing.DayOfWeek;
-        existing.SlotId = dto.SlotId ?? existing.SlotId;
+        var teachingAssignmentId = dto.TeachingAssignmentId ?? existing.TeachingAssignmentId;
+        var dayOfWeek = dto.DayOfWeek ?? existing.DayOfWeek;
+        var slotId = dto.SlotId ?? existing.SlotId;
+
+        await EnsureTemplateNoConflictAsync(teachingAssignmentId, dayOfWeek, slotId, excludeTemplateId: id);
+
+        existing.TeachingAssignmentId = teachingAssignmentId;
+        existing.DayOfWeek = dayOfWeek;
+        existing.SlotId = slotId;
         existing.RoomName = dto.RoomName ?? existing.RoomName;
 
         await db.SaveChangesAsync();
@@ -277,6 +339,96 @@ public class TimetableService(ITimetableRepository repo, Prm393dbContext db) : I
             .FirstAsync(t => t.TemplateId == existing.TemplateId);
 
         return ToTemplateDto(full);
+    }
+
+    /// <summary>
+    /// Một phân công (GV + môn + lớp) chỉ được xếp 1 lần trong cùng thứ + tiết.
+    /// Giáo viên cũng không được dạy 2 môn khác nhau cùng khung giờ.
+    /// </summary>
+    private async Task EnsureTemplateNoConflictAsync(
+        int teachingAssignmentId, byte dayOfWeek, int slotId, int? excludeTemplateId = null)
+    {
+        var ta = await db.TeachingAssignments.FindAsync(teachingAssignmentId)
+            ?? throw new InvalidOperationException("Phân công giảng dạy không tồn tại.");
+
+        var semesterAssignmentIds = await db.TeachingAssignments
+            .Where(a => a.SemesterId == ta.SemesterId)
+            .Select(a => a.TeachingAssignmentId)
+            .ToListAsync();
+
+        var sameSlot = await db.TimetableTemplates
+            .Include(t => t.TeachingAssignment).ThenInclude(x => x.Class)
+            .Include(t => t.TeachingAssignment).ThenInclude(x => x.Subject)
+            .Where(t => t.DayOfWeek == dayOfWeek && t.SlotId == slotId)
+            .Where(t => semesterAssignmentIds.Contains(t.TeachingAssignmentId))
+            .Where(t => excludeTemplateId == null || t.TemplateId != excludeTemplateId.Value)
+            .ToListAsync();
+
+        if (sameSlot.Any(t => t.TeachingAssignmentId == teachingAssignmentId))
+        {
+            throw new InvalidOperationException(
+                "Phân công này đã được xếp vào tiết này trong lịch mẫu (trùng GV + môn + slot).");
+        }
+
+        var teacherConflict = sameSlot.FirstOrDefault(t => t.TeachingAssignment.TeacherId == ta.TeacherId);
+        if (teacherConflict != null)
+        {
+            var other = teacherConflict.TeachingAssignment;
+            throw new InvalidOperationException(
+                $"Giáo viên đã dạy {other.Subject.SubjectName} (lớp {other.Class.ClassName}) " +
+                $"cùng khung giờ {DayOfWeekLabel(dayOfWeek)} trong lịch mẫu.");
+        }
+
+        if (sameSlot.Any(t =>
+                t.TeachingAssignment.ClassId == ta.ClassId &&
+                t.TeachingAssignment.SubjectId == ta.SubjectId))
+        {
+            throw new InvalidOperationException(
+                "Môn học này đã được xếp cho lớp ở tiết này trong lịch mẫu.");
+        }
+    }
+
+    private static string DayOfWeekLabel(byte dayOfWeek) => dayOfWeek switch
+    {
+        2 => "Thứ 2",
+        3 => "Thứ 3",
+        4 => "Thứ 4",
+        5 => "Thứ 5",
+        6 => "Thứ 6",
+        7 => "Thứ 7",
+        8 => "Chủ Nhật",
+        _ => $"Thứ {dayOfWeek}",
+    };
+
+    private async Task EnsureTimetableNoConflictAsync(
+        int teachingAssignmentId, DateOnly date, int slotId, int? excludeTimetableId = null)
+    {
+        var ta = await db.TeachingAssignments.FindAsync(teachingAssignmentId)
+            ?? throw new InvalidOperationException("Phân công giảng dạy không tồn tại.");
+
+        var sameSlot = await db.Timetables
+            .Include(t => t.TeachingAssignment)
+            .Where(t => t.Date == date && t.SlotId == slotId)
+            .Where(t => excludeTimetableId == null || t.TimetableId != excludeTimetableId.Value)
+            .ToListAsync();
+
+        if (sameSlot.Any(t => t.TeachingAssignmentId == teachingAssignmentId))
+        {
+            throw new InvalidOperationException(
+                "Phân công này đã được xếp vào tiết này (trùng GV + môn + slot).");
+        }
+
+        if (sameSlot.Any(t => t.TeachingAssignment.TeacherId == ta.TeacherId))
+        {
+            throw new InvalidOperationException("Giáo viên đã có tiết khác cùng khung giờ.");
+        }
+
+        if (sameSlot.Any(t =>
+                t.TeachingAssignment.ClassId == ta.ClassId &&
+                t.TeachingAssignment.SubjectId == ta.SubjectId))
+        {
+            throw new InvalidOperationException("Môn học này đã được xếp cho lớp ở tiết này.");
+        }
     }
 
     public async Task<bool> DeleteTemplateAsync(int id)
@@ -325,7 +477,8 @@ public class TimetableService(ITimetableRepository repo, Prm393dbContext db) : I
         t.TeachingAssignment.ClassId,
         t.TeachingAssignment.Class.ClassName,
         t.Status,
-        t.Note);
+        t.Note,
+        t.AttendanceRecords.Any());
 
     private static TimetableTemplateResponseDto ToTemplateDto(TimetableTemplate t) => new(
         t.TemplateId,

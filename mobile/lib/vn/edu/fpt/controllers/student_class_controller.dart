@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import '../core/network/api_client.dart';
+import '../core/submit/submit_guard_mixin.dart';
 import '../models/student_class_model.dart';
 import '../models/user_model.dart';
 import '../models/class_model.dart';
 import '../models/academic_year_model.dart';
 
-class StudentClassController extends GetxController {
+class StudentClassController extends GetxController with SubmitGuardMixin {
   final RxList<StudentClassModel> studentClasses = <StudentClassModel>[].obs;
   
   final RxList<AcademicYearModel> academicYears = <AcademicYearModel>[].obs;
@@ -19,6 +20,8 @@ class StudentClassController extends GetxController {
 
   final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
+
+  final RxSet<int> yearAssignedStudentIds = <int>{}.obs;
 
   List<ClassModel> get filteredClasses {
     if (selectedYearId.value == null) return [];
@@ -58,9 +61,11 @@ class StudentClassController extends GetxController {
     final response = await ApiClient.instance.get('/api/academicyear');
     if (response.statusCode == 200) {
       final List<dynamic> data = response.data;
-      academicYears.value = data.map((json) => AcademicYearModel.fromJson(json)).toList();
+      academicYears.value = AcademicYearModel.sortedChronologically(
+        data.map((json) => AcademicYearModel.fromJson(json)),
+      );
       if (academicYears.isNotEmpty) {
-        selectedYearId.value = academicYears.first.academicYearId;
+        selectedYearId.value = AcademicYearModel.preferredDefaultId(academicYears);
       }
     }
   }
@@ -74,8 +79,30 @@ class StudentClassController extends GetxController {
       // Update selected class
       if (filteredClasses.isNotEmpty) {
         selectedClassId.value = filteredClasses.first.classId;
+        await refreshYearAssignedStudents();
       }
     }
+  }
+
+  Future<void> refreshYearAssignedStudents() async {
+    yearAssignedStudentIds.clear();
+    if (selectedYearId.value == null) return;
+    for (final cls in filteredClasses) {
+      final response = await ApiClient.instance.get('/api/studentclass/by-class/${cls.classId}');
+      if (response.statusCode == 200) {
+        for (final item in response.data as List) {
+          yearAssignedStudentIds.add(item['studentId'] as int);
+        }
+      }
+    }
+  }
+
+  List<UserModel> getAvailableStudentsForClass(int classId) {
+    return allStudents.where((s) {
+      if (studentClasses.any((sc) => sc.studentId == s.userId)) return false;
+      if (yearAssignedStudentIds.contains(s.userId)) return false;
+      return true;
+    }).toList();
   }
 
   Future<void> _fetchStudents() async {
@@ -108,40 +135,44 @@ class StudentClassController extends GetxController {
   }
 
   Future<void> addStudentToClass(int studentId, int classId) async {
-    try {
-      final response = await ApiClient.instance.post(
-        '/api/studentclass',
-        data: {
-          'studentId': studentId,
-          'classId': classId,
-        },
-      );
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        Get.back(); // close modal
-        Get.snackbar('Thành công', 'Thêm học sinh vào lớp thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchStudentClassesByClass(classId); // refresh
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.post(
+          '/api/studentclass',
+          data: {
+            'studentId': studentId,
+            'classId': classId,
+          },
+        );
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          closeDialogSafely(); // close modal
+          Get.snackbar('Thành công', 'Thêm học sinh vào lớp thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchStudentClassesByClass(classId); // refresh
+        }
+      } on DioException catch (e) {
+        if (e.response != null && e.response!.data is Map && e.response!.data['message'] != null) {
+          Get.snackbar('Lỗi', e.response!.data['message'], backgroundColor: Colors.redAccent, colorText: Colors.white);
+        } else {
+          Get.snackbar('Lỗi', 'Không thể thêm học sinh. Có thể học sinh này đã thuộc lớp khác.', backgroundColor: Colors.redAccent, colorText: Colors.white);
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Lỗi hệ thống. Vui lòng thử lại sau.', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } on DioException catch (e) {
-      if (e.response != null && e.response!.data is Map && e.response!.data['message'] != null) {
-        Get.snackbar('Lỗi', e.response!.data['message'], backgroundColor: Colors.redAccent, colorText: Colors.white);
-      } else {
-        Get.snackbar('Lỗi', 'Không thể thêm học sinh. Có thể học sinh này đã thuộc lớp khác.', backgroundColor: Colors.redAccent, colorText: Colors.white);
-      }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Lỗi hệ thống. Vui lòng thử lại sau.', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 
   Future<void> removeStudentFromClass(int id, int classId) async {
-    try {
-      final response = await ApiClient.instance.delete('/api/studentclass/$id');
-      if (response.statusCode == 204 || response.statusCode == 200) {
-        Get.back(); // close confirm dialog
-        Get.snackbar('Thành công', 'Xóa học sinh khỏi lớp thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchStudentClassesByClass(classId); // refresh
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.delete('/api/studentclass/$id');
+        if (response.statusCode == 204 || response.statusCode == 200) {
+          closeDialogSafely(); // close confirm dialog
+          Get.snackbar('Thành công', 'Xóa học sinh khỏi lớp thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchStudentClassesByClass(classId); // refresh
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Không thể xóa học sinh', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể xóa học sinh', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 }

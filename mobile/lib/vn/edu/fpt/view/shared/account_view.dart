@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/account_controller.dart';
+import '../../controllers/auth_controller.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
@@ -27,10 +30,7 @@ class AccountView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value!, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchUserData,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchUserData),
               ],
             ),
           ),
@@ -171,40 +171,34 @@ class AccountView extends StatelessWidget {
   Widget _buildLogoutButton(AccountController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SizedBox(
-        width: double.infinity,
+      child: AppButton(
+        variant: AppButtonVariant.dangerOutlined,
+        icon: Icons.logout,
+        label: 'Đăng xuất',
+        fullWidth: true,
         height: 56,
-        child: OutlinedButton.icon(
-          icon: const Icon(Icons.logout, color: Colors.red),
-          label: const Text('Đăng xuất', style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Colors.red, width: 1.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-          onPressed: () {
-            // Confirm logout
-            Get.dialog(
-              AlertDialog(
-                title: const Text('Xác nhận'),
-                content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                    onPressed: () {
-                      Get.back(); // close dialog
-                      controller.logout();
-                    },
-                    child: const Text('Đăng xuất'),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+        borderRadius: 16,
+        onPressed: () {
+          final authController = Get.find<AuthController>();
+          Get.dialog(
+            AlertDialog(
+              title: const Text('Xác nhận'),
+              content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+              actions: [
+                AppDialogActions.reactive(
+                  isSubmitting: authController.isSubmitting,
+                  onCancel: () => Get.back(),
+                  labels: AppDialogLabels.logout,
+                  disableCancelWhileSubmitting: true,
+                  onSubmit: () {
+                    Get.back();
+                    controller.logout();
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

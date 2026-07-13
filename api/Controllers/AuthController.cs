@@ -12,7 +12,12 @@ public class AuthController(IAuthService service) : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
         var result = await service.LoginAsync(dto);
-        return result is null ? Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không đúng." }) : Ok(result);
+        return result.Failure switch
+        {
+            LoginFailureReason.AccountLocked => StatusCode(403, new { message = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên." }),
+            LoginFailureReason.InvalidCredentials => Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không đúng." }),
+            _ => Ok(result.Token),
+        };
     }
 
     [HttpPost("refresh")]

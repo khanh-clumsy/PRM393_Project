@@ -18,7 +18,7 @@ public class AttendanceServiceTests
         AttendanceId = 1,
         TimetableId = 1,
         StudentId = 10,
-        Status = "Present",
+        Status = "P",
         RecordedBy = 3,
         RecordedAt = DateTime.UtcNow,
     };
@@ -31,6 +31,7 @@ public class AttendanceServiceTests
         var dto = new CreateAttendanceDto(1, 10, "Present", null, 3);
         var result = await _sut.CreateAsync(dto);
         Assert.Equal("Present", result.Status);
+        _repo.Verify(r => r.CreateAsync(It.Is<AttendanceRecord>(a => a.Status == "P")), Times.Once);
         _repo.Verify(r => r.CreateAsync(It.Is<AttendanceRecord>(a => a.RecordedAt <= DateTime.UtcNow)), Times.Once);
     }
 
@@ -46,6 +47,9 @@ public class AttendanceServiceTests
             .ReturnsAsync((IEnumerable<AttendanceRecord> list) => list.ToList());
         var result = (await _sut.BulkCreateAsync(dtos)).ToList();
         Assert.Equal(2, result.Count);
+        _repo.Verify(r => r.BulkCreateAsync(It.Is<IEnumerable<AttendanceRecord>>(records =>
+            records.Any(a => a.StudentId == 10 && a.Status == "P") &&
+            records.Any(a => a.StudentId == 11 && a.Status == "A"))), Times.Once);
     }
 
     [Fact]
@@ -63,6 +67,8 @@ public class AttendanceServiceTests
             .ReturnsAsync(new[] { Sample() });
         var result = (await _sut.BulkUpdateAsync(updates)).ToList();
         Assert.Single(result);
+        _repo.Verify(r => r.BulkUpdateAsync(It.Is<IEnumerable<(int id, string status, string? note)>>(updates =>
+            updates.Any(u => u.id == 1 && u.status == "L"))), Times.Once);
     }
 
     [Fact]

@@ -27,56 +27,45 @@ class QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Định nghĩa các nút hành động nhanh
     final List<QuickActionItemData> actions = [
       QuickActionItemData(
         icon: Icons.fact_check_outlined,
-        label: 'Attendance',
-        onTap: () {
-          Get.to(() => const AttendanceView());
-        },
+        label: 'Điểm danh',
+        onTap: () => Get.to(() => const AttendanceView()),
       ),
       QuickActionItemData(
         icon: Icons.bar_chart_rounded,
-        label: 'Grades',
-        onTap: () {
-          Get.to(() => const StudentGradeView());
-        },
+        label: 'Điểm số',
+        onTap: () => Get.to(() => const StudentGradeView()),
       ),
       QuickActionItemData(
         icon: Icons.calendar_month_outlined,
-        label: 'Timetable',
-        onTap: () {
-          Get.to(() => const TimetablePage());
-        },
+        label: 'Thời khóa biểu',
+        onTap: () => Get.to(() => const TimetablePage()),
       ),
       QuickActionItemData(
         icon: Icons.flight_takeoff_outlined,
-        label: 'Leave Request',
+        label: 'Đơn xin nghỉ',
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const LeaveRequestListPage(),
-            ),
+            MaterialPageRoute(builder: (_) => const LeaveRequestListPage()),
           );
         },
       ),
       QuickActionItemData(
         icon: Icons.assignment_outlined,
-        label: 'Assignments',
-        onTap: () {
-          Get.to(() => const StudentAssignmentView());
-        },
+        label: 'Bài tập',
+        onTap: () => Get.to(() => const StudentAssignmentView()),
       ),
       QuickActionItemData(
         icon: Icons.more_horiz_rounded,
-        label: 'More',
+        label: 'Thêm',
         backgroundColor: Colors.grey.shade200,
         iconColor: Colors.grey.shade700,
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('More Actions selected')),
+            const SnackBar(content: Text('Tính năng đang phát triển')),
           );
         },
       ),
@@ -86,7 +75,7 @@ class QuickActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Quick Actions',
+          'Thao tác nhanh',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -162,7 +151,6 @@ class _QuickActionWidgetState extends State<QuickActionWidget>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Vòng tròn chứa Icon
             Container(
               width: 58,
               height: 58,
@@ -188,7 +176,6 @@ class _QuickActionWidgetState extends State<QuickActionWidget>
               ),
             ),
             const SizedBox(height: 8),
-            // Tên nút hành động
             Text(
               widget.item.label,
               style: const TextStyle(
@@ -197,7 +184,7 @@ class _QuickActionWidgetState extends State<QuickActionWidget>
                 color: Color(0xFF424242),
               ),
               textAlign: TextAlign.center,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],

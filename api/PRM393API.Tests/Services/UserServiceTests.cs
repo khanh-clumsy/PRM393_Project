@@ -56,7 +56,9 @@ public class UserServiceTests
             Address: null,
             Gender: null,
             AvatarUrl: null,
-            IsActive: false));
+            IsActive: false,
+            RoleId: null,
+            DepartmentId: null));
 
         Assert.NotNull(result);
         Assert.False(result!.IsActive);
@@ -77,7 +79,9 @@ public class UserServiceTests
             Address: null,
             Gender: null,
             AvatarUrl: null,
-            IsActive: null));
+            IsActive: null,
+            RoleId: null,
+            DepartmentId: null));
 
         Assert.NotNull(result);
         Assert.False(result!.IsActive);
@@ -96,10 +100,61 @@ public class UserServiceTests
             Address: null,
             Gender: null,
             AvatarUrl: null,
-            IsActive: false));
+            IsActive: false,
+            RoleId: null,
+            DepartmentId: null));
 
         Assert.Null(result);
         _repo.Verify(r => r.UpdateAsync(It.IsAny<int>(), It.IsAny<User>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ChangeDepartment_PersistsDepartmentId()
+    {
+        var existing = TestDataFactory.CreateUser(roleId: 3, roleName: "Teacher");
+        existing.DepartmentId = 1;
+        _repo.Setup(r => r.GetByIdAsync(existing.UserId)).ReturnsAsync(existing);
+        _repo.Setup(r => r.UpdateAsync(existing.UserId, It.IsAny<User>()))
+            .ReturnsAsync((int _, User u) => u);
+
+        var result = await _sut.UpdateAsync(existing.UserId, new UpdateUserDto(
+            FullName: null,
+            Email: null,
+            PhoneNumber: null,
+            Address: null,
+            Gender: null,
+            AvatarUrl: null,
+            IsActive: null,
+            RoleId: 3,
+            DepartmentId: 2));
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.DepartmentId);
+        _repo.Verify(r => r.UpdateAsync(existing.UserId, It.Is<User>(u => u.DepartmentId == 2)), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ChangeRoleToStudent_ClearsDepartmentId()
+    {
+        var existing = TestDataFactory.CreateUser(roleId: 3, roleName: "Teacher");
+        existing.DepartmentId = 2;
+        _repo.Setup(r => r.GetByIdAsync(existing.UserId)).ReturnsAsync(existing);
+        _repo.Setup(r => r.UpdateAsync(existing.UserId, It.IsAny<User>()))
+            .ReturnsAsync((int _, User u) => u);
+
+        var result = await _sut.UpdateAsync(existing.UserId, new UpdateUserDto(
+            FullName: null,
+            Email: null,
+            PhoneNumber: null,
+            Address: null,
+            Gender: null,
+            AvatarUrl: null,
+            IsActive: null,
+            RoleId: 4,
+            DepartmentId: null));
+
+        Assert.NotNull(result);
+        Assert.Null(result!.DepartmentId);
     }
 
     [Fact]

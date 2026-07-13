@@ -6,6 +6,7 @@ class AuthModel {
   final String fullName;
   final int roleId;
   final String roleName;
+  final int? departmentId;
 
   AuthModel({
     required this.accessToken,
@@ -15,6 +16,7 @@ class AuthModel {
     required this.fullName,
     required this.roleId,
     required this.roleName,
+    this.departmentId,
   });
 
   factory AuthModel.fromJson(Map<String, dynamic> json) {
@@ -22,11 +24,12 @@ class AuthModel {
     return AuthModel(
       accessToken: json['accessToken'] ?? '',
       refreshToken: json['refreshToken'] ?? '',
-      userId: user['id'] ?? 0,
+      userId: user['id'] ?? user['userId'] ?? 0,
       username: user['username'] ?? '',
       fullName: user['fullName'] ?? '',
       roleId: user['roleId'] ?? 0,
       roleName: user['roleName'] ?? '',
+      departmentId: user['departmentId'],
     );
   }
 
@@ -39,6 +42,7 @@ class AuthModel {
       'fullName': fullName,
       'roleId': roleId,
       'roleName': roleName,
+      'departmentId': departmentId,
     };
   }
 }

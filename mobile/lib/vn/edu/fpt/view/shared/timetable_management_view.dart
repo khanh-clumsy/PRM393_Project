@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../core/auth/role_context.dart';
+import '../../core/timetable_status_helper.dart';
 import '../../controllers/timetable_controller.dart';
 import '../../models/timetable_model.dart';
 import '../../models/timetable_template_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 import 'package:intl/intl.dart';
 
 class TimetableManagementView extends StatelessWidget {
-  const TimetableManagementView({super.key});
+  final ScopeMode scopeMode;
+  const TimetableManagementView({super.key, this.scopeMode = ScopeMode.admin});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(TimetableController());
+    final controller = Get.put(TimetableController(scopeMode: scopeMode));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
@@ -47,10 +52,7 @@ class TimetableManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchInitialData,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchInitialData),
               ],
             ),
           );
@@ -231,14 +233,11 @@ class TimetableManagementView extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 color: Colors.white,
-                child: OutlinedButton.icon(
+                child: AppButton(
+                  variant: AppButtonVariant.dangerOutlined,
+                  icon: Icons.delete_sweep,
+                  label: 'TODO: Xóa sau khi test - Xóa lịch đã sinh',
                   onPressed: () => _showClearConfirmDialog(context, controller),
-                  icon: const Icon(Icons.delete_sweep, color: Colors.redAccent),
-                  label: const Text('TODO: Xóa sau khi test - Xóa lịch đã sinh', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.redAccent),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
                 ),
               ),
 
@@ -292,7 +291,7 @@ class TimetableManagementView extends StatelessWidget {
                     itemCount: controller.slots.length,
                     itemBuilder: (context, slotIndex) {
                       final slot = controller.slots[slotIndex];
-                      final matchingTemplates = controller.filteredTemplatesByDay.where((t) => t.slotName == slot.slotName).toList();
+                      final matchingTemplates = controller.filteredTemplatesByDay.where((t) => t.slotId == slot.slotId).toList();
 
                       if (matchingTemplates.isEmpty) {
                         return Card(
@@ -325,8 +324,8 @@ class TimetableManagementView extends StatelessWidget {
                           ),
                         );
                       } else {
-                        final t = matchingTemplates.first;
-
+                        return Column(
+                          children: matchingTemplates.map((t) {
                         return Card(
                           color: Colors.white,
                           elevation: 0,
@@ -435,6 +434,8 @@ class TimetableManagementView extends StatelessWidget {
                             ],
                           ),
                         );
+                          }).toList(),
+                        );
                       }
                     },
                   ),
@@ -462,6 +463,10 @@ class TimetableManagementView extends StatelessWidget {
                             lastDate: DateTime(2030),
                           );
                           if (picked != null) {
+                            if (!controller.isDateInSelectedSemester(picked)) {
+                              Get.snackbar('Cảnh báo', 'Ngày chọn nằm ngoài thời gian học kỳ.', backgroundColor: Colors.orange, colorText: Colors.white);
+                              return;
+                            }
                             controller.selectedDate.value = picked;
                           }
                         },
@@ -590,8 +595,8 @@ class TimetableManagementView extends StatelessWidget {
                           ),
                         );
                       } else {
-                        final t = slotTimetables.first;
-
+                        return Column(
+                          children: slotTimetables.map((t) {
                         return Card(
                           color: Colors.white,
                           elevation: 0,
@@ -631,6 +636,26 @@ class TimetableManagementView extends StatelessWidget {
                                             fontSize: 13,
                                           ),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: TimetableStatusHelper.color(t.status).withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            TimetableStatusHelper.label(t.status),
+                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: TimetableStatusHelper.color(t.status)),
+                                          ),
+                                        ),
+                                        if (t.note != null && t.note!.isNotEmpty) ...[
+                                          const SizedBox(width: 8),
+                                          Expanded(child: Text(t.note!, style: const TextStyle(fontSize: 11, color: Colors.black54), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                        ],
                                       ],
                                     ),
                                     const SizedBox(height: 8),
@@ -678,29 +703,18 @@ class TimetableManagementView extends StatelessWidget {
                                               _showFormDialog(context, controller, timetable: t);
                                             } else if (val == 2) {
                                               _showDeleteConfirm(context, controller, t);
+                                            } else if (val >= 10 && val <= 13) {
+                                              final statuses = [1, 2, 3, 4];
+                                              _showStatusNoteDialog(context, controller, t, statuses[val - 10]);
                                             }
                                           },
                                           itemBuilder: (context) => [
-                                            const PopupMenuItem(
-                                              value: 1,
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.edit_outlined, size: 18),
-                                                  SizedBox(width: 8),
-                                                  Text('Sửa tiết học'),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 2,
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                                  SizedBox(width: 8),
-                                                  Text('Xóa lịch học', style: TextStyle(color: Colors.red)),
-                                                ],
-                                              ),
-                                            ),
+                                            const PopupMenuItem(value: 1, child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Sửa tiết học')])),
+                                            const PopupMenuItem(value: 10, child: Row(children: [Icon(Icons.check_circle_outline, size: 18), SizedBox(width: 8), Text('Bình thường')])),
+                                            const PopupMenuItem(value: 11, child: Row(children: [Icon(Icons.swap_horiz, size: 18), SizedBox(width: 8), Text('Đổi lịch')])),
+                                            const PopupMenuItem(value: 12, child: Row(children: [Icon(Icons.event_busy, size: 18), SizedBox(width: 8), Text('Nghỉ học')])),
+                                            const PopupMenuItem(value: 13, child: Row(children: [Icon(Icons.event_available, size: 18), SizedBox(width: 8), Text('Dạy bù')])),
+                                            const PopupMenuItem(value: 2, child: Row(children: [Icon(Icons.delete_outline, size: 18, color: Colors.red), SizedBox(width: 8), Text('Xóa lịch học', style: TextStyle(color: Colors.red))])),
                                           ],
                                         ),
                                       ],
@@ -710,6 +724,8 @@ class TimetableManagementView extends StatelessWidget {
                               ),
                             ],
                           ),
+                        );
+                          }).toList(),
                         );
                       }
                     },
@@ -722,7 +738,7 @@ class TimetableManagementView extends StatelessWidget {
       }),
       floatingActionButton: Obx(() {
         if (controller.selectedClassId.value == null) return const SizedBox.shrink();
-        return FloatingActionButton(
+        return AppFab.add(
           onPressed: () {
             if (controller.isMasterMode.value) {
               _showTemplateFormDialog(context, controller);
@@ -730,9 +746,6 @@ class TimetableManagementView extends StatelessWidget {
               _showFormDialog(context, controller);
             }
           },
-          backgroundColor: const Color(0xFFE65100),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: const Icon(Icons.add, color: Colors.white),
         );
       }),
     );
@@ -838,19 +851,27 @@ class TimetableManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              onSubmit: () {
                 if (selectedTaId == null || selectedSlotId == null) {
                   Get.snackbar('Lỗi', 'Vui lòng chọn phân công giảng dạy và tiết học', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
+                final date = DateFormat('yyyy-MM-dd').format(controller.selectedDate.value);
+                if (!controller.isDateInSelectedSemester(controller.selectedDate.value)) {
+                  Get.snackbar('Lỗi', 'Ngày chọn nằm ngoài thời gian học kỳ.', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
+                final conflict = controller.checkScheduleConflict(
+                  taId: selectedTaId!,
+                  slotId: selectedSlotId!,
+                  date: date,
+                  excludeTimetableId: timetable?.timetableId,
+                );
+                if (conflict != null) {
+                  Get.snackbar('Cảnh báo trùng lịch', conflict, backgroundColor: Colors.orange, colorText: Colors.white);
                   return;
                 }
                 if (timetable == null) {
@@ -869,7 +890,6 @@ class TimetableManagementView extends StatelessWidget {
                   );
                 }
               },
-              child: const Text('Lưu'),
             ),
           ],
         );
@@ -883,9 +903,10 @@ class TimetableManagementView extends StatelessWidget {
       return;
     }
 
+    final isEditing = template != null;
     int? selectedTaId = template?.teachingAssignmentId;
     int? selectedSlotId = template?.slotId ?? preselectedSlotId;
-    bool isSlotFixed = preselectedSlotId != null || template != null;
+    final int dayOfWeek = template?.dayOfWeek ?? controller.selectedMasterDay.value;
 
     final roomController = TextEditingController(text: template?.roomName);
 
@@ -901,19 +922,37 @@ class TimetableManagementView extends StatelessWidget {
       selectedSlotId = controller.slots.first.slotId;
     }
 
+    String dayLabel(int day) => day == 8 ? 'Chủ Nhật' : 'Thứ $day';
+    final slotLabel = template?.slotName ??
+        controller.slots.firstWhereOrNull((s) => s.slotId == selectedSlotId)?.slotName ??
+        '—';
+
     Get.dialog(
       StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(template == null ? 'Thêm Cấu hình Lịch mẫu' : 'Sửa Cấu hình Lịch mẫu', style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            isEditing ? 'Sửa giáo viên / phòng' : 'Thêm Cấu hình Lịch mẫu',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (isEditing) ...[
+                  Text('${dayLabel(dayOfWeek)} · $slotLabel', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Không đổi thứ hoặc tiết. Muốn đổi slot hãy xóa và tạo lại.',
+                    style: TextStyle(fontSize: 12, color: Colors.orange),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 DropdownButtonFormField<int>(
                   decoration: InputDecoration(
-                    labelText: 'Phân công giảng dạy',
+                    labelText: 'Phân công giảng dạy (GV / môn)',
                     filled: true,
                     fillColor: const Color(0xFFF5F5F5),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -936,30 +975,37 @@ class TimetableManagementView extends StatelessWidget {
                     });
                   },
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<int>(
-                  decoration: InputDecoration(
-                    labelText: 'Tiết học',
-                    filled: true,
-                    fillColor: isSlotFixed ? Colors.grey.shade100 : Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                if (!isEditing) ...[
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<int>(
+                    decoration: InputDecoration(
+                      labelText: 'Tiết học',
+                      filled: true,
+                      fillColor: preselectedSlotId != null ? Colors.grey.shade100 : Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                    ),
+                    value: selectedSlotId,
+                    items: controller.slots.map((s) {
+                      return DropdownMenuItem<int>(
+                        value: s.slotId,
+                        child: Text(s.slotName),
+                      );
+                    }).toList(),
+                    onChanged: preselectedSlotId != null ? null : (val) {
+                      setState(() {
+                        selectedSlotId = val;
+                      });
+                    },
                   ),
-                  value: selectedSlotId,
-                  items: controller.slots.map((s) {
-                    return DropdownMenuItem<int>(
-                      value: s.slotId,
-                      child: Text(s.slotName),
-                    );
-                  }).toList(),
-                  onChanged: isSlotFixed ? null : (val) {
-                    setState(() {
-                      selectedSlotId = val;
-                    });
-                  },
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Thứ: ${dayLabel(dayOfWeek)} (theo tab đang chọn)',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 TextField(
                   controller: roomController,
@@ -976,39 +1022,41 @@ class TimetableManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              onSubmit: () {
                 if (selectedTaId == null || selectedSlotId == null) {
-                  Get.snackbar('Lỗi', 'Vui lòng chọn phân công giảng dạy và tiết học', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  Get.snackbar('Lỗi', 'Vui lòng chọn phân công giảng dạy', backgroundColor: Colors.redAccent, colorText: Colors.white);
                   return;
                 }
-                if (template == null) {
+                final conflict = controller.checkTemplateConflict(
+                  taId: selectedTaId!,
+                  dayOfWeek: dayOfWeek,
+                  slotId: selectedSlotId!,
+                  excludeTemplateId: template?.templateId,
+                );
+                if (conflict != null) {
+                  Get.snackbar('Cảnh báo trùng lịch', conflict, backgroundColor: Colors.orange, colorText: Colors.white);
+                  return;
+                }
+                if (!isEditing) {
                   controller.createTimetableTemplate(
                     selectedTaId!,
-                    controller.selectedMasterDay.value,
+                    dayOfWeek,
                     selectedSlotId!,
                     roomController.text.trim(),
                   );
                 } else {
                   controller.updateTimetableTemplate(
-                    template.templateId,
+                    template!.templateId,
                     selectedTaId!,
-                    controller.selectedMasterDay.value,
-                    selectedSlotId!,
+                    template.dayOfWeek,
+                    template.slotId,
                     roomController.text.trim(),
                   );
                 }
               },
-              child: const Text('Lưu'),
             ),
           ],
         );
@@ -1027,18 +1075,16 @@ class TimetableManagementView extends StatelessWidget {
           'Lưu ý: Tất cả lịch học của học kỳ này đã sinh trước đó sẽ bị xóa để ghi đè lịch mới.',
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFC2410C),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.confirm,
+            submitColor: const Color(0xFFC2410C),
+            disableCancelWhileSubmitting: true,
+            onSubmit: () {
               Get.back();
               controller.generateFromDatabaseTemplates();
             },
-            child: const Text('Đồng ý'),
           ),
         ],
       ),
@@ -1053,17 +1099,12 @@ class TimetableManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Bạn có chắc chắn muốn xóa tiết học thực tế này không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteTimetable(t.timetableId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteTimetable(t.timetableId),
           ),
         ],
       ),
@@ -1078,17 +1119,40 @@ class TimetableManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Bạn có chắc chắn muốn xóa lịch mẫu này không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteTimetableTemplate(t.templateId);
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteTimetableTemplate(t.templateId),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStatusNoteDialog(BuildContext context, TimetableController controller, TimetableModel t, int status) {
+    final noteController = TextEditingController(text: t.note);
+    Get.dialog(
+      AlertDialog(
+        title: Text('Cập nhật: ${TimetableStatusHelper.label(status)}'),
+        content: TextField(
+          controller: noteController,
+          decoration: const InputDecoration(labelText: 'Ghi chú (tuỳ chọn)'),
+          maxLines: 2,
+        ),
+        actions: [
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.save,
+            onSubmit: () {
+              controller.updateTimetableStatus(
+                t.timetableId,
+                status,
+                noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+              );
             },
-            child: const Text('Xóa'),
           ),
         ],
       ),
@@ -1106,18 +1170,15 @@ class TimetableManagementView extends StatelessWidget {
           'Dữ liệu cấu hình lịch mẫu sẽ KHÔNG bị ảnh hưởng.',
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.confirmDelete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () {
               Get.back();
               controller.clearGeneratedTimetables();
             },
-            child: const Text('Đồng ý xóa'),
           ),
         ],
       ),

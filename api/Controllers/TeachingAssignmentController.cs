@@ -47,6 +47,20 @@ public class TeachingAssignmentController(ITeachingAssignmentService service) : 
         }
     }
 
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateTeachingAssignmentDto dto)
+    {
+        try
+        {
+            var updated = await service.UpdateAsync(id, dto);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {

@@ -27,6 +27,14 @@ public class ParentStudentService(IParentStudentRepository repo) : IParentStuden
 
     public async Task<ParentStudentDto> CreateAsync(CreateParentStudentDto dto)
     {
+        var linksForStudent = await repo.GetByStudentAsync(dto.StudentId);
+        if (linksForStudent.Any())
+            throw new InvalidOperationException("Học sinh này đã được liên kết với phụ huynh khác.");
+
+        var linksForParent = await repo.GetByParentAsync(dto.ParentId);
+        if (linksForParent.Any(ps => ps.StudentId == dto.StudentId))
+            throw new InvalidOperationException("Liên kết phụ huynh – học sinh đã tồn tại.");
+
         var ps = new ParentStudent
         {
             ParentId = dto.ParentId,

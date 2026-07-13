@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../view/auth/login_view.dart';
@@ -18,10 +19,11 @@ import '../../view/shared/teaching_assignment_management_view.dart';
 import '../../view/shared/timetable_management_view.dart';
 import '../../view/shared/student_class_management_view.dart';
 import '../../view/shared/parent_student_management_view.dart';
-import '../../view/parent/parent_main_view.dart';
 import '../../view/shared/attendance_view.dart';
-// Placeholder screens cho các role chưa có UI
-import 'package:flutter/material.dart';
+import '../../view/parent/parent_main_view.dart';
+import '../../view/head_of_dept/head_dept_teachers_view.dart';
+import '../../view/head_of_dept/head_dept_assignments_view.dart';
+import '../auth/role_context.dart';
 
 class AppPages {
   static final routes = [
@@ -93,23 +95,23 @@ class AppPages {
     ),
     GetPage(
       name: '/head/classes',
-      page: () => const ClassManagementView(),
+      page: () => const ClassManagementView(scopeMode: ScopeMode.head),
     ),
     GetPage(
       name: '/head/teaching-assignments',
-      page: () => const TeachingAssignmentManagementView(),
+      page: () => const TeachingAssignmentManagementView(scopeMode: ScopeMode.head),
     ),
     GetPage(
       name: '/head/timetables',
-      page: () => const TimetableManagementView(),
+      page: () => const TimetableManagementView(scopeMode: ScopeMode.head),
     ),
     GetPage(
-      name: '/head/student-classes',
-      page: () => const StudentClassManagementView(),
+      name: '/head/teachers',
+      page: () => const HeadDeptTeachersView(),
     ),
     GetPage(
-      name: '/head/parent-student',
-      page: () => const ParentStudentManagementView(),
+      name: '/head/assignments-view',
+      page: () => const HeadDeptAssignmentsView(),
     ),
     GetPage(
       name: '/parent',

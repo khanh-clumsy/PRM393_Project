@@ -9,7 +9,6 @@ class NotificationItemData {
   final Color iconBackground;
   final Color iconColor;
   bool isUnread;
-  final String? profileImageUrl;
 
   NotificationItemData({
     required this.id,
@@ -20,7 +19,6 @@ class NotificationItemData {
     required this.iconBackground,
     required this.iconColor,
     this.isUnread = false,
-    this.profileImageUrl,
   });
 }
 
@@ -32,15 +30,14 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  int _activeTab = 0; // 0: School & Class, 1: Internal
+  int _activeTab = 0;
 
-  // Danh sách thông báo mẫu "School & Class"
   final List<NotificationItemData> _schoolNotifications = [
     NotificationItemData(
       id: 's1',
-      title: 'Change in Math schedule',
-      description: 'Mr. Anderson has updated the start time for tomorrow\'s Advanced Calculus class to 8:30 AM.',
-      timeAgo: '2 min ago',
+      title: 'Thay đổi lịch học Toán',
+      description: 'Thầy Anderson đã đổi giờ bắt đầu tiết Giải tích nâng cao ngày mai thành 8:30.',
+      timeAgo: '2 phút trước',
       icon: Icons.school_rounded,
       iconBackground: const Color(0xFFFFF3E0),
       iconColor: const Color(0xFFD84315),
@@ -48,9 +45,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     ),
     NotificationItemData(
       id: 's2',
-      title: 'Campus Alert',
-      description: 'The main library will be closed this afternoon for emergency air conditioning maintenance.',
-      timeAgo: '15 min ago',
+      title: 'Thông báo toàn trường',
+      description: 'Thư viện sẽ đóng cửa chiều nay để bảo trì hệ thống điều hòa.',
+      timeAgo: '15 phút trước',
       icon: Icons.campaign_rounded,
       iconBackground: const Color(0xFFFFEBEE),
       iconColor: const Color(0xFFC62828),
@@ -58,9 +55,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     ),
     NotificationItemData(
       id: 's3',
-      title: 'New Assignment Posted',
-      description: 'Chapter 4 review questions are now available in your portal for Physics 101.',
-      timeAgo: 'Yesterday, 4:30 PM',
+      title: 'Bài tập mới',
+      description: 'Câu hỏi ôn tập chương 4 đã được đăng trên cổng thông tin môn Vật lý.',
+      timeAgo: 'Hôm qua, 16:30',
       icon: Icons.assignment_rounded,
       iconBackground: const Color(0xFFE8EAF6),
       iconColor: const Color(0xFF3F51B5),
@@ -68,20 +65,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
     ),
     NotificationItemData(
       id: 's4',
-      title: 'Message from Mrs. Davis',
-      description: 'Great job on the group project presentations today. Grades have been updated in your Academic tab.',
-      timeAgo: 'Yesterday, 2:15 PM',
+      title: 'Tin nhắn từ cô Davis',
+      description: 'Các em làm bài thuyết trình nhóm rất tốt. Điểm đã được cập nhật trên tab Học tập.',
+      timeAgo: 'Hôm qua, 14:15',
       icon: Icons.person_rounded,
       iconBackground: Colors.grey.shade100,
       iconColor: Colors.grey.shade700,
       isUnread: false,
-      profileImageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop',
     ),
     NotificationItemData(
       id: 's5',
-      title: 'Upcoming Event Reminder',
-      description: 'Don\'t forget the Science Fair registration deadline is this Friday. Submit projects soon!',
-      timeAgo: 'Yesterday, 9:00 AM',
+      title: 'Nhắc sự kiện',
+      description: 'Hạn đăng ký Hội thi Khoa học Kỹ thuật là thứ Sáu tuần này. Hãy nộp đề cương sớm!',
+      timeAgo: 'Hôm qua, 09:00',
       icon: Icons.calendar_today_rounded,
       iconBackground: const Color(0xFFE0F2F1),
       iconColor: const Color(0xFF00796B),
@@ -89,13 +85,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
     ),
   ];
 
-  // Danh sách thông báo mẫu "Internal"
   final List<NotificationItemData> _internalNotifications = [
     NotificationItemData(
       id: 'i1',
-      title: 'System Maintenance',
-      description: 'The FSchool student portal will be offline for routine database upgrades tonight from 12:00 AM to 2:00 AM.',
-      timeAgo: '1h ago',
+      title: 'Bảo trì hệ thống',
+      description: 'Cổng thông tin FSchool sẽ tạm ngưng từ 0:00 đến 2:00 sáng nay để nâng cấp cơ sở dữ liệu.',
+      timeAgo: '1 giờ trước',
       icon: Icons.settings_rounded,
       iconBackground: const Color(0xFFECEFF1),
       iconColor: const Color(0xFF546E7A),
@@ -103,9 +98,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     ),
     NotificationItemData(
       id: 'i2',
-      title: 'Library Overdue Notice',
-      description: 'Please return the borrowed book "Principles of Classical Physics" to avoid late fee penalties.',
-      timeAgo: '3 days ago',
+      title: 'Sách quá hạn',
+      description: 'Vui lòng trả cuốn "Nguyên lý Vật lý cổ điển" để tránh phí phạt trả muộn.',
+      timeAgo: '3 ngày trước',
       icon: Icons.menu_book_rounded,
       iconBackground: const Color(0xFFEFEBE9),
       iconColor: const Color(0xFF5D4037),
@@ -116,8 +111,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     final activeList = _activeTab == 0 ? _schoolNotifications : _internalNotifications;
-
-    // Phân chia danh sách thành "Hôm nay/Mới" (Chưa đọc) và "Hôm qua/Cũ" (Đã đọc)
     final unreadItems = activeList.where((item) => item.isUnread).toList();
     final readItems = activeList.where((item) => !item.isUnread).toList();
 
@@ -125,7 +118,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Notifications',
+          'Thông báo',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF212121)),
         ),
         centerTitle: true,
@@ -137,20 +130,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          // Nút "Mark all read" (Đánh dấu đã đọc hết)
           TextButton(
             onPressed: () {
               setState(() {
-                for (var item in activeList) {
+                for (final item in activeList) {
                   item.isUnread = false;
                 }
               });
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('All notifications marked as read')),
+                const SnackBar(content: Text('Đã đánh dấu tất cả là đã đọc')),
               );
             },
             child: const Text(
-              'Mark all read',
+              'Đọc hết',
               style: TextStyle(
                 color: Color(0xFFD84315),
                 fontWeight: FontWeight.w600,
@@ -164,85 +156,27 @@ class _NotificationsPageState extends State<NotificationsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Thanh chọn Tab ngang: School & Class vs Internal
             Container(
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1)),
+                border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _activeTab = 0),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _activeTab == 0 ? const Color(0xFFE65100) : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'School & Class',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: _activeTab == 0 ? FontWeight.bold : FontWeight.w500,
-                              color: _activeTab == 0 ? const Color(0xFFE65100) : Colors.grey.shade600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _activeTab = 1),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _activeTab == 1 ? const Color(0xFFE65100) : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Internal',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: _activeTab == 1 ? FontWeight.bold : FontWeight.w500,
-                              color: _activeTab == 1 ? const Color(0xFFE65100) : Colors.grey.shade600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildTab(0, 'Trường & Lớp'),
+                  _buildTab(1, 'Hệ thống'),
                 ],
               ),
             ),
-
-            // Danh sách thông báo cuộn dọc
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 children: [
-                  // 1. Nhóm thông báo chưa đọc
-                  if (unreadItems.isNotEmpty) ...[
-                    ...unreadItems.map((item) => _buildNotificationTile(item)),
-                  ],
-
-                  // 2. Tiêu đề "YESTERDAY" (hoặc "OLDER" cho các thông báo cũ đã đọc)
+                  ...unreadItems.map(_buildNotificationTile),
                   if (readItems.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
                       child: Text(
-                        'YESTERDAY',
+                        'TRƯỚC ĐÓ',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -251,9 +185,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         ),
                       ),
                     ),
-                    ...readItems.map((item) => _buildNotificationTile(item)),
+                    ...readItems.map(_buildNotificationTile),
                   ],
-
                   if (unreadItems.isEmpty && readItems.isEmpty)
                     Center(
                       child: Padding(
@@ -262,9 +195,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           children: [
                             Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade300),
                             const SizedBox(height: 16),
-                            const Text(
-                              'No notifications found',
-                              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                            Text(
+                              'Không có thông báo',
+                              style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -279,50 +212,60 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  // Widget vẽ từng thông báo riêng lẻ
+  Widget _buildTab(int index, String label) {
+    final selected = _activeTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _activeTab = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? const Color(0xFFE65100) : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                color: selected ? const Color(0xFFE65100) : Colors.grey.shade600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildNotificationTile(NotificationItemData item) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          item.isUnread = false; // Đọc thông báo khi ấn vào
-        });
-      },
+      onTap: () => setState(() => item.isUnread = false),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          // Nền cam cực nhạt nếu chưa đọc, nền trắng nếu đã đọc
           color: item.isUnread ? const Color(0xFFFFF8F5) : Colors.white,
           border: Border(
-            bottom: BorderSide(color: Colors.grey.shade50.withOpacity(0.8), width: 1),
+            bottom: BorderSide(color: Colors.grey.shade50.withValues(alpha: 0.8)),
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hình đại diện giáo viên hoặc Icon danh mục
-            if (item.profileImageUrl != null)
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: NetworkImage(item.profileImageUrl!),
-                backgroundColor: Colors.grey.shade100,
-              )
-            else
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: item.iconBackground,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  item.icon,
-                  color: item.iconColor,
-                  size: 20,
-                ),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: item.iconBackground,
+                shape: BoxShape.circle,
               ),
+              child: Icon(item.icon, color: item.iconColor, size: 20),
+            ),
             const SizedBox(width: 14),
-
-            // Nội dung thông báo
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,7 +285,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       fontSize: 12.5,
                       color: Colors.grey.shade600,
                       height: 1.4,
-                      fontWeight: FontWeight.w400,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -359,9 +301,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 ],
               ),
             ),
-            const SizedBox(width: 10),
-
-            // Dấu chấm cam báo hiệu chưa đọc bên phải
             if (item.isUnread)
               Container(
                 margin: const EdgeInsets.only(top: 6),

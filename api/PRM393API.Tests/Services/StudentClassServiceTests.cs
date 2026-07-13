@@ -3,6 +3,7 @@ using PRM393API.DTOs;
 using PRM393API.Models;
 using PRM393API.Repositories.Interfaces;
 using PRM393API.Services;
+using PRM393API.Services.Interfaces;
 using PRM393API.Tests.Helpers;
 
 namespace PRM393API.Tests.Services;
@@ -11,11 +12,12 @@ public class StudentClassServiceTests
 {
     private readonly Mock<IStudentClassRepository> _scRepo = new();
     private readonly Mock<IClassRepository> _classRepo = new();
+    private readonly Mock<IAcademicContextService> _academicContext = new();
     private readonly StudentClassService _sut;
 
     public StudentClassServiceTests()
     {
-        _sut = new StudentClassService(_scRepo.Object, _classRepo.Object);
+        _sut = new StudentClassService(_scRepo.Object, _classRepo.Object, _academicContext.Object);
     }
 
     [Fact]

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import '../core/network/api_client.dart';
+import '../core/submit/submit_guard_mixin.dart';
 import '../models/semester_model.dart';
 import '../models/academic_year_model.dart';
 
-class SemesterController extends GetxController {
+class SemesterController extends GetxController with SubmitGuardMixin {
   final RxList<SemesterModel> semesters = <SemesterModel>[].obs;
   final RxList<AcademicYearModel> academicYears = <AcademicYearModel>[].obs;
   
@@ -52,9 +53,11 @@ class SemesterController extends GetxController {
       final response = await ApiClient.instance.get('/api/academicyear');
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        academicYears.value = data.map((json) => AcademicYearModel.fromJson(json)).toList();
+        academicYears.value = AcademicYearModel.sortedChronologically(
+          data.map((json) => AcademicYearModel.fromJson(json)),
+        );
         if (academicYears.isNotEmpty) {
-          selectedYearId.value = academicYears.first.academicYearId;
+          selectedYearId.value = AcademicYearModel.preferredDefaultId(academicYears);
         }
       }
     } catch (e) {
@@ -63,57 +66,63 @@ class SemesterController extends GetxController {
   }
 
   Future<void> createSemester(int academicYearId, String name, String startDate, String endDate) async {
-    try {
-      final response = await ApiClient.instance.post(
-        '/api/semester',
-        data: {
-          'academicYearId': academicYearId,
-          'semesterName': name,
-          'startDate': startDate,
-          'endDate': endDate,
-        },
-      );
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        Get.back();
-        Get.snackbar('Thành công', 'Thêm học kỳ mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchSemesters();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.post(
+          '/api/semester',
+          data: {
+            'academicYearId': academicYearId,
+            'semesterName': name,
+            'startDate': startDate,
+            'endDate': endDate,
+          },
+        );
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          closeDialogSafely();
+          Get.snackbar('Thành công', 'Thêm học kỳ mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchSemesters();
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Không thể thêm học kỳ', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể thêm học kỳ', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 
   Future<void> updateSemester(int id, String? name, String? startDate, String? endDate) async {
-    try {
-      final response = await ApiClient.instance.put(
-        '/api/semester/$id',
-        data: {
-          'semesterName': name,
-          'startDate': startDate,
-          'endDate': endDate,
-        },
-      );
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        Get.back();
-        Get.snackbar('Thành công', 'Cập nhật học kỳ thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchSemesters();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.put(
+          '/api/semester/$id',
+          data: {
+            'semesterName': name,
+            'startDate': startDate,
+            'endDate': endDate,
+          },
+        );
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          closeDialogSafely();
+          Get.snackbar('Thành công', 'Cập nhật học kỳ thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchSemesters();
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Không thể cập nhật học kỳ', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể cập nhật học kỳ', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 
   Future<void> deleteSemester(int id) async {
-    try {
-      final response = await ApiClient.instance.delete('/api/semester/$id');
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        Get.back();
-        Get.snackbar('Thành công', 'Xóa học kỳ thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchSemesters();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.delete('/api/semester/$id');
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          closeDialogSafely();
+          Get.snackbar('Thành công', 'Xóa học kỳ thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchSemesters();
+        }
+      } catch (e) {
+        closeDialogSafely();
+        Get.snackbar('Lỗi', 'Không thể xóa do ràng buộc dữ liệu', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.back();
-      Get.snackbar('Lỗi', 'Không thể xóa do ràng buộc dữ liệu', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 }

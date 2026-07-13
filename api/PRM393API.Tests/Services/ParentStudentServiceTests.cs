@@ -27,9 +27,22 @@ public class ParentStudentServiceTests
     [Fact]
     public async Task CreateAsync_MapsRelationship()
     {
+        _repo.Setup(r => r.GetByStudentAsync(10)).ReturnsAsync(Array.Empty<ParentStudent>());
+        _repo.Setup(r => r.GetByParentAsync(20)).ReturnsAsync(Array.Empty<ParentStudent>());
         _repo.Setup(r => r.CreateAsync(It.IsAny<ParentStudent>())).ReturnsAsync((ParentStudent ps) => ps);
         var result = await _sut.CreateAsync(new CreateParentStudentDto(20, 10, "Mẹ"));
         Assert.Equal("Mẹ", result.Relationship);
+    }
+
+    [Fact]
+    public async Task CreateAsync_StudentAlreadyLinked_Throws()
+    {
+        _repo.Setup(r => r.GetByStudentAsync(10)).ReturnsAsync(new[] { Sample() });
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _sut.CreateAsync(new CreateParentStudentDto(21, 10, "Mẹ")));
+
+        Assert.Contains("đã được liên kết", ex.Message);
     }
 
     [Fact]

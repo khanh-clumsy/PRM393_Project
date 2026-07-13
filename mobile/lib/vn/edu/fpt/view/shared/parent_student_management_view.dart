@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/parent_student_controller.dart';
+import '../../core/parent_relationship_helper.dart';
 import '../../models/parent_student_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class ParentStudentManagementView extends StatelessWidget {
   const ParentStudentManagementView({super.key});
@@ -33,10 +36,7 @@ class ParentStudentManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchInitialData,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchInitialData),
               ],
             ),
           );
@@ -141,7 +141,10 @@ class ParentStudentManagementView extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('Mã HS: ${ps.studentCode ?? 'N/A'}'),
-                                    Text('Quan hệ: ${ps.relationship}', style: const TextStyle(color: Colors.blue)),
+                                    Text(
+                                      ParentRelationshipHelper.displaySubtitle(ps.relationship),
+                                      style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
+                                    ),
                                   ],
                                 ),
                                 trailing: Row(
@@ -167,11 +170,9 @@ class ParentStudentManagementView extends StatelessWidget {
       }),
       floatingActionButton: Obx(() {
         if (controller.selectedParentId.value == null) return const SizedBox.shrink();
-        return FloatingActionButton.extended(
+        return AppFab.extended(
           onPressed: () => _showFormDialog(context, controller),
-          backgroundColor: const Color(0xFFE65100),
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text('Thêm Liên kết', style: TextStyle(color: Colors.white)),
+          label: 'Thêm Liên kết',
         );
       }),
     );
@@ -180,13 +181,9 @@ class ParentStudentManagementView extends StatelessWidget {
   void _showFormDialog(BuildContext context, ParentStudentController controller, {ParentStudentModel? ps}) {
     final isEditing = ps != null;
     int? selectedStudentId = ps?.studentId;
-    final relationshipController = TextEditingController(text: ps?.relationship ?? '');
+    String selectedRelationship = ParentRelationshipHelper.initialDropdownValue(ps?.relationship);
 
-    // Available students to link (if adding new)
-    final availableStudents = controller.allStudents.where((s) {
-      if (isEditing && s.userId == ps.studentId) return true; // keep current
-      return !controller.parentStudents.any((existing) => existing.studentId == s.userId);
-    }).toList();
+    final availableStudents = controller.getAvailableStudents(keepStudentId: isEditing ? ps.studentId : null);
 
     Get.dialog(
       StatefulBuilder(builder: (context, setState) {
@@ -197,6 +194,7 @@ class ParentStudentManagementView extends StatelessWidget {
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!isEditing)
                   DropdownMenu<int>(
@@ -224,49 +222,80 @@ class ParentStudentManagementView extends StatelessWidget {
                     },
                   ),
                 if (!isEditing) const SizedBox(height: 16),
-                TextField(
-                  controller: relationshipController,
+                const Text(
+                  'Mối quan hệ với học sinh',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF616161)),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: selectedRelationship,
+                  isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: 'Mối quan hệ (VD: Bố, Mẹ)',
                     filled: true,
                     fillColor: const Color(0xFFF5F5F5),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
+                  selectedItemBuilder: (context) {
+                    return ParentRelationshipHelper.options.map((option) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          option.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      );
+                    }).toList();
+                  },
+                  items: ParentRelationshipHelper.options.map((option) {
+                    return DropdownMenuItem<String>(
+                      value: option.value,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(option.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            option.description,
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => selectedRelationship = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  ParentRelationshipHelper.displayDescription(selectedRelationship),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
-                final rel = relationshipController.text.trim();
-                if (rel.isEmpty) {
-                  Get.snackbar('Lỗi', 'Vui lòng nhập mối quan hệ', backgroundColor: Colors.redAccent, colorText: Colors.white);
-                  return;
-                }
-                
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: isEditing ? AppDialogLabels.save : AppDialogLabels.add,
+              onSubmit: () {
                 if (isEditing) {
-                  controller.updateParentStudent(ps.parentStudentId, rel, controller.selectedParentId.value!);
+                  controller.updateParentStudent(ps.parentStudentId, selectedRelationship, controller.selectedParentId.value!);
                 } else {
                   if (selectedStudentId == null) {
                     Get.snackbar('Lỗi', 'Vui lòng chọn học sinh', backgroundColor: Colors.redAccent, colorText: Colors.white);
                     return;
                   }
-                  controller.createParentStudent(controller.selectedParentId.value!, selectedStudentId!, rel);
+                  controller.createParentStudent(controller.selectedParentId.value!, selectedStudentId!, selectedRelationship);
                 }
               },
-              child: Text(isEditing ? 'Lưu' : 'Thêm'),
             ),
           ],
         );
@@ -282,17 +311,12 @@ class ParentStudentManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa liên kết với học sinh ${ps.studentName}?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteParentStudent(ps.parentStudentId, controller.selectedParentId.value!);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteParentStudent(ps.parentStudentId, controller.selectedParentId.value!),
           ),
         ],
       ),

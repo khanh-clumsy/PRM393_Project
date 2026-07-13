@@ -9,7 +9,7 @@ namespace PRM393API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class ParentStudentController(IParentStudentService service) : ControllerBase
+public class ParentStudentController(IParentStudentService service, IAcademicContextService academicContext) : ControllerBase
 {
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
@@ -48,40 +48,44 @@ public class ParentStudentController(IParentStudentService service) : Controller
     }
 
     [HttpGet("dashboard/{parentId:int}")]
-    public async Task<IActionResult> GetDashboard(int parentId, [FromServices] PRM393API.Models.Prm393dbContext db)
+    public async Task<IActionResult> GetDashboard(int parentId, [FromQuery] DateOnly? date, [FromServices] PRM393API.Models.Prm393dbContext db)
     {
+        var referenceDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var parent = await db.Users.FindAsync(parentId);
         if (parent == null) return NotFound("Phụ huynh không tồn tại.");
 
-        var children = await db.ParentStudents
+        var links = await db.ParentStudents
             .Where(ps => ps.ParentId == parentId)
             .Include(ps => ps.Student)
-            .Select(ps => new
+            .ToListAsync();
+
+        var children = new List<object>();
+        foreach (var ps in links)
+        {
+            var enrollment = await academicContext.ResolveStudentEnrollmentAsync(ps.StudentId, referenceDate);
+            children.Add(new
             {
                 ps.ParentStudentId,
                 ps.StudentId,
                 StudentName = ps.Student.FullName,
                 ps.Relationship,
-                ClassId = db.StudentClasses
-                    .Where(sc => sc.StudentId == ps.StudentId)
-                    .Select(sc => sc.ClassId)
-                    .FirstOrDefault(),
-                ClassName = db.StudentClasses
-                    .Where(sc => sc.StudentId == ps.StudentId)
-                    .Include(sc => sc.Class)
-                    .Select(sc => sc.Class.ClassName)
-                    .FirstOrDefault(),
+                ClassId = enrollment?.ClassId,
+                ClassName = enrollment?.ClassName,
+                AcademicYearId = enrollment?.AcademicYearId,
+                AcademicYearName = enrollment?.AcademicYearName,
+                EnrollmentResolvedAt = referenceDate,
                 AttendanceToday = db.AttendanceRecords
-                    .Where(a => a.StudentId == ps.StudentId && a.RecordedAt.Date == DateTime.Today)
+                    .Where(a => a.StudentId == ps.StudentId && a.RecordedAt.Date == referenceDate.ToDateTime(TimeOnly.MinValue).Date)
                     .Select(a => new { a.AttendanceId, a.TimetableId, a.Status, a.Note })
                     .ToList()
-            })
-            .ToListAsync();
+            });
+        }
 
         return Ok(new
         {
             ParentId = parent.UserId,
             ParentName = parent.FullName,
+            ReferenceDate = referenceDate,
             Children = children
         });
     }

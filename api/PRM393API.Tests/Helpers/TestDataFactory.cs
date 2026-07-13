@@ -74,11 +74,11 @@ internal static class TestDataFactory
             EndDate = new DateOnly(2026, 1, 15),
         };
 
-    internal static Class CreateClass(int id = 1, int academicYearId = 1, int? homeroomTeacherId = null) =>
+    internal static Class CreateClass(int id = 1, int academicYearId = 1, int? homeroomTeacherId = null, string className = "10A1") =>
         new()
         {
             ClassId = id,
-            ClassName = "10A1",
+            ClassName = className,
             AcademicYearId = academicYearId,
             HomeroomTeacherId = homeroomTeacherId,
         };

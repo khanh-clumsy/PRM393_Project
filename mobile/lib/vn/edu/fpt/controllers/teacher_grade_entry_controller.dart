@@ -10,6 +10,16 @@ import 'package:prm393_mobile/vn/edu/fpt/core/network/api_client.dart';
 import 'package:prm393_mobile/vn/edu/fpt/core/storage/local_storage.dart';
 
 class TeacherGradeEntryController extends GetxController {
+  final int? initialYearId;
+  final int? initialSemesterId;
+  final int? initialAssignmentId;
+
+  TeacherGradeEntryController({
+    this.initialYearId,
+    this.initialSemesterId,
+    this.initialAssignmentId,
+  });
+
   var isLoading = false.obs;
   var isSaving = false.obs;
   var errorMessage = ''.obs;
@@ -36,6 +46,8 @@ class TeacherGradeEntryController extends GetxController {
     _loadInitialData();
   }
 
+  Future<void> reload() => _loadInitialData();
+
   Future<void> _loadInitialData() async {
     isLoading(true);
     errorMessage('');
@@ -51,22 +63,44 @@ class TeacherGradeEntryController extends GetxController {
         ApiClient.instance.get('/api/assessmenttype'),
       ]);
 
-      academicYears.value = (responses[0].data as List).map((j) => AcademicYearModel.fromJson(j)).toList();
+      academicYears.value = AcademicYearModel.sortedChronologically(
+        (responses[0].data as List).map((j) => AcademicYearModel.fromJson(j)),
+      );
       allSemesters.value = (responses[1].data as List).map((j) => SemesterModel.fromJson(j)).toList();
       allAssignments.value = (responses[2].data as List).map((j) => TeachingAssignmentModel.fromJson(j)).toList();
       assessmentTypes.value = (responses[3].data as List).map((j) => AssessmentTypeModel.fromJson(j)).toList();
 
-      // Auto-select first Year
-      if (academicYears.isNotEmpty) {
-        onYearChanged(academicYears.first.academicYearId);
-      }
       if (assessmentTypes.isNotEmpty) {
         selectedAssessmentTypeId.value = assessmentTypes.first.assessmentTypeId;
       }
+
+      _applyInitialSelection();
     } on DioException catch (e) {
       errorMessage('Lỗi khi tải dữ liệu: ${e.message}');
     } finally {
       isLoading(false);
+    }
+  }
+
+  void _applyInitialSelection() {
+    final yearId = initialYearId ?? AcademicYearModel.preferredDefaultId(academicYears);
+    if (yearId == null) return;
+
+    selectedAcademicYearId.value = yearId;
+    filteredSemesters.value = allSemesters.where((s) => s.academicYearId == yearId).toList();
+
+    final semesterId = initialSemesterId ??
+        filteredSemesters.firstOrNull?.semesterId;
+    if (semesterId == null) return;
+
+    selectedSemesterId.value = semesterId;
+    filteredAssignments.value = allAssignments.where((a) => a.semesterId == semesterId).toList();
+
+    final assignmentId = initialAssignmentId ??
+        filteredAssignments.firstOrNull?.teachingAssignmentId;
+    if (assignmentId != null) {
+      selectedAssignmentId.value = assignmentId;
+      fetchStudents();
     }
   }
 
@@ -131,7 +165,18 @@ class TeacherGradeEntryController extends GetxController {
 
   Future<void> saveGrades() async {
     if (selectedAssignmentId.value == null || selectedAssessmentTypeId.value == null) return;
-    
+
+    final invalid = students.where((s) => s.score != null && (s.score! < 0 || s.score! > 10)).toList();
+    if (invalid.isNotEmpty) {
+      Get.snackbar(
+        'Điểm không hợp lệ',
+        'Điểm phải nằm trong khoảng từ 0 đến 10.',
+        backgroundColor: const Color(0xFFFFEBEE),
+        colorText: const Color(0xFFC62828),
+      );
+      return;
+    }
+
     try {
       isSaving(true);
       errorMessage('');

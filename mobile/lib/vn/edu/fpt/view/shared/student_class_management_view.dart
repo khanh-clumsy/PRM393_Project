@@ -4,6 +4,8 @@ import '../../controllers/student_class_controller.dart';
 import '../../models/student_class_model.dart';
 import '../../models/class_model.dart';
 import '../../models/academic_year_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class StudentClassManagementView extends StatelessWidget {
   const StudentClassManagementView({super.key});
@@ -35,10 +37,7 @@ class StudentClassManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchInitialData,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchInitialData),
               ],
             ),
           );
@@ -183,11 +182,9 @@ class StudentClassManagementView extends StatelessWidget {
       }),
       floatingActionButton: Obx(() {
         if (controller.selectedClassId.value == null) return const SizedBox.shrink();
-        return FloatingActionButton.extended(
+        return AppFab.extended(
           onPressed: () => _showFormDialog(context, controller),
-          backgroundColor: const Color(0xFFE65100),
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text('Thêm Học sinh', style: TextStyle(color: Colors.white)),
+          label: 'Thêm Học sinh',
         );
       }),
     );
@@ -198,9 +195,7 @@ class StudentClassManagementView extends StatelessWidget {
 
     // Lọc ra các học sinh chưa có trong lớp này (Hoặc có thể lọc chặt hơn: chưa có trong lớp nào trong năm nay)
     // Ở đây chỉ đơn giản lọc các học sinh chưa có trong danh sách hiển thị
-    final availableStudents = controller.allStudents.where((s) {
-      return !controller.studentClasses.any((sc) => sc.studentId == s.userId);
-    }).toList();
+    final availableStudents = controller.getAvailableStudentsForClass(controller.selectedClassId.value ?? 0);
 
     Get.dialog(
       StatefulBuilder(builder: (context, setState) {
@@ -240,24 +235,17 @@ class StudentClassManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: AppDialogLabels.add,
+              onSubmit: () {
                 if (selectedStudentId == null) {
                   Get.snackbar('Lỗi', 'Vui lòng chọn học sinh', backgroundColor: Colors.redAccent, colorText: Colors.white);
                   return;
                 }
                 controller.addStudentToClass(selectedStudentId!, controller.selectedClassId.value!);
               },
-              child: const Text('Thêm'),
             ),
           ],
         );
@@ -273,17 +261,12 @@ class StudentClassManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa học sinh ${sc.studentName} khỏi lớp này?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.removeStudentFromClass(sc.studentClassId, controller.selectedClassId.value!);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.removeStudentFromClass(sc.studentClassId, controller.selectedClassId.value!),
           ),
         ],
       ),

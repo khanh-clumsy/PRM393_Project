@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/user_controller.dart';
 import '../../models/user_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class UserManagementView extends StatelessWidget {
   const UserManagementView({super.key});
@@ -50,10 +52,7 @@ class UserManagementView extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: controller.fetchUsers,
-                    child: const Text('Thử lại'),
-                  ),
+                  AppButton.retry(onPressed: controller.fetchUsers),
                 ],
               ),
             );
@@ -92,11 +91,16 @@ class UserManagementView extends StatelessWidget {
                               )
                             : null,
                       ),
-                      title: Text(user.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(user.username), // No need to show roleName since they are in a specific tab
+                      title: Text(user.fullName, style: TextStyle(fontWeight: FontWeight.bold, color: user.isActive ? null : Colors.grey)),
+                      subtitle: Text(user.isActive ? user.username : '${user.username} (Đã khóa)'),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          IconButton(
+                            icon: Icon(user.isActive ? Icons.lock_open : Icons.lock, color: user.isActive ? Colors.green : Colors.orange),
+                            tooltip: user.isActive ? 'Khóa tài khoản' : 'Mở khóa',
+                            onPressed: () => controller.toggleUserActive(user),
+                          ),
                           IconButton(
                             icon: const Icon(Icons.edit_outlined, color: Colors.blue),
                             onPressed: () => _showFormDialog(context, controller, user: user, defaultRoleId: roleId),
@@ -116,15 +120,12 @@ class UserManagementView extends StatelessWidget {
         }),
         floatingActionButton: Builder(
           builder: (ctx) {
-            return FloatingActionButton(
+            return AppFab.add(
               onPressed: () {
                 final currentTabIndex = DefaultTabController.of(ctx).index;
                 final defaultRoleId = tabs[currentTabIndex]['id'] as int;
                 _showFormDialog(context, controller, defaultRoleId: defaultRoleId);
               },
-              backgroundColor: const Color(0xFFE65100),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.add, color: Colors.white),
             );
           }
         ),
@@ -277,17 +278,11 @@ class UserManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: isEditing ? AppDialogLabels.save : AppDialogLabels.add,
+              onSubmit: () {
                 final username = usernameController.text.trim();
                 final password = passwordController.text.trim();
                 final name = nameController.text.trim();
@@ -330,7 +325,6 @@ class UserManagementView extends StatelessWidget {
                   );
                 }
               },
-              child: Text(isEditing ? 'Lưu' : 'Thêm'),
             ),
           ],
         );
@@ -346,17 +340,12 @@ class UserManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa tài khoản "${user.username}" không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteUser(user.userId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteUser(user.userId),
           ),
         ],
       ),

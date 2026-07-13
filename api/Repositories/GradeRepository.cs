@@ -94,6 +94,11 @@ public class GradeRepository(Prm393dbContext db) : IGradeRepository
 
     public async Task<YearlyTranscriptDto> GetYearlyTranscriptAsync(int studentId, int academicYearId)
     {
+        var allSemesters = await db.Semesters
+            .Where(s => s.AcademicYearId == academicYearId)
+            .OrderBy(s => s.StartDate)
+            .ToListAsync();
+
         var data = await db.TeachingAssignments
             .Include(ta => ta.Subject)
             .Include(ta => ta.Semester)
@@ -101,60 +106,21 @@ public class GradeRepository(Prm393dbContext db) : IGradeRepository
                 .ThenInclude(a => a.AssessmentType)
             .Include(ta => ta.Assessments)
                 .ThenInclude(a => a.Grades.Where(g => g.StudentId == studentId))
-            .Where(ta => ta.Semester.AcademicYearId == academicYearId && 
+            .Where(ta => ta.Semester.AcademicYearId == academicYearId &&
                          db.StudentClasses.Any(sc => sc.StudentId == studentId && sc.ClassId == ta.ClassId))
             .ToListAsync();
 
+        var assignmentsBySemester = data
+            .GroupBy(ta => ta.SemesterId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
         var semesters = new List<SemesterTranscriptDto>();
 
-        var groupedBySemester = data.GroupBy(ta => ta.Semester);
-
-        foreach (var group in groupedBySemester)
+        foreach (var semester in allSemesters)
         {
-            var semester = group.Key;
-            var semesterSubjects = new List<SemesterSubjectTranscriptDto>();
-
-            foreach (var ta in group)
-            {
-                var grades = new List<AssessmentGradeDto>();
-                decimal totalWeight = 0;
-                decimal totalScore = 0;
-
-                foreach (var a in ta.Assessments)
-                {
-                    var g = a.Grades.FirstOrDefault();
-                    grades.Add(new AssessmentGradeDto(
-                        a.AssessmentId,
-                        a.AssessmentName,
-                        a.AssessmentType.TypeName,
-                        a.AssessmentType.Weight,
-                        a.MaxScore,
-                        g?.Score,
-                        g?.Comment,
-                        g?.EnteredAt
-                    ));
-
-                    if (g?.Score != null)
-                    {
-                        totalWeight += a.AssessmentType.Weight;
-                        totalScore += g.Score.Value * a.AssessmentType.Weight;
-                    }
-                }
-
-                decimal? overallScore = totalWeight > 0 ? Math.Round(totalScore / totalWeight, 1) : null;
-                
-                bool isPassed = overallScore >= 5.0m;
-
-                semesterSubjects.Add(new SemesterSubjectTranscriptDto(
-                    ta.SubjectId,
-                    ta.Subject.SubjectName,
-                    ta.Subject.SubjectCode,
-                    overallScore,
-                    null, // Yearly average will be calculated later
-                    isPassed,
-                    grades
-                ));
-            }
+            var semesterSubjects = assignmentsBySemester.TryGetValue(semester.SemesterId, out var assignments)
+                ? BuildSemesterSubjects(assignments)
+                : [];
 
             var semesterSummary = await db.StudentSemesterSummaries
                 .Include(s => s.Rank)
@@ -180,12 +146,7 @@ public class GradeRepository(Prm393dbContext db) : IGradeRepository
             if (sem1Subject?.OverallScore != null && sem2Subject?.OverallScore != null)
             {
                 var yearlyAvg = Math.Round((sem1Subject.OverallScore.Value + sem2Subject.OverallScore.Value * 2) / 3, 1);
-                
-                // Update in memory
-                if (sem1Subject != null) sem1Subject = sem1Subject with { YearlyAverageScore = yearlyAvg };
-                if (sem2Subject != null) sem2Subject = sem2Subject with { YearlyAverageScore = yearlyAvg };
 
-                // Since records are immutable, we need to replace them in the list.
                 foreach (var sem in semesters)
                 {
                     var index = sem.Subjects.FindIndex(s => s.SubjectId == subjectId);
@@ -201,11 +162,59 @@ public class GradeRepository(Prm393dbContext db) : IGradeRepository
             .FirstOrDefaultAsync(s => s.StudentId == studentId && s.AcademicYearId == academicYearId);
 
         return new YearlyTranscriptDto(
-            studentId, 
-            academicYearId, 
-            yearlySummary?.YearlyGpa, 
-            yearlySummary?.YearlyConduct, 
+            studentId,
+            academicYearId,
+            yearlySummary?.YearlyGpa,
+            yearlySummary?.YearlyConduct,
             semesters);
+    }
+
+    private static List<SemesterSubjectTranscriptDto> BuildSemesterSubjects(IEnumerable<TeachingAssignment> assignments)
+    {
+        var semesterSubjects = new List<SemesterSubjectTranscriptDto>();
+
+        foreach (var ta in assignments)
+        {
+            var grades = new List<AssessmentGradeDto>();
+            decimal totalWeight = 0;
+            decimal totalScore = 0;
+
+            foreach (var a in ta.Assessments)
+            {
+                var g = a.Grades.FirstOrDefault();
+                grades.Add(new AssessmentGradeDto(
+                    a.AssessmentId,
+                    a.AssessmentName,
+                    a.AssessmentType.TypeName,
+                    a.AssessmentType.Weight,
+                    a.MaxScore,
+                    g?.Score,
+                    g?.Comment,
+                    g?.EnteredAt
+                ));
+
+                if (g?.Score != null)
+                {
+                    totalWeight += a.AssessmentType.Weight;
+                    totalScore += g.Score.Value * a.AssessmentType.Weight;
+                }
+            }
+
+            decimal? overallScore = totalWeight > 0 ? Math.Round(totalScore / totalWeight, 1) : null;
+            bool isPassed = overallScore >= 5.0m;
+
+            semesterSubjects.Add(new SemesterSubjectTranscriptDto(
+                ta.SubjectId,
+                ta.Subject.SubjectName,
+                ta.Subject.SubjectCode,
+                overallScore,
+                null,
+                isPassed,
+                grades
+            ));
+        }
+
+        return semesterSubjects;
     }
 
     public async Task<IEnumerable<StudentGradeEntryDto>> GetClassGradesAsync(int teachingAssignmentId, int assessmentId)

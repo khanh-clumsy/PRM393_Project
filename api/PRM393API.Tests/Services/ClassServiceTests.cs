@@ -18,13 +18,14 @@ public class ClassServiceTests
     public async Task CreateAsync_NoHomeroomTeacher_Succeeds()
     {
         var dto = new CreateClassDto("10A2", 1, null);
+        _repo.Setup(r => r.GetByAcademicYearAsync(1)).ReturnsAsync(Array.Empty<Class>());
         _repo.Setup(r => r.CreateAsync(It.IsAny<Class>()))
             .ReturnsAsync((Class c) => { c.ClassId = 2; return c; });
 
         var result = await _sut.CreateAsync(dto);
 
         Assert.Equal("10A2", result.ClassName);
-        _repo.Verify(r => r.GetByAcademicYearAsync(It.IsAny<int>()), Times.Never);
+        _repo.Verify(r => r.GetByAcademicYearAsync(1), Times.Once);
     }
 
     [Fact]
@@ -82,6 +83,35 @@ public class ClassServiceTests
 
         Assert.NotNull(result);
         Assert.Equal("10A1 đổi tên", result!.ClassName);
+    }
+
+    [Fact]
+    public async Task CreateAsync_DuplicateClassNameInSameYear_Throws()
+    {
+        var dto = new CreateClassDto("10A1", 1, null);
+        _repo.Setup(r => r.GetByAcademicYearAsync(1))
+            .ReturnsAsync(new[] { TestDataFactory.CreateClass(className: "10A1") });
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateAsync(dto));
+
+        Assert.Contains("đã tồn tại", ex.Message);
+        _repo.Verify(r => r.CreateAsync(It.IsAny<Class>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DuplicateClassName_Throws()
+    {
+        var existing = TestDataFactory.CreateClass(id: 1, homeroomTeacherId: 5);
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(existing);
+        _repo.Setup(r => r.GetByAcademicYearAsync(1))
+            .ReturnsAsync(new[]
+            {
+                existing,
+                TestDataFactory.CreateClass(id: 2, className: "10A2"),
+            });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _sut.UpdateAsync(1, new UpdateClassDto("10A2", 5)));
     }
 
     [Fact]

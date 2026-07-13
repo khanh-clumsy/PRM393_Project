@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/timetable_controller.dart';
-import '../student/notifications_view.dart';
+import '../../controllers/user_controller.dart';
+import '../../widgets/student_welcome_app_bar.dart';
+import '../teacher/teacher_attendance_view.dart';
 
 class TimetablePage extends StatelessWidget {
   const TimetablePage({super.key});
@@ -32,6 +34,27 @@ class TimetablePage extends StatelessWidget {
     }
   }
 
+  bool _checkIsToday(String dateStr) {
+    try {
+      final now = DateTime.now();
+      final date = DateTime.parse(dateStr.split('T')[0]);
+      return date.year == now.year && date.month == now.month && date.day == now.day;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _checkIsPastDay(String dateStr) {
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final date = DateTime.parse(dateStr.split('T')[0]);
+      return date.isBefore(today);
+    } catch (_) {
+      return false;
+    }
+  }
+
   double _getElapsedProgress(String startStr, String endStr) {
     try {
       final now = DateTime.now();
@@ -50,65 +73,34 @@ class TimetablePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(TimetableController());
+    final userController = Get.isRegistered<UserController>()
+        ? Get.find<UserController>()
+        : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Obx(() => Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFFCC80), width: 1.5),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Color(0xFFFFE0B2),
-                    child: Icon(Icons.person, color: Color(0xFFE65100), size: 20),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'FSchool',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFE65100),
-                      ),
-                    ),
-                    Text(
-                      controller.studentName.value.isNotEmpty
-                          ? controller.studentName.value
-                          : 'Học sinh',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            )),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
-              );
-            },
-            icon: const Icon(Icons.notifications_none_rounded, color: Color(0xFF424242), size: 26),
-          ),
-          const SizedBox(width: 8),
-        ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Obx(() {
+          final role = controller.userRole.value.toLowerCase();
+          String welcomeLine;
+          if (role == 'student' && userController != null) {
+            welcomeLine = userController.welcomeText;
+          } else if (role == 'parent') {
+            welcomeLine = controller.studentName.value.isNotEmpty
+                ? 'Con: ${controller.studentName.value}'
+                : 'Phụ huynh';
+          } else if (controller.studentName.value.isNotEmpty) {
+            welcomeLine = controller.studentName.value;
+          } else {
+            welcomeLine = 'Học sinh';
+          }
+
+          return StudentWelcomeAppBar(
+            welcomeLine: welcomeLine,
+            showNotificationBadge: role == 'student',
+          );
+        }),
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.timetables.isEmpty) {
@@ -343,10 +335,14 @@ class TimetablePage extends StatelessWidget {
                         final t = controller.filteredTimetablesByDay[index];
                         final isOngoing = _checkIfOngoing(t.date, t.startTime, t.endTime);
                         final isPast = _checkIsPast(t.date, t.endTime);
+                        final isToday = _checkIsToday(t.date);
+                        final isPastDay = _checkIsPastDay(t.date);
                         final progress = _getElapsedProgress(t.startTime, t.endTime);
 
                         // Lấy điểm danh cho tiết này
                         final attendance = controller.getAttendanceForTimetable(t.timetableId);
+                        final isTeacher = controller.userRole.value.toLowerCase() == 'teacher';
+                        final canTakeAttendance = isTeacher && t.status != 3 && isToday;
 
                         return Column(
                           children: [
@@ -370,7 +366,7 @@ class TimetablePage extends StatelessWidget {
                                           ),
                                         ),
                                         Text(
-                                          int.parse(t.startTime.substring(0, 2)) < 12 ? 'AM' : 'PM',
+                                          int.parse(t.startTime.substring(0, 2)) < 12 ? 'Sáng' : 'Chiều',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w500,
@@ -405,7 +401,22 @@ class TimetablePage extends StatelessWidget {
 
                                   // Card tiết học
                                   Expanded(
-                                    child: Container(
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: canTakeAttendance
+                                            ? () {
+                                                final slotDate = DateTime.parse(t.date.split('T')[0]);
+                                                Get.to(() => TeacherAttendanceView(
+                                                      initialDate: slotDate,
+                                                      initialTimetableId: t.timetableId,
+                                                    ))?.then((_) {
+                                                  controller.fetchWeeklyTimetables();
+                                                });
+                                              }
+                                            : null,
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
                                       margin: const EdgeInsets.only(bottom: 20),
                                       decoration: BoxDecoration(
                                         color: t.status == 3 ? Colors.grey.shade100 : Colors.white,
@@ -473,10 +484,14 @@ class TimetablePage extends StatelessWidget {
                                             const SizedBox(height: 6),
                                             Row(
                                               children: [
-                                                Icon(Icons.person_outline_rounded, size: 13, color: Colors.grey.shade600),
+                                                Icon(
+                                                  isTeacher ? Icons.class_outlined : Icons.person_outline_rounded,
+                                                  size: 13,
+                                                  color: Colors.grey.shade600,
+                                                ),
                                                 const SizedBox(width: 5),
                                                 Text(
-                                                  t.teacherName,
+                                                  isTeacher ? t.className : t.teacherName,
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: Colors.grey.shade600,
@@ -505,13 +520,16 @@ class TimetablePage extends StatelessWidget {
                                               ],
                                             ),
 
-                                            // Badge điểm danh (chỉ hiện khi đã qua hoặc đang học)
-                                            if (isPast || isOngoing) ...[
+                                            // Badge điểm danh
+                                            if (t.status != 3 && (isTeacher || isPast || isOngoing)) ...[
                                               const SizedBox(height: 8),
                                               _AttendanceBadge(
                                                 attendance: attendance,
                                                 isPast: isPast,
                                                 isOngoing: isOngoing,
+                                                isTeacher: isTeacher,
+                                                isAttendanceTaken: t.isAttendanceTaken,
+                                                isPastDay: isPastDay,
                                               ),
                                             ],
 
@@ -552,9 +570,30 @@ class TimetablePage extends StatelessWidget {
                                                 ),
                                               )
                                             ],
+                                            if (canTakeAttendance) ...[
+                                              const SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.fact_check_outlined, size: 14, color: Colors.green.shade700),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Chạm để điểm danh',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: Colors.green.shade700,
+                                                    ),
+                                                  ),
+                                                  const Spacer(),
+                                                  Icon(Icons.chevron_right, size: 18, color: Colors.green.shade700),
+                                                ],
+                                              ),
+                                            ],
                                           ],
                                         ),
                                       ),
+                                    ),
+                                    ),
                                     ),
                                   ),
                                 ],
@@ -584,15 +623,31 @@ class _AttendanceBadge extends StatelessWidget {
   final dynamic attendance;
   final bool isPast;
   final bool isOngoing;
+  final bool isTeacher;
+  final bool isAttendanceTaken;
+  final bool isPastDay;
 
   const _AttendanceBadge({
     required this.attendance,
     required this.isPast,
     required this.isOngoing,
+    this.isTeacher = false,
+    this.isAttendanceTaken = false,
+    this.isPastDay = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (isTeacher) {
+      if (isAttendanceTaken) {
+        return _chip('Đã điểm danh', const Color(0xFFE8F5E9), const Color(0xFF2E7D32), Icons.check_circle_outline_rounded);
+      }
+      if (isPastDay) {
+        return _chip('Đã quá hạn', const Color(0xFFFFEBEE), const Color(0xFFC62828), Icons.event_busy_outlined);
+      }
+      return _chip('Chưa điểm danh', const Color(0xFFFFF3E0), const Color(0xFFE65100), Icons.pending_outlined);
+    }
+
     if (attendance == null) {
       if (isOngoing) {
         return _chip('Đang học', const Color(0xFFFFE0B2), const Color(0xFFE65100), Icons.schedule_rounded);
@@ -602,12 +657,16 @@ class _AttendanceBadge extends StatelessWidget {
 
     final status = (attendance.status as String).toLowerCase();
     switch (status) {
+      case 'p':
       case 'present':
         return _chip('Có mặt', const Color(0xFFE8F5E9), const Color(0xFF2E7D32), Icons.check_circle_outline_rounded);
+      case 'a':
       case 'absent':
         return _chip('Vắng mặt', const Color(0xFFFFEBEE), const Color(0xFFC62828), Icons.cancel_outlined);
+      case 'l':
       case 'late':
         return _chip('Đi muộn', const Color(0xFFFFF8E1), const Color(0xFFF57F17), Icons.watch_later_outlined);
+      case 'e':
       case 'excused':
         return _chip('Có phép', const Color(0xFFE3F2FD), const Color(0xFF1565C0), Icons.assignment_turned_in_outlined);
       default:

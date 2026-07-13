@@ -132,21 +132,21 @@ public class AttendanceRepository(Prm393dbContext db) : IAttendanceRepository
 
                 if (attendanceMap.TryGetValue(timetable.TimetableId, out var ar))
                 {
-                    status = ar.Status; // "Present", "Absent", "Late", "Excused"
+                    status = ToDisplayStatus(ar.Status);
                     note = ar.Note;
 
-                    switch (status.ToLower())
+                    switch (ToStorageStatus(ar.Status))
                     {
-                        case "present":
+                        case "P":
                             present++;
                             break;
-                        case "absent":
+                        case "A":
                             absent++;
                             break;
-                        case "late":
+                        case "L":
                             late++;
                             break;
-                        case "excused":
+                        case "E":
                             excused++;
                             break;
                     }
@@ -198,4 +198,24 @@ public class AttendanceRepository(Prm393dbContext db) : IAttendanceRepository
             Subjects = result
         };
     }
+
+    private static string ToStorageStatus(string status) =>
+        status.Trim().ToUpperInvariant() switch
+        {
+            "P" or "PRESENT" => "P",
+            "A" or "ABSENT" => "A",
+            "L" or "LATE" => "L",
+            "E" or "EXCUSED" => "E",
+            _ => status
+        };
+
+    private static string ToDisplayStatus(string status) =>
+        ToStorageStatus(status) switch
+        {
+            "P" => "Present",
+            "A" => "Absent",
+            "L" => "Late",
+            "E" => "Excused",
+            _ => status
+        };
 }

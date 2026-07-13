@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import '../core/network/api_client.dart';
+import '../core/submit/submit_guard_mixin.dart';
 import '../models/department_model.dart';
 
-class DepartmentController extends GetxController {
+class DepartmentController extends GetxController with SubmitGuardMixin {
   final RxList<DepartmentModel> departments = <DepartmentModel>[].obs;
   final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
@@ -37,54 +38,60 @@ class DepartmentController extends GetxController {
   }
 
   Future<void> createDepartment(String name, String? description) async {
-    try {
-      final response = await ApiClient.instance.post(
-        '/api/department',
-        data: {
-          'departmentName': name,
-          'description': description,
-        },
-      );
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        Get.back(); // Close dialog
-        Get.snackbar('Thành công', 'Thêm phòng ban mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchDepartments();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.post(
+          '/api/department',
+          data: {
+            'departmentName': name,
+            'description': description,
+          },
+        );
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          closeDialogSafely(); // Close dialog
+          Get.snackbar('Thành công', 'Thêm phòng ban mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchDepartments();
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Không thể thêm phòng ban', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể thêm phòng ban', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 
   Future<void> updateDepartment(int id, String name, String? description) async {
-    try {
-      final response = await ApiClient.instance.put(
-        '/api/department/$id',
-        data: {
-          'departmentName': name,
-          'description': description,
-        },
-      );
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        Get.back(); // Close dialog
-        Get.snackbar('Thành công', 'Cập nhật phòng ban thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchDepartments();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.put(
+          '/api/department/$id',
+          data: {
+            'departmentName': name,
+            'description': description,
+          },
+        );
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          closeDialogSafely(); // Close dialog
+          Get.snackbar('Thành công', 'Cập nhật phòng ban thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchDepartments();
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Không thể cập nhật phòng ban', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể cập nhật phòng ban', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 
   Future<void> deleteDepartment(int id) async {
-    try {
-      final response = await ApiClient.instance.delete('/api/department/$id');
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        Get.back(); // Close confirm dialog
-        Get.snackbar('Thành công', 'Xóa phòng ban thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchDepartments();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.delete('/api/department/$id');
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          closeDialogSafely(); // Close confirm dialog
+          Get.snackbar('Thành công', 'Xóa phòng ban thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchDepartments();
+        }
+      } catch (e) {
+        closeDialogSafely(); // Close confirm dialog
+        Get.snackbar('Lỗi', 'Không thể xóa do ràng buộc dữ liệu (Khoá ngoại)', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.back(); // Close confirm dialog
-      Get.snackbar('Lỗi', 'Không thể xóa do ràng buộc dữ liệu (Khoá ngoại)', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 }

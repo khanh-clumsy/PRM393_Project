@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../core/auth/role_context.dart';
 import '../../controllers/class_controller.dart';
 import '../../models/class_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class ClassManagementView extends StatelessWidget {
-  const ClassManagementView({super.key});
+  final ScopeMode scopeMode;
+  const ClassManagementView({super.key, this.scopeMode = ScopeMode.admin});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ClassController());
+    final controller = Get.put(ClassController(scopeMode: scopeMode));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
@@ -33,10 +37,7 @@ class ClassManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchInitialData,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchInitialData),
               ],
             ),
           );
@@ -136,11 +137,8 @@ class ClassManagementView extends StatelessWidget {
       )
     ]);
     }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab.add(
         onPressed: () => _showFormDialog(context, controller),
-        backgroundColor: const Color(0xFFE65100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -148,12 +146,8 @@ class ClassManagementView extends StatelessWidget {
   void _showFormDialog(BuildContext context, ClassController controller, {ClassModel? cls}) {
     final isEditing = cls != null;
     final nameController = TextEditingController(text: cls?.className ?? '');
-    int? selectedYearId = cls?.academicYearId;
+    final yearId = isEditing ? cls.academicYearId : controller.selectedYearId.value;
     int? selectedTeacherId = cls?.homeroomTeacherId;
-
-    if (controller.academicYears.isNotEmpty && selectedYearId == null) {
-      selectedYearId = controller.academicYears.first.academicYearId;
-    }
 
     Get.dialog(
       StatefulBuilder(builder: (context, setState) {
@@ -165,37 +159,6 @@ class ClassManagementView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!isEditing)
-                  DropdownButtonFormField<int>(
-                    decoration: InputDecoration(
-                      labelText: 'Năm học',
-                      filled: true,
-                      fillColor: const Color(0xFFF5F5F5),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    ),
-                    value: selectedYearId,
-                    items: controller.academicYears.map((y) {
-                      return DropdownMenuItem<int>(
-                        value: y.academicYearId,
-                        child: Text(y.yearName),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        selectedYearId = val;
-                        // Khi đổi năm học, reset GVCN nếu GVCN hiện tại đã có lớp trong năm học mới
-                        if (selectedTeacherId != null) {
-                          final valid = controller.getAvailableTeachers(selectedYearId ?? 0, cls?.classId).any((t) => t.userId == selectedTeacherId);
-                          if (!valid) {
-                            selectedTeacherId = null;
-                          }
-                        }
-                      });
-                    },
-                  ),
-                if (!isEditing) const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
@@ -223,7 +186,7 @@ class ClassManagementView extends StatelessWidget {
                       value: null,
                       child: Text('--- Chọn GVCN ---', style: TextStyle(color: Colors.grey)),
                     ),
-                    ...controller.getAvailableTeachers(selectedYearId ?? 0, cls?.classId).map((t) {
+                    ...controller.getAvailableTeachers(yearId ?? 0, cls?.classId).map((t) {
                       return DropdownMenuItem<int?>(
                         value: t.userId,
                         child: Text(t.fullName),
@@ -240,34 +203,27 @@ class ClassManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: isEditing ? AppDialogLabels.save : AppDialogLabels.add,
+              onSubmit: () {
                 final name = nameController.text.trim();
                 if (name.isEmpty) {
                   Get.snackbar('Lỗi', 'Vui lòng nhập tên lớp', backgroundColor: Colors.redAccent, colorText: Colors.white);
                   return;
                 }
-                
+
                 if (isEditing) {
                   controller.updateClass(cls.classId, name, selectedTeacherId);
                 } else {
-                  if (selectedYearId == null) {
-                    Get.snackbar('Lỗi', 'Vui lòng chọn năm học', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  if (yearId == null) {
+                    Get.snackbar('Lỗi', 'Vui lòng chọn năm học ở danh sách phía trên', backgroundColor: Colors.redAccent, colorText: Colors.white);
                     return;
                   }
-                  controller.createClass(name, selectedYearId!, selectedTeacherId);
+                  controller.createClass(name, yearId, selectedTeacherId);
                 }
               },
-              child: Text(isEditing ? 'Lưu' : 'Thêm'),
             ),
           ],
         );
@@ -283,17 +239,12 @@ class ClassManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa lớp "${cls.className}" không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteClass(cls.classId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteClass(cls.classId),
           ),
         ],
       ),

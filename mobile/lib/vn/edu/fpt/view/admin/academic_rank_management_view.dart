@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../controllers/academic_rank_controller.dart';
 import '../../models/academic_rank_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class AcademicRankManagementView extends StatelessWidget {
   const AcademicRankManagementView({super.key});
+
+  static bool _rangesOverlap(double min1, double max1, double min2, double max2) =>
+      min1 <= max2 && min2 <= max1;
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +39,7 @@ class AcademicRankManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchRanks,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchRanks),
               ],
             ),
           );
@@ -84,11 +87,8 @@ class AcademicRankManagementView extends StatelessWidget {
           },
         );
       }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab.add(
         onPressed: () => _showFormDialog(context, controller),
-        backgroundColor: const Color(0xFFE65100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -123,6 +123,9 @@ class AcademicRankManagementView extends StatelessWidget {
               TextField(
                 controller: minController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
                 decoration: InputDecoration(
                   labelText: 'Điểm tối thiểu (VD: 8.0)',
                   filled: true,
@@ -136,6 +139,9 @@ class AcademicRankManagementView extends StatelessWidget {
               TextField(
                 controller: maxController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
                 decoration: InputDecoration(
                   labelText: 'Điểm tối đa (VD: 10.0)',
                   filled: true,
@@ -149,17 +155,11 @@ class AcademicRankManagementView extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE65100),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: isEditing ? AppDialogLabels.save : AppDialogLabels.add,
+            onSubmit: () {
               final name = nameController.text.trim();
               final minText = minController.text.trim();
               final maxText = maxController.text.trim();
@@ -177,9 +177,27 @@ class AcademicRankManagementView extends StatelessWidget {
                 return;
               }
 
+              if (minVal < 0 || maxVal < 0) {
+                Get.snackbar('Lỗi', 'Điểm không được âm', backgroundColor: Colors.redAccent, colorText: Colors.white);
+                return;
+              }
+
               if (minVal > maxVal) {
                  Get.snackbar('Lỗi', 'Điểm tối thiểu không được lớn hơn điểm tối đa', backgroundColor: Colors.redAccent, colorText: Colors.white);
                  return;
+              }
+
+              for (final existing in controller.ranks) {
+                if (isEditing && existing.rankId == rank.rankId) continue;
+                if (_rangesOverlap(minVal, maxVal, existing.minScore, existing.maxScore)) {
+                  Get.snackbar(
+                    'Lỗi',
+                    'Khoảng điểm trùng với "${existing.rankName}" (${existing.minScore} - ${existing.maxScore})',
+                    backgroundColor: Colors.redAccent,
+                    colorText: Colors.white,
+                  );
+                  return;
+                }
               }
 
               if (isEditing) {
@@ -188,7 +206,6 @@ class AcademicRankManagementView extends StatelessWidget {
                 controller.createRank(name, minVal, maxVal);
               }
             },
-            child: Text(isEditing ? 'Lưu' : 'Thêm'),
           ),
         ],
       ),
@@ -203,17 +220,12 @@ class AcademicRankManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa xếp loại "${rank.rankName}" không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteRank(rank.rankId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteRank(rank.rankId),
           ),
         ],
       ),

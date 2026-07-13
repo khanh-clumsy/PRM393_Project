@@ -35,4 +35,6 @@ public record UpdateUserDto(
     string? Address,
     string? Gender,
     string? AvatarUrl,
-    bool? IsActive);
+    bool? IsActive,
+    int? RoleId,
+    int? DepartmentId);

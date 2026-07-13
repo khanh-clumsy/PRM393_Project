@@ -27,13 +27,18 @@ public class ClassService(IClassRepository repo) : IClassService
 
     public async Task<ClassDto> CreateAsync(CreateClassDto dto)
     {
-        if (dto.HomeroomTeacherId.HasValue)
+        var existingClassesInYear = await repo.GetByAcademicYearAsync(dto.AcademicYearId);
+
+        if (existingClassesInYear.Any(c =>
+                string.Equals(c.ClassName, dto.ClassName, StringComparison.OrdinalIgnoreCase)))
         {
-            var existingClassesInYear = await repo.GetByAcademicYearAsync(dto.AcademicYearId);
-            if (existingClassesInYear.Any(c => c.HomeroomTeacherId == dto.HomeroomTeacherId))
-            {
-                throw new InvalidOperationException("Giáo viên này đã chủ nhiệm một lớp khác trong năm học này.");
-            }
+            throw new InvalidOperationException($"Tên lớp \"{dto.ClassName}\" đã tồn tại trong năm học này.");
+        }
+
+        if (dto.HomeroomTeacherId.HasValue &&
+            existingClassesInYear.Any(c => c.HomeroomTeacherId == dto.HomeroomTeacherId))
+        {
+            throw new InvalidOperationException("Giáo viên này đã chủ nhiệm một lớp khác trong năm học này.");
         }
 
         var cls = new Class
@@ -51,9 +56,18 @@ public class ClassService(IClassRepository repo) : IClassService
         var existing = await repo.GetByIdAsync(id);
         if (existing is null) return null;
 
+        var existingClassesInYear = await repo.GetByAcademicYearAsync(existing.AcademicYearId);
+
+        if (dto.ClassName is not null &&
+            existingClassesInYear.Any(c =>
+                c.ClassId != id &&
+                string.Equals(c.ClassName, dto.ClassName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException($"Tên lớp \"{dto.ClassName}\" đã tồn tại trong năm học này.");
+        }
+
         if (dto.HomeroomTeacherId.HasValue && dto.HomeroomTeacherId != existing.HomeroomTeacherId)
         {
-            var existingClassesInYear = await repo.GetByAcademicYearAsync(existing.AcademicYearId);
             if (existingClassesInYear.Any(c => c.HomeroomTeacherId == dto.HomeroomTeacherId && c.ClassId != id))
             {
                 throw new InvalidOperationException("Giáo viên này đã chủ nhiệm một lớp khác trong năm học này.");

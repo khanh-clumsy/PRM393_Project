@@ -21,6 +21,9 @@ public class AcademicRankService(IAcademicRankRepository repo) : IAcademicRankSe
 
     public async Task<AcademicRankDto> CreateAsync(CreateAcademicRankDto dto)
     {
+        ValidateScores(dto.MinScore, dto.MaxScore);
+        await ValidateNoOverlapAsync(dto.MinScore, dto.MaxScore, excludeRankId: null);
+
         var rank = new AcademicRank
         {
             RankName = dto.RankName,
@@ -35,9 +38,14 @@ public class AcademicRankService(IAcademicRankRepository repo) : IAcademicRankSe
         var existing = await repo.GetByIdAsync(id);
         if (existing is null) return null;
 
+        var minScore = dto.MinScore ?? existing.MinScore;
+        var maxScore = dto.MaxScore ?? existing.MaxScore;
+        ValidateScores(minScore, maxScore);
+        await ValidateNoOverlapAsync(minScore, maxScore, excludeRankId: id);
+
         existing.RankName = dto.RankName ?? existing.RankName;
-        existing.MinScore = dto.MinScore ?? existing.MinScore;
-        existing.MaxScore = dto.MaxScore ?? existing.MaxScore;
+        existing.MinScore = minScore;
+        existing.MaxScore = maxScore;
 
         var updated = await repo.UpdateAsync(id, existing);
         return updated is null ? null : ToDto(updated);
@@ -45,6 +53,38 @@ public class AcademicRankService(IAcademicRankRepository repo) : IAcademicRankSe
 
     public async Task<bool> DeleteAsync(int id) =>
         await repo.DeleteAsync(id);
+
+    private static void ValidateScores(decimal minScore, decimal maxScore)
+    {
+        if (minScore < 0 || maxScore < 0)
+        {
+            throw new InvalidOperationException("Điểm tối thiểu và điểm tối đa không được âm.");
+        }
+
+        if (minScore > maxScore)
+        {
+            throw new InvalidOperationException("Điểm tối thiểu không được lớn hơn điểm tối đa.");
+        }
+    }
+
+    private async Task ValidateNoOverlapAsync(decimal minScore, decimal maxScore, int? excludeRankId)
+    {
+        var all = await repo.GetAllAsync();
+        foreach (var other in all)
+        {
+            if (excludeRankId.HasValue && other.RankId == excludeRankId.Value)
+                continue;
+
+            if (RangesOverlap(minScore, maxScore, other.MinScore, other.MaxScore))
+            {
+                throw new InvalidOperationException(
+                    $"Khoảng điểm {minScore}–{maxScore} trùng với xếp loại \"{other.RankName}\" ({other.MinScore}–{other.MaxScore}).");
+            }
+        }
+    }
+
+    private static bool RangesOverlap(decimal min1, decimal max1, decimal min2, decimal max2) =>
+        min1 <= max2 && min2 <= max1;
 
     private static AcademicRankDto ToDto(AcademicRank r) =>
         new(r.RankId, r.RankName, r.MinScore, r.MaxScore);

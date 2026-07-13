@@ -14,6 +14,7 @@ class TimetableModel {
   final String className;
   final int status;
   final String? note;
+  final bool isAttendanceTaken;
 
   TimetableModel({
     required this.timetableId,
@@ -31,6 +32,7 @@ class TimetableModel {
     required this.className,
     required this.status,
     this.note,
+    this.isAttendanceTaken = false,
   });
 
   factory TimetableModel.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,7 @@ class TimetableModel {
       className: json['className'] ?? '',
       status: json['status'] ?? 1,
       note: json['note'],
+      isAttendanceTaken: json['isAttendanceTaken'] ?? false,
     );
   }
 
@@ -70,6 +73,7 @@ class TimetableModel {
       'className': className,
       'status': status,
       'note': note,
+      'isAttendanceTaken': isAttendanceTaken,
     };
   }
 }

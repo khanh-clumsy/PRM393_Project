@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/subject_controller.dart';
 import '../../models/subject_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class SubjectManagementView extends StatelessWidget {
   const SubjectManagementView({super.key});
@@ -33,10 +35,7 @@ class SubjectManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchSubjects,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchSubjects),
               ],
             ),
           );
@@ -86,11 +85,8 @@ class SubjectManagementView extends StatelessWidget {
           },
         );
       }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab.add(
         onPressed: () => _showFormDialog(context, controller),
-        backgroundColor: const Color(0xFFE65100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -148,17 +144,11 @@ class SubjectManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: isEditing ? AppDialogLabels.save : AppDialogLabels.add,
+              onSubmit: () {
                 final code = codeController.text.trim();
                 final name = nameController.text.trim();
                 if (code.isEmpty || name.isEmpty) {
@@ -171,7 +161,6 @@ class SubjectManagementView extends StatelessWidget {
                   controller.createSubject(code, name, isActive);
                 }
               },
-              child: Text(isEditing ? 'Lưu' : 'Thêm'),
             ),
           ],
         );
@@ -187,17 +176,12 @@ class SubjectManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa môn học "${subject.subjectCode}" không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteSubject(subject.subjectId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteSubject(subject.subjectId),
           ),
         ],
       ),

@@ -10,5 +10,6 @@ public interface ITeachingAssignmentService
     Task<IEnumerable<TeachingAssignmentDto>> GetBySemesterAsync(int semesterId);
     Task<TeachingAssignmentDto?> GetByIdAsync(int id);
     Task<TeachingAssignmentDto> CreateAsync(CreateTeachingAssignmentDto dto);
+    Task<TeachingAssignmentDto?> UpdateAsync(int id, UpdateTeachingAssignmentDto dto);
     Task<bool> DeleteAsync(int id);
 }

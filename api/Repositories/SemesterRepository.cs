@@ -10,7 +10,10 @@ public class SemesterRepository(Prm393dbContext db) : ISemesterRepository
         await db.Semesters.ToListAsync();
 
     public async Task<IEnumerable<Semester>> GetByAcademicYearAsync(int academicYearId) =>
-        await db.Semesters.Where(s => s.AcademicYearId == academicYearId).ToListAsync();
+        await db.Semesters
+            .Where(s => s.AcademicYearId == academicYearId)
+            .OrderBy(s => s.StartDate)
+            .ToListAsync();
 
     public async Task<Semester?> GetByIdAsync(int id) =>
         await db.Semesters.FindAsync(id);

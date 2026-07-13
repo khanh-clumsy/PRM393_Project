@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/department_controller.dart';
 import '../../models/department_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class DepartmentManagementView extends StatelessWidget {
   const DepartmentManagementView({super.key});
@@ -33,10 +35,7 @@ class DepartmentManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchDepartments,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchDepartments),
               ],
             ),
           );
@@ -87,10 +86,8 @@ class DepartmentManagementView extends StatelessWidget {
           },
         );
       }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab.add(
         onPressed: () => _showFormDialog(context, controller),
-        backgroundColor: const Color(0xFFE65100),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -128,13 +125,11 @@ class DepartmentManagementView extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE65100), foregroundColor: Colors.white),
-            onPressed: () {
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: isEditing ? AppDialogLabels.save : AppDialogLabels.add,
+            onSubmit: () {
               final name = nameController.text.trim();
               final desc = descController.text.trim();
               if (name.isEmpty) {
@@ -147,7 +142,6 @@ class DepartmentManagementView extends StatelessWidget {
                 controller.createDepartment(name, desc.isEmpty ? null : desc);
               }
             },
-            child: Text(isEditing ? 'Lưu' : 'Thêm'),
           ),
         ],
       ),
@@ -160,16 +154,12 @@ class DepartmentManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa'),
         content: Text('Bạn có chắc chắn muốn xóa phòng ban "${department.departmentName}" không?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            onPressed: () {
-              controller.deleteDepartment(department.departmentId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteDepartment(department.departmentId),
           ),
         ],
       ),

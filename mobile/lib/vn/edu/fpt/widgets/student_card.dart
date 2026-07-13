@@ -73,7 +73,7 @@ class StudentCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isPresent ? 'Present' : 'Absent',
+                      isPresent ? 'Có mặt' : 'Vắng mặt',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -111,7 +111,7 @@ class StudentCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Current Class',
+                        'Tiết hiện tại',
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade500,
@@ -156,7 +156,7 @@ class StudentCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Upcoming Assignment',
+                        'Bài tập sắp tới',
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade500,

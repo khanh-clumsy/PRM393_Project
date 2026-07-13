@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/custom_bottom_nav_bar.dart';
 import 'admin_home_view.dart';
+import 'admin_dashboard_view.dart';
 import '../shared/account_view.dart';
 
 class AdminMainView extends StatefulWidget {
@@ -15,11 +16,7 @@ class _AdminMainViewState extends State<AdminMainView> {
 
   final List<Widget> _pages = [
     const AdminHomeView(),
-    const PlaceholderScreen(
-      title: 'Dashboard',
-      subtitle: 'Thống kê tổng quan',
-      icon: Icons.dashboard,
-    ),
+    const AdminDashboardView(),
     const AccountView(),
   ];
 

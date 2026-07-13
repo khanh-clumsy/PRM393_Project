@@ -30,6 +30,7 @@ public class TimetableRepository(Prm393dbContext db) : ITimetableRepository
                 .ThenInclude(ta => ta.Teacher)
             .Include(t => t.TeachingAssignment)
                 .ThenInclude(ta => ta.Class)
+            .Include(t => t.AttendanceRecords)
             .FirstOrDefaultAsync(t => t.TimetableId == id);
 
     public async Task<IEnumerable<Timetable>> GetWeeklyByClassAsync(int classId, DateOnly weekStart, DateOnly weekEnd) =>
@@ -38,6 +39,7 @@ public class TimetableRepository(Prm393dbContext db) : ITimetableRepository
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Subject)
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Teacher)
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Class)
+            .Include(t => t.AttendanceRecords)
             .Where(t => t.TeachingAssignment.ClassId == classId
                      && t.Date >= weekStart
                      && t.Date <= weekEnd)
@@ -51,6 +53,7 @@ public class TimetableRepository(Prm393dbContext db) : ITimetableRepository
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Subject)
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Teacher)
             .Include(t => t.TeachingAssignment).ThenInclude(ta => ta.Class)
+            .Include(t => t.AttendanceRecords)
             .Where(t => t.TeachingAssignment.TeacherId == teacherId
                      && t.Date >= weekStart
                      && t.Date <= weekEnd)

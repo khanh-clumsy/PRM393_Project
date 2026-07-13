@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/student_grade_controller.dart';
 import '../../models/grade_model.dart';
+import '../../widgets/app_button.dart';
 import 'notifications_view.dart';
 import 'student_grade_detail_view.dart';
 
@@ -102,10 +103,7 @@ class StudentGradeView extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: controller.onInit,
-                    child: const Text('Thử lại'),
-                  ),
+                  AppButton.retry(onPressed: controller.onInit),
                 ],
               ),
             );
@@ -113,6 +111,31 @@ class StudentGradeView extends StatelessWidget {
 
           return Column(
             children: [
+              if (controller.linkedStudents.isNotEmpty)
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Con:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: controller.linkedStudents.map((s) {
+                          final selected = controller.targetStudentId.value == s['studentId'];
+                          return ChoiceChip(
+                            label: Text(s['studentName'] ?? 'HS'),
+                            selected: selected,
+                            onSelected: (_) => controller.switchToStudent(s['studentId'], s['studentName'] ?? ''),
+                            selectedColor: const Color(0xFFFFE0B2),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
               // Academic Year Dropdown at the top
               Container(
                 color: Colors.white,
@@ -155,7 +178,7 @@ class StudentGradeView extends StatelessWidget {
 
                   final transcript = controller.transcript.value;
                   if (transcript == null || transcript.semesters.isEmpty) {
-                    return const Center(child: Text('Không có dữ liệu điểm cho năm học này.'));
+                    return const Center(child: Text('Không có học kỳ nào cho năm học này.'));
                   }
 
                   final selectedIndex = controller.selectedSemesterIndex.value;
@@ -166,7 +189,7 @@ class StudentGradeView extends StatelessWidget {
                   final currentSemester = transcript.semesters[selectedIndex];
                   final activeSubjects = currentSemester.subjects;
                   final double cumulativeGpa = currentSemester.gpa ?? 0.0;
-                  final String conduct = currentSemester.conduct ?? 'N/A';
+                  final String conduct = currentSemester.conduct ?? 'Chưa có';
 
                   return SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -174,7 +197,7 @@ class StudentGradeView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Academic Records',
+                          'Bảng điểm học tập',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -254,7 +277,7 @@ class StudentGradeView extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'Semester GPA',
+                                    'GPA học kỳ',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Colors.grey,
@@ -287,7 +310,7 @@ class StudentGradeView extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 20),
                                   const Text(
-                                    'Conduct Rating',
+                                    'Hạnh kiểm',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Colors.grey,
@@ -324,7 +347,7 @@ class StudentGradeView extends StatelessWidget {
                                   if (currentSemester.rankName != null) ...[
                                     const SizedBox(height: 12),
                                     const Text(
-                                      'Academic Rank',
+                                      'Học lực',
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: Colors.grey,
@@ -368,7 +391,7 @@ class StudentGradeView extends StatelessWidget {
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         const Text(
-                                          'Yearly Cumulative GPA:',
+                                          'GPA cả năm:',
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
@@ -409,7 +432,7 @@ class StudentGradeView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Subject Grades',
+                              'Điểm các môn',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -417,7 +440,7 @@ class StudentGradeView extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${activeSubjects.length} Subjects',
+                              '${activeSubjects.length} môn',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey.shade600,
@@ -427,7 +450,22 @@ class StudentGradeView extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
 
-                        // List of Subject Cards
+                        if (activeSubjects.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Text(
+                              'Chưa có điểm môn học trong ${currentSemester.semesterName}.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                          )
+                        else
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -438,8 +476,14 @@ class StudentGradeView extends StatelessWidget {
 
                             // Tách các điểm
                             final scores15m = subject.grades.where((g) => g.typeName.toLowerCase().contains('15')).map((g) => g.score).toList();
-                            final midterm = subject.grades.where((g) => g.typeName.toLowerCase().contains('mid')).map((g) => g.score).firstOrNull;
-                            final finalScore = subject.grades.where((g) => g.typeName.toLowerCase().contains('final')).map((g) => g.score).firstOrNull;
+                            final midterm = subject.grades.where((g) {
+                              final n = g.typeName.toLowerCase();
+                              return n.contains('giữa') || n.contains('mid') || n.contains('gk');
+                            }).map((g) => g.score).firstOrNull;
+                            final finalScore = subject.grades.where((g) {
+                              final n = g.typeName.toLowerCase();
+                              return n.contains('cuối') || n.contains('final') || n.contains('ck');
+                            }).map((g) => g.score).firstOrNull;
 
                             return GestureDetector(
                               onTap: () {
@@ -508,7 +552,7 @@ class StudentGradeView extends StatelessWidget {
                                               crossAxisAlignment: CrossAxisAlignment.end,
                                               children: [
                                                 const Text(
-                                                  'Overall',
+                                                  'Tổng kết',
                                                   style: TextStyle(
                                                     fontSize: 9,
                                                     color: Colors.grey,
@@ -530,7 +574,7 @@ class StudentGradeView extends StatelessWidget {
                                                 ),
                                                 if (subject.yearlyAverageScore != null)
                                                   Text(
-                                                    'Yearly: ${subject.yearlyAverageScore}',
+                                                    'Cả năm: ${subject.yearlyAverageScore}',
                                                     style: const TextStyle(
                                                       fontSize: 10,
                                                       fontWeight: FontWeight.w600,
@@ -551,7 +595,7 @@ class StudentGradeView extends StatelessWidget {
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   const Text(
-                                                    '15 Min',
+                                                    '15 phút',
                                                     style: TextStyle(fontSize: 10, color: Colors.grey),
                                                   ),
                                                   const SizedBox(height: 4),
@@ -571,7 +615,7 @@ class StudentGradeView extends StatelessWidget {
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   const Text(
-                                                    'Midterm',
+                                                    'Giữa kỳ',
                                                     style: TextStyle(fontSize: 10, color: Colors.grey),
                                                   ),
                                                   const SizedBox(height: 4),
@@ -591,7 +635,7 @@ class StudentGradeView extends StatelessWidget {
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   const Text(
-                                                    'Final',
+                                                    'Cuối kỳ',
                                                     style: TextStyle(fontSize: 10, color: Colors.grey),
                                                   ),
                                                   const SizedBox(height: 4),

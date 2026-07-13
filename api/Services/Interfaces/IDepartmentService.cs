@@ -9,4 +9,6 @@ public interface IDepartmentService
     Task<DepartmentDto> CreateAsync(CreateDepartmentDto dto);
     Task<DepartmentDto?> UpdateAsync(int id, UpdateDepartmentDto dto);
     Task<bool> DeleteAsync(int id);
+    Task<IEnumerable<UserDto>> GetTeachersAsync(int departmentId);
+    Task<IEnumerable<TeachingAssignmentDto>> GetAssignmentsAsync(int departmentId);
 }

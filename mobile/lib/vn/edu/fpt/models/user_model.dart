@@ -11,6 +11,7 @@ class UserModel {
   final int roleId;
   final String roleName;
   final int? departmentId;
+  final bool isActive;
 
   UserModel({
     required this.userId,
@@ -25,6 +26,7 @@ class UserModel {
     required this.roleId,
     required this.roleName,
     this.departmentId,
+    this.isActive = true,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class UserModel {
       roleId: json['roleId'] ?? 0,
       roleName: json['roleName'] ?? '',
       departmentId: json['departmentId'],
+      isActive: json['isActive'] ?? true,
     );
   }
 

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../shared/attendance_view.dart';
 import '../shared/timetable_view.dart';
-import 'teacher_grade_entry_view.dart';
+import 'teacher_my_classes_view.dart';
 
 class TeacherHomeView extends StatelessWidget {
   const TeacherHomeView({super.key});
+
+  static const _primary = Color(0xFFE65100);
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +15,10 @@ class TeacherHomeView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        scrolledUnderElevation: 0,
+        centerTitle: true,
         title: const Text(
-          'Teacher Dashboard',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFE65100),
-          ),
+          'Trang chủ GV',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
         ),
       ),
       body: SafeArea(
@@ -31,60 +28,45 @@ class TeacherHomeView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Welcome, Teacher!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF212121),
+                'Xin chào, Giáo viên!',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Truy cập nhanh các tác vụ hàng ngày',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 20),
+              const Text('Hành động nhanh', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              _buildActionTile(
+                context,
+                icon: Icons.class_outlined,
+                label: 'Lớp học của tôi',
+                subtitle: 'Điểm danh, nhập điểm, danh sách lớp',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TeacherMyClassesView()),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF212121),
-                ),
+              const SizedBox(height: 8),
+              _buildActionTile(
+                context,
+                icon: Icons.calendar_month_outlined,
+                label: 'Thời khóa biểu',
+                subtitle: 'Xem lịch dạy',
+                onTap: () => Get.to(() => const TimetablePage()),
               ),
-              const SizedBox(height: 16),
-              GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.95,
-                children: [
-                  _buildActionCard(
-                    context,
-                    icon: Icons.calendar_month_outlined,
-                    label: 'Timetable',
-                    onTap: () => Get.to(() => const TimetablePage()),
-                  ),
-                  _buildActionCard(
-                    context,
-                    icon: Icons.fact_check_outlined,
-                    label: 'Attendance',
-                    onTap: () => Get.to(() => const AttendanceView()),
-                  ),
-                  _buildActionCard(
-                    context,
-                    icon: Icons.edit_document,
-                    label: 'Grades',
-                    onTap: () => Get.to(() => const TeacherGradeEntryView()),
-                  ),
-                  _buildActionCard(
-                    context,
-                    icon: Icons.assignment,
-                    label: 'Assignments',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Assignments coming soon...')),
-                      );
-                    },
-                  ),
-                ],
+              const SizedBox(height: 8),
+              _buildActionTile(
+                context,
+                icon: Icons.assignment_outlined,
+                label: 'Bài tập',
+                subtitle: 'Sắp có',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tính năng bài tập đang phát triển.')),
+                  );
+                },
               ),
             ],
           ),
@@ -93,47 +75,29 @@ class TeacherHomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE65100),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFE65100).withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                )
-              ],
-            ),
-            child: Center(
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 26,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF424242),
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+  Widget _buildActionTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFFFFF3E0),
+          child: Icon(icon, color: _primary, size: 22),
+        ),
+        title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
       ),
     );
   }

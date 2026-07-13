@@ -242,7 +242,7 @@ class _NewsCardState extends State<NewsCard> {
                     GestureDetector(
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Link shared!')),
+                          const SnackBar(content: Text('Đã sao chép liên kết')),
                         );
                       },
                       child: Icon(

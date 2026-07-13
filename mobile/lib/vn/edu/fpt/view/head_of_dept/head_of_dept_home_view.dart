@@ -10,8 +10,7 @@ class HeadOfDeptHomeView extends StatelessWidget {
       {'title': 'Lớp học', 'icon': Icons.class_, 'color': Colors.teal, 'route': '/head/classes'},
       {'title': 'Phân công', 'icon': Icons.assignment_ind, 'color': Colors.blue, 'route': '/head/teaching-assignments'},
       {'title': 'Thời khóa biểu', 'icon': Icons.schedule, 'color': Colors.orange, 'route': '/head/timetables'},
-      {'title': 'Phân lớp HS', 'icon': Icons.group_add, 'color': Colors.lightBlue, 'route': '/head/student-classes'},
-      {'title': 'Phụ huynh - HS', 'icon': Icons.family_restroom, 'color': Colors.amber, 'route': '/head/parent-student'},
+      {'title': 'Giáo viên tổ', 'icon': Icons.people, 'color': Colors.indigo, 'route': '/head/teachers'},
     ];
 
     return Scaffold(

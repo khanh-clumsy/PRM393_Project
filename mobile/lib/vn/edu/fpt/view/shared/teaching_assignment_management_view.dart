@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../core/auth/role_context.dart';
 import '../../controllers/teaching_assignment_controller.dart';
 import '../../models/teaching_assignment_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class TeachingAssignmentManagementView extends StatelessWidget {
-  const TeachingAssignmentManagementView({super.key});
+  final ScopeMode scopeMode;
+  const TeachingAssignmentManagementView({super.key, this.scopeMode = ScopeMode.admin});
+
+  static int? _validDropdownValue(int? value, Iterable<int> options) {
+    if (value == null) return null;
+    return options.contains(value) ? value : null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(TeachingAssignmentController());
+    final controller = Get.put(TeachingAssignmentController(scopeMode: scopeMode));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
@@ -33,10 +42,7 @@ class TeachingAssignmentManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchInitialData,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchInitialData),
               ],
             ),
           );
@@ -70,12 +76,7 @@ class TeachingAssignmentManagementView extends StatelessWidget {
                             }).toList(),
                             onChanged: (val) {
                               if (val != null) {
-                                controller.selectedYearId.value = val;
-                                if (controller.filteredSemesters.isNotEmpty) {
-                                  controller.selectedSemesterId.value = controller.filteredSemesters.first.semesterId;
-                                } else {
-                                  controller.selectedSemesterId.value = null;
-                                }
+                                controller.onYearChanged(val);
                               }
                             },
                           ),
@@ -94,7 +95,10 @@ class TeachingAssignmentManagementView extends StatelessWidget {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<int>(
                             isExpanded: true,
-                            value: controller.selectedSemesterId.value,
+                            value: _validDropdownValue(
+                              controller.selectedSemesterId.value,
+                              controller.filteredSemesters.map((s) => s.semesterId),
+                            ),
                             hint: const Text('Chọn học kỳ'),
                             items: controller.filteredSemesters.map((sem) {
                               return DropdownMenuItem<int>(
@@ -122,7 +126,10 @@ class TeachingAssignmentManagementView extends StatelessWidget {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<int>(
                             isExpanded: true,
-                            value: controller.selectedClassId.value,
+                            value: _validDropdownValue(
+                              controller.selectedClassId.value,
+                              controller.filteredClasses.map((c) => c.classId),
+                            ),
                             hint: const Text('Chọn lớp học'),
                             items: controller.filteredClasses.map((cls) {
                               return DropdownMenuItem<int>(
@@ -202,11 +209,8 @@ class TeachingAssignmentManagementView extends StatelessWidget {
           ],
         );
       }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab.add(
         onPressed: () => _showFormDialog(context, controller),
-        backgroundColor: const Color(0xFFE65100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -269,7 +273,7 @@ class TeachingAssignmentManagementView extends StatelessWidget {
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
                   value: selectedSubjectId,
-                  items: controller.subjects.map((s) {
+                  items: controller.activeSubjects.map((s) {
                     return DropdownMenuItem<int>(
                       value: s.subjectId,
                       child: Text(s.subjectName),
@@ -304,17 +308,11 @@ class TeachingAssignmentManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: AppDialogLabels.save,
+              onSubmit: () {
                 if (selectedTeacherId == null || selectedClassId == null || selectedSubjectId == null) {
                   Get.snackbar('Lỗi', 'Vui lòng chọn đầy đủ thông tin', backgroundColor: Colors.redAccent, colorText: Colors.white);
                   return;
@@ -325,7 +323,6 @@ class TeachingAssignmentManagementView extends StatelessWidget {
                   controller.updateAssignment(ta.teachingAssignmentId, selectedTeacherId!, selectedClassId!, selectedSubjectId!, controller.selectedSemesterId.value!);
                 }
               },
-              child: const Text('Lưu'),
             ),
           ],
         );
@@ -341,17 +338,12 @@ class TeachingAssignmentManagementView extends StatelessWidget {
         title: const Text('Xác nhận hủy', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Bạn có chắc chắn muốn hủy phân công này không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteAssignment(ta.teachingAssignmentId);
-            },
-            child: const Text('Hủy phân công'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.unassign,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteAssignment(ta.teachingAssignmentId),
           ),
         ],
       ),

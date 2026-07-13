@@ -80,7 +80,7 @@ class StudentGradeDetailView extends StatelessWidget {
               child: Column(
                 children: [
                   const Text(
-                    'CURRENT STANDING',
+                    'KẾT QUẢ HIỆN TẠI',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -156,7 +156,7 @@ class StudentGradeDetailView extends StatelessWidget {
 
             // GRADE COMPONENTS
             const Text(
-              'Grade Components',
+              'Thành phần điểm',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -212,7 +212,7 @@ class StudentGradeDetailView extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Weight: ${(grade.weight * 10).toStringAsFixed(0)}%',
+                            'Hệ số: ${(grade.weight * 10).toStringAsFixed(0)}%',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,
@@ -251,7 +251,7 @@ class StudentGradeDetailView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
-                          'TBD',
+                          'Chưa có',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,

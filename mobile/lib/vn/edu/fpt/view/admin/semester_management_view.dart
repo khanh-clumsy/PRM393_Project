@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/semester_controller.dart';
+import '../../models/academic_year_model.dart';
 import '../../models/semester_model.dart';
+import '../../widgets/app_button.dart';
+import '../../widgets/app_dialog_actions.dart';
 
 class SemesterManagementView extends StatelessWidget {
   const SemesterManagementView({super.key});
@@ -33,10 +36,7 @@ class SemesterManagementView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchSemesters,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.fetchSemesters),
               ],
             ),
           );
@@ -135,11 +135,8 @@ class SemesterManagementView extends StatelessWidget {
       )
     ]);
     }),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab.add(
         onPressed: () => _showFormDialog(context, controller),
-        backgroundColor: const Color(0xFFE65100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -152,7 +149,7 @@ class SemesterManagementView extends StatelessWidget {
     int? selectedYearId = semester?.academicYearId;
 
     if (controller.academicYears.isNotEmpty && selectedYearId == null) {
-      selectedYearId = controller.academicYears.first.academicYearId;
+      selectedYearId = AcademicYearModel.preferredDefaultId(controller.academicYears);
     }
 
     Get.dialog(
@@ -254,17 +251,11 @@ class SemesterManagementView extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE65100),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
+            AppDialogActions.reactive(
+              isSubmitting: controller.isSubmitting,
+              onCancel: () => Get.back(),
+              labels: isEditing ? AppDialogLabels.save : AppDialogLabels.add,
+              onSubmit: () {
                 final name = nameController.text.trim();
                 final start = startDateController.text.trim();
                 final end = endDateController.text.trim();
@@ -296,7 +287,6 @@ class SemesterManagementView extends StatelessWidget {
                   controller.createSemester(selectedYearId!, name, start, end);
                 }
               },
-              child: Text(isEditing ? 'Lưu' : 'Thêm'),
             ),
           ],
         );
@@ -312,17 +302,12 @@ class SemesterManagementView extends StatelessWidget {
         title: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa học kỳ "${semester.semesterName}" không?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              controller.deleteSemester(semester.semesterId);
-            },
-            child: const Text('Xóa'),
+          AppDialogActions.reactive(
+            isSubmitting: controller.isSubmitting,
+            onCancel: () => Get.back(),
+            labels: AppDialogLabels.delete,
+            disableCancelWhileSubmitting: true,
+            onSubmit: () => controller.deleteSemester(semester.semesterId),
           ),
         ],
       ),

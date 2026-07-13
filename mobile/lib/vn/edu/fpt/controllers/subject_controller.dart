@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import '../core/network/api_client.dart';
+import '../core/submit/submit_guard_mixin.dart';
 import '../models/subject_model.dart';
 
-class SubjectController extends GetxController {
+class SubjectController extends GetxController with SubmitGuardMixin {
   final RxList<SubjectModel> subjects = <SubjectModel>[].obs;
   final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
@@ -37,56 +38,62 @@ class SubjectController extends GetxController {
   }
 
   Future<void> createSubject(String code, String name, bool isActive) async {
-    try {
-      final response = await ApiClient.instance.post(
-        '/api/subject',
-        data: {
-          'subjectCode': code,
-          'subjectName': name,
-          'isActive': isActive,
-        },
-      );
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        Get.back();
-        Get.snackbar('Thành công', 'Thêm môn học mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchSubjects();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.post(
+          '/api/subject',
+          data: {
+            'subjectCode': code,
+            'subjectName': name,
+            'isActive': isActive,
+          },
+        );
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          closeDialogSafely();
+          Get.snackbar('Thành công', 'Thêm môn học mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchSubjects();
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Không thể thêm môn học', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể thêm môn học', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 
   Future<void> updateSubject(int id, String? code, String? name, bool? isActive) async {
-    try {
-      final response = await ApiClient.instance.put(
-        '/api/subject/$id',
-        data: {
-          'subjectCode': code,
-          'subjectName': name,
-          'isActive': isActive,
-        },
-      );
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        Get.back();
-        Get.snackbar('Thành công', 'Cập nhật môn học thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchSubjects();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.put(
+          '/api/subject/$id',
+          data: {
+            'subjectCode': code,
+            'subjectName': name,
+            'isActive': isActive,
+          },
+        );
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          closeDialogSafely();
+          Get.snackbar('Thành công', 'Cập nhật môn học thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchSubjects();
+        }
+      } catch (e) {
+        Get.snackbar('Lỗi', 'Không thể cập nhật môn học', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể cập nhật môn học', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 
   Future<void> deleteSubject(int id) async {
-    try {
-      final response = await ApiClient.instance.delete('/api/subject/$id');
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        Get.back();
-        Get.snackbar('Thành công', 'Xóa môn học thành công', backgroundColor: Colors.green, colorText: Colors.white);
-        fetchSubjects();
+    await runSubmitting(() async {
+      try {
+        final response = await ApiClient.instance.delete('/api/subject/$id');
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          closeDialogSafely();
+          Get.snackbar('Thành công', 'Xóa môn học thành công', backgroundColor: Colors.green, colorText: Colors.white);
+          fetchSubjects();
+        }
+      } catch (e) {
+        closeDialogSafely();
+        Get.snackbar('Lỗi', 'Không thể xóa do ràng buộc dữ liệu', backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.back();
-      Get.snackbar('Lỗi', 'Không thể xóa do ràng buộc dữ liệu', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    });
   }
 }

@@ -37,7 +37,7 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
         {
             TimetableId = dto.TimetableId,
             StudentId = dto.StudentId,
-            Status = dto.Status,
+            Status = ToStorageStatus(dto.Status),
             Note = dto.Note,
             RecordedBy = dto.RecordedBy,
             RecordedAt = DateTime.UtcNow,
@@ -51,7 +51,7 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
         {
             TimetableId = dto.TimetableId,
             StudentId = dto.StudentId,
-            Status = dto.Status,
+            Status = ToStorageStatus(dto.Status),
             Note = dto.Note,
             RecordedBy = dto.RecordedBy,
             RecordedAt = DateTime.UtcNow,
@@ -62,7 +62,7 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
 
     public async Task<IEnumerable<AttendanceDto>> BulkUpdateAsync(IEnumerable<BulkUpdateAttendanceDto> dtos)
     {
-        var updates = dtos.Select(d => (d.AttendanceId, d.Status, d.Note));
+        var updates = dtos.Select(d => (d.AttendanceId, ToStorageStatus(d.Status), d.Note));
         var updated = await repo.BulkUpdateAsync(updates);
         return updated.Select(ToDto);
     }
@@ -72,7 +72,7 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
         var existing = await repo.GetByIdAsync(id);
         if (existing is null) return null;
 
-        existing.Status = dto.Status ?? existing.Status;
+        existing.Status = dto.Status is null ? existing.Status : ToStorageStatus(dto.Status);
         existing.Note = dto.Note ?? existing.Note;
 
         var updated = await repo.UpdateAsync(id, existing);
@@ -86,5 +86,25 @@ public class AttendanceService(IAttendanceRepository repo) : IAttendanceService
         await repo.GetStudentAttendanceSummaryAsync(studentId, semesterId);
 
     private static AttendanceDto ToDto(AttendanceRecord a) =>
-        new(a.AttendanceId, a.TimetableId, a.StudentId, a.Status, a.Note, a.RecordedBy, a.RecordedAt);
+        new(a.AttendanceId, a.TimetableId, a.StudentId, ToDisplayStatus(a.Status), a.Note, a.RecordedBy, a.RecordedAt);
+
+    private static string ToStorageStatus(string status) =>
+        status.Trim().ToUpperInvariant() switch
+        {
+            "P" or "PRESENT" => "P",
+            "A" or "ABSENT" => "A",
+            "L" or "LATE" => "L",
+            "E" or "EXCUSED" => "E",
+            _ => throw new ArgumentException($"Trạng thái điểm danh không hợp lệ: {status}")
+        };
+
+    private static string ToDisplayStatus(string status) =>
+        status.Trim().ToUpperInvariant() switch
+        {
+            "P" => "Present",
+            "A" => "Absent",
+            "L" => "Late",
+            "E" => "Excused",
+            _ => status
+        };
 }

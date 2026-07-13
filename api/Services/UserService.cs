@@ -59,6 +59,13 @@ public class UserService(IUserRepository repo) : IUserService
         existing.Gender = dto.Gender ?? existing.Gender;
         existing.AvatarUrl = dto.AvatarUrl ?? existing.AvatarUrl;
         existing.IsActive = dto.IsActive ?? existing.IsActive;
+
+        if (dto.RoleId.HasValue)
+        {
+            existing.RoleId = dto.RoleId.Value;
+            existing.DepartmentId = dto.RoleId.Value is 2 or 3 ? dto.DepartmentId : null;
+        }
+
         existing.UpdatedAt = DateTime.UtcNow;
 
         var updated = await repo.UpdateAsync(id, existing);

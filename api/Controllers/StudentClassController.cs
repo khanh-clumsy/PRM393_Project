@@ -18,6 +18,17 @@ public class StudentClassController(IStudentClassService service) : ControllerBa
     public async Task<IActionResult> GetByStudent(int studentId) =>
         Ok(await service.GetByStudentAsync(studentId));
 
+    /// <summary>
+    /// Phân lớp của học sinh tại ngày tham chiếu.
+    /// Năm học/học kỳ được suy ra từ StartDate–EndDate (không dùng IsActive).
+    /// </summary>
+    [HttpGet("by-student/{studentId:int}/enrollment")]
+    public async Task<IActionResult> GetEnrollmentAtDate(int studentId, [FromQuery] DateOnly? date)
+    {
+        var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        return Ok(await service.GetEnrollmentAtDateAsync(studentId, target));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStudentClassDto dto)
     {

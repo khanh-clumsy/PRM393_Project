@@ -7,7 +7,7 @@ namespace PRM393API.Repositories;
 public class AcademicYearRepository(Prm393dbContext db) : IAcademicYearRepository
 {
     public async Task<IEnumerable<AcademicYear>> GetAllAsync() =>
-        await db.AcademicYears.ToListAsync();
+        await db.AcademicYears.OrderBy(y => y.StartDate).ToListAsync();
 
     public async Task<AcademicYear?> GetByIdAsync(int id) =>
         await db.AcademicYears.FindAsync(id);

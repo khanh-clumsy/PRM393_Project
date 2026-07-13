@@ -46,6 +46,7 @@ builder.Services.AddScoped<IStudentSemesterSummaryRepository, StudentSemesterSum
 builder.Services.AddScoped<IStudentYearlySummaryRepository, StudentYearlySummaryRepository>();
 
 // Services
+builder.Services.AddScoped<IAcademicContextService, AcademicContextService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();

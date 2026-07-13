@@ -42,6 +42,20 @@ public class TimetableController(ITimetableService service) : ControllerBase
         return Ok(await service.GetWeeklyByTeacherAsync(teacherId, target));
     }
 
+    /// <summary>
+    /// TKB tuần của học sinh — BE tự resolve lớp theo năm học chứa ngày tham chiếu.
+    /// Trả về slots + điểm danh trong tuần + ngữ cảnh năm học/học kỳ/phân lớp.
+    /// </summary>
+    [HttpGet("weekly/by-student/{studentId:int}")]
+    public async Task<IActionResult> GetWeeklyByStudent(int studentId, [FromQuery] DateOnly? date)
+    {
+        var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var result = await service.GetWeeklyByStudentAsync(studentId, target);
+        return result is null
+            ? NotFound(new { message = $"Không tìm thấy phân lớp của học sinh tại ngày {target:yyyy-MM-dd}." })
+            : Ok(result);
+    }
+
     [HttpGet("by-assignment/{teachingAssignmentId:int}")]
     public async Task<IActionResult> GetByAssignment(int teachingAssignmentId) =>
         Ok(await service.GetByAssignmentAsync(teachingAssignmentId));
@@ -60,8 +74,15 @@ public class TimetableController(ITimetableService service) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTimetableDto dto)
     {
-        var created = await service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.TimetableId }, created);
+        try
+        {
+            var created = await service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.TimetableId }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -85,15 +106,29 @@ public class TimetableController(ITimetableService service) : ControllerBase
     [HttpPost("template")]
     public async Task<IActionResult> CreateTemplate([FromBody] CreateTimetableTemplateDto dto)
     {
-        var created = await service.CreateTemplateAsync(dto);
-        return Ok(created);
+        try
+        {
+            var created = await service.CreateTemplateAsync(dto);
+            return Ok(created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("template/{id:int}")]
     public async Task<IActionResult> UpdateTemplate(int id, [FromBody] UpdateTimetableTemplateDto dto)
     {
-        var updated = await service.UpdateTemplateAsync(id, dto);
-        return updated is null ? NotFound() : Ok(updated);
+        try
+        {
+            var updated = await service.UpdateTemplateAsync(id, dto);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("template/{id:int}")]

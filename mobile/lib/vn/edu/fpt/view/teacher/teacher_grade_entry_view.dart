@@ -1,18 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../controllers/teacher_grade_entry_controller.dart';
+import '../../widgets/app_button.dart';
 
-class TeacherGradeEntryView extends StatelessWidget {
-  const TeacherGradeEntryView({super.key});
+/// Chặn nhập điểm > 10 (và giữ định dạng số hợp lệ).
+class ScoreInputFormatter extends TextInputFormatter {
+  const ScoreInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text;
+    if (text.isEmpty) return newValue;
+    if (text == '.') return oldValue;
+    if ('.'.allMatches(text).length > 1) return oldValue;
+    final value = double.tryParse(text);
+    if (value == null) return oldValue;
+    if (value > 10) return oldValue;
+    return newValue;
+  }
+}
+
+class TeacherGradeEntryView extends StatefulWidget {
+  final int? initialYearId;
+  final int? initialSemesterId;
+  final int? initialAssignmentId;
+
+  const TeacherGradeEntryView({
+    super.key,
+    this.initialYearId,
+    this.initialSemesterId,
+    this.initialAssignmentId,
+  });
+
+  @override
+  State<TeacherGradeEntryView> createState() => _TeacherGradeEntryViewState();
+}
+
+class _TeacherGradeEntryViewState extends State<TeacherGradeEntryView> {
+  late final TeacherGradeEntryController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    if (Get.isRegistered<TeacherGradeEntryController>()) {
+      Get.delete<TeacherGradeEntryController>();
+    }
+    controller = Get.put(TeacherGradeEntryController(
+      initialYearId: widget.initialYearId,
+      initialSemesterId: widget.initialSemesterId,
+      initialAssignmentId: widget.initialAssignmentId,
+    ));
+  }
+
+  @override
+  void dispose() {
+    if (Get.isRegistered<TeacherGradeEntryController>()) {
+      Get.delete<TeacherGradeEntryController>();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(TeacherGradeEntryController());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
       appBar: AppBar(
-        title: const Text('Grade Entry', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+        title: const Text('Nhập điểm', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
         backgroundColor: const Color(0xFFF9FAFC),
         foregroundColor: Colors.black87,
         elevation: 0,
@@ -32,10 +87,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(controller.errorMessage.value, style: const TextStyle(color: Colors.redAccent)),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.onInit,
-                  child: const Text('Thử lại'),
-                ),
+                AppButton.retry(onPressed: controller.reload),
               ],
             ),
           );
@@ -68,7 +120,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Academic Year', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                              const Text('Năm học', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
                               const SizedBox(height: 4),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -95,7 +147,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Semester', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                              const Text('Học kỳ', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
                               const SizedBox(height: 4),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -122,7 +174,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     // Subject
-                    const Text('Subject', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                    const Text('Môn học', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -131,7 +183,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                         child: DropdownButton<int>(
                           isExpanded: true,
                           value: controller.selectedAssignmentId.value,
-                          hint: const Text('Select a Subject', style: TextStyle(fontSize: 14)),
+                          hint: const Text('Chọn môn học', style: TextStyle(fontSize: 14)),
                           items: controller.filteredAssignments.map((ta) {
                             return DropdownMenuItem<int>(
                               value: ta.teachingAssignmentId,
@@ -145,7 +197,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     // Assessment Type
-                    const Text('Assessment Type', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                    const Text('Loại đánh giá', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -179,7 +231,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                         children: [
                           Icon(Icons.info_outline, size: 16, color: Colors.grey),
                           SizedBox(width: 4),
-                          Text('Max: 10.0', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          Text('Tối đa: 10.0', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -196,8 +248,8 @@ class TeacherGradeEntryView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('Students ($totalStudents)', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212121))),
-                  Text('Entered: $enteredStudents/$totalStudents', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                  Text('Học sinh ($totalStudents)', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212121))),
+                  Text('Đã nhập: $enteredStudents/$totalStudents', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -261,7 +313,7 @@ class TeacherGradeEntryView extends StatelessWidget {
                                   children: [
                                     Text(student.studentName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                     const SizedBox(height: 2),
-                                    Text('ID: ${student.username}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                    Text('Mã HS: ${student.username}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                                   ],
                                 ),
                               ),
@@ -275,6 +327,10 @@ class TeacherGradeEntryView extends StatelessWidget {
                                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(fontWeight: FontWeight.bold),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                        const ScoreInputFormatter(),
+                                      ],
                                       decoration: InputDecoration(
                                         hintText: '—',
                                         contentPadding: EdgeInsets.zero,
@@ -325,36 +381,15 @@ class TeacherGradeEntryView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
+                  AppButton.reactive(
+                    isLoading: controller.isSaving,
+                    icon: Icons.check_circle_outline,
+                    label: 'Lưu điểm',
+                    loadingLabel: 'Đang lưu...',
+                    fullWidth: true,
                     height: 48,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // Draft could just be a silent save or skip API call for now.
-                        controller.saveGrades(); 
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF9E400A)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('Save Draft', style: TextStyle(color: Color(0xFF9E400A), fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: controller.saveGrades,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF9E400A), // Dark orange/brown
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        elevation: 0,
-                      ),
-                      icon: const Icon(Icons.check_circle_outline, size: 20),
-                      label: const Text('Submit Grades', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    ),
+                    borderRadius: 8,
+                    onPressed: controller.saveGrades,
                   ),
                 ],
               ),

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/local_storage.dart';
+import '../models/academic_year_model.dart';
 
 class AttendanceDetailItem {
   final int timetableId;
@@ -52,7 +53,8 @@ class SubjectAttendanceStats {
     required this.details,
   });
 
-  double get attendanceRate => totalCount == 0 ? 0.0 : presentCount / totalCount;
+  double get attendanceRate =>
+      totalCount == 0 ? 0.0 : (presentCount + lateCount) / totalCount;
 
   factory SubjectAttendanceStats.fromJson(Map<String, dynamic> json) {
     var detailsList = json['details'] as List? ?? [];
@@ -178,8 +180,8 @@ class StudentAttendanceController extends GetxController {
       ]);
 
       if (academicYears.isNotEmpty) {
-        academicYears.sort((a, b) => (b['academicYearId'] as int).compareTo(a['academicYearId'] as int));
-        selectedYearId.value = academicYears.first['academicYearId'];
+        AcademicYearModel.sortMaps(academicYears);
+        selectedYearId.value = AcademicYearModel.preferredDefaultIdFromMaps(academicYears);
       }
 
       if (role?.toLowerCase() == 'parent') {
@@ -201,7 +203,9 @@ class StudentAttendanceController extends GetxController {
   Future<void> _fetchAcademicYears() async {
     final res = await ApiClient.instance.get('/api/academicyear');
     if (res.statusCode == 200 && res.data is List) {
-      academicYears.value = res.data;
+      final years = List<dynamic>.from(res.data as List);
+      AcademicYearModel.sortMaps(years);
+      academicYears.value = years;
     }
   }
 
