@@ -2,7 +2,9 @@
 
 Tài liệu triển khai cho sprint hoàn thiện các module đang ở **80–90%** trong [MOBILE_PROGRESS.md](./MOBILE_PROGRESS.md).
 
-**Phạm vi:** Chỉ 3 nhóm sau — **không** mở rộng sang Bài tập, Học bạ GVCN, Đơn nghỉ, Push notification.
+**Phạm vi:** Chỉ 3 nhóm sau — **không** mở rộng sang Học bạ GVCN, Đơn nghỉ, Push notification.
+
+Module Bài tập/Assignments đã loại khỏi scope; grading đi qua màn Nhập điểm của giáo viên.
 
 | Module hiện tại | % | Mục tiêu |
 |-----------------|---|----------|
@@ -10,7 +12,7 @@ Tài liệu triển khai cho sprint hoàn thiện các module đang ở **80–9
 | TKB + Phân công + Phân lớp | 90% | **100%** |
 | Điểm danh + Nhập/xem điểm | 80% | **100%** |
 
-**Tham chiếu:** [SRS.md](./SRS.md) §3.2–3.4 · [API_DESIGN.md](./API_DESIGN.md) · [FLUTTER_ARCHITECTURE_GUIDE.md](./FLUTTER_ARCHITECTURE_GUIDE.md) · [MOBILE_TEST_MATRIX.md](./MOBILE_TEST_MATRIX.md) *(kịch bản QA thủ công)*
+**Tham chiếu:** [SRS.md](./SRS.md) §3.2–3.4 · [API_DESIGN.md](./API_DESIGN.md) · [FLUTTER_ARCHITECTURE_GUIDE.md](./FLUTTER_ARCHITECTURE_GUIDE.md) · [tests/MOBILE_TEST_MATRIX.md](./tests/MOBILE_TEST_MATRIX.md) *(kịch bản QA thủ công)*
 
 **Cập nhật lần cuối:** 09/07/2026
 
@@ -236,7 +238,7 @@ Phase 5: QA + cập nhật docs          (0.5 ngày)
 | Student | Xem điểm + TKB + điểm danh | 3 |
 | Parent | Chọn con → xem điểm + điểm danh + TKB | 3 |
 
-> Chi tiết từng bước, error path và checkbox tick trong Preview: **[MOBILE_TEST_MATRIX.md](./MOBILE_TEST_MATRIX.md)**
+> Chi tiết từng bước, error path và checkbox tick trong Preview: **[tests/MOBILE_TEST_MATRIX.md](./tests/MOBILE_TEST_MATRIX.md)**
 
 ---
 

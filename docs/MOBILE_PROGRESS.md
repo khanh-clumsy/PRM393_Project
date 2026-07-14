@@ -47,7 +47,6 @@ Tiến độ ước lượng theo SRS mobile:
 ✅ Điểm danh + Nhập/xem điểm           [██████████] 100%
 ✅ Bảng tin & Thông báo               [██████████] 100%
 ✅ Đơn xin nghỉ                        [██████████] 100%
-❌ Bài tập                             [░░░░░░░░░░]   0%
 ❌ Học bạ / Tổng kết GVCN              [░░░░░░░░░░]   0%
 ❌ Bảo mật tài khoản (đổi/quên MK)     [░░░░░░░░░░]   0%
 ```
@@ -60,7 +59,6 @@ Tiến độ ước lượng theo SRS mobile:
 | Điểm danh + Nhập/xem điểm | 100% | ✅ Hoàn thành (sprint 09/07/2026) |
 | Bảng tin & Thông báo | 100% | ✅ Đã nối API thật; chờ QA Flutter |
 | Đơn xin nghỉ | 100% | ✅ HS/PH tạo đơn, GV duyệt; chờ QA Flutter |
-| Bài tập | 0% | ❌ Chưa bắt đầu |
 | Học bạ / Tổng kết GVCN | 0% | ❌ Chưa bắt đầu |
 | Bảo mật tài khoản (đổi/quên MK) | 0% | ❌ Chưa bắt đầu |
 
@@ -161,7 +159,6 @@ Theo [SRS.md](./SRS.md), các hạng mục sau **chưa có** trên mobile:
 
 | Module SRS | Mô tả | Ghi chú |
 |------------|-------|---------|
-| **Bài tập (Assignments)** | GV tạo bài, HS nộp bài, GV chấm | `student_assignment_view.dart` chỉ hiện “đang phát triển”; GV báo “coming soon” |
 | **Học bạ điện tử** | Xem tổng kết học kỳ/năm (GPA, Hạnh kiểm, Xếp loại) | Chưa có màn riêng; GPA hiển thị một phần trong `student_grade_view.dart` |
 | **GVCN chốt GPA & Hạnh kiểm** | Flow giáo viên chủ nhiệm chốt sổ cuối kỳ/năm | Chưa có controller/view |
 | **Đổi mật khẩu** | Bảo mật tài khoản | `AccountController` chỉ đọc, chưa có form đổi MK |
@@ -178,8 +175,8 @@ Theo [SRS.md](./SRS.md), các hạng mục sau **chưa có** trên mobile:
 |---------|-------|--------|---------|
 | **Admin** | CRUD toàn bộ master data, TKB, phân công, bảng tin | Dashboard thống kê | — |
 | **HeadOfDept** | Lớp, phân công, TKB trong phạm vi tổ; GV tổ | — | — |
-| **Teacher** | Điểm danh GV, nhập điểm, TKB, tab Lớp, thông báo lớp, duyệt đơn nghỉ | — | Bài tập, GVCN chốt sổ |
-| **Student** | Xem điểm, TKB, bảng tin/thông báo, tạo/theo dõi đơn nghỉ | — | Bài tập, học bạ đầy đủ |
+| **Teacher** | Điểm danh GV, nhập điểm, TKB, tab Lớp, thông báo lớp, duyệt đơn nghỉ | — | GVCN chốt sổ |
+| **Student** | Xem điểm, TKB, bảng tin/thông báo, tạo/theo dõi đơn nghỉ | — | Học bạ đầy đủ |
 | **Parent** | TKB con, điểm danh con, xem điểm con, tạo/theo dõi đơn nghỉ cho con | — | Học bạ con |
 
 ---
@@ -207,11 +204,12 @@ Theo [SRS.md](./SRS.md), các hạng mục sau **chưa có** trên mobile:
 | # | Task | Phụ thuộc API | Độ ưu tiên |
 |---|------|---------------|------------|
 | 1 | Chạy QA sprint Bảng tin & Đơn nghỉ | `docs/tests/MOBILE_TEST_MATRIX_NEWSFEED_LEAVE.md` | 🔴 Cao |
-| 2 | Module Bài tập (GV tạo/chấm, HS xem/nộp) | `Assignments`, `Submissions` | 🔴 Cao |
-| 3 | Học bạ điện tử + flow GVCN chốt GPA/Hạnh kiểm | `StudentSemesterSummaries`, `StudentYearlySummaries` | 🟠 Trung bình |
-| 4 | Cập nhật profile + đổi mật khẩu + quên MK | Auth/User endpoints | 🟡 Thấp |
-| 5 | Dọn UI: gỡ tab Tin nhắn, hoàn thiện tab Lớp GV | — | 🟡 Thấp |
-| 6 | Push notification (FCM) | Backend + mobile config | 🟡 Thấp |
+| 2 | Học bạ điện tử + flow GVCN chốt GPA/Hạnh kiểm | `StudentSemesterSummaries`, `StudentYearlySummaries` | 🟠 Trung bình |
+| 3 | Cập nhật profile + đổi mật khẩu + quên MK | Auth/User endpoints | 🟡 Thấp |
+| 4 | Dọn UI: gỡ tab Tin nhắn, hoàn thiện tab Lớp GV | — | 🟡 Thấp |
+| 5 | Push notification (FCM) | Backend + mobile config | 🟡 Thấp |
+
+**Đã loại khỏi scope:** Module Bài tập/Assignments và nộp bài đã được bỏ khỏi sản phẩm; giáo viên nhập điểm trực tiếp trong module Nhập điểm.
 
 ---
 

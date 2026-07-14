@@ -2,11 +2,11 @@
 
 Kịch bản QA cho phạm vi **Mobile Completion Sprint** (Batch 2–5): TKB, phân công, phân lớp, điểm danh, nhập/xem điểm, Admin/HeadOfDept polish.
 
-**Tham chiếu:** [MOBILE_PROGRESS.md](./MOBILE_PROGRESS.md) · [MOBILE_COMPLETION_PLAN.md](./MOBILE_COMPLETION_PLAN.md) · [API_DESIGN.md](./API_DESIGN.md)
+**Tham chiếu:** [MOBILE_PROGRESS.md](../MOBILE_PROGRESS.md) · [MOBILE_COMPLETION_PLAN.md](../MOBILE_COMPLETION_PLAN.md) · [API_DESIGN.md](../API_DESIGN.md)
 
 **Cập nhật lần cuối:** 13/07/2026
 
-> **Trạng thái QA:** Đã test thủ công **toàn bộ** kịch bản trong ma trận này (13/07/2026). Integration tests API (40 tests): `api/PRM393API.Tests/Integration/` · Changelog: [CHANGELOG.md](./CHANGELOG.md)
+> **Trạng thái QA:** Đã test thủ công **toàn bộ** kịch bản trong ma trận này (13/07/2026). Integration tests API (40 tests): `api/PRM393API.Tests/Integration/` · Changelog: [CHANGELOG.md](../CHANGELOG.md)
 
 > **Cách tick:** Mở **Markdown Preview** (`Ctrl+Shift+V` / `Cmd+Shift+V`) → click trực tiếp vào ô `- [ ]`. Thay đổi được lưu vào file `.md` khi tick trong Preview (Cursor/VS Code).
 
@@ -320,8 +320,8 @@ Phạm vi: Batch 2 (TKB `by-teacher`), Batch 3 (điểm danh, nhập điểm, ta
 |                |                                             |
 | -------------- | ------------------------------------------- |
 | **Màn hình**   | `teacher_home_view.dart`                    |
-| **Kỳ vọng**    | Có: TKB, Điểm danh, Bài tập (placeholder)   |
-| **Không có**   | Nút Grades / Nhập điểm trực tiếp            |
+| **Kỳ vọng**    | Có: TKB, Điểm danh, Lớp học của tôi         |
+| **Không có**   | Bài tập                                     |
 | **Ghi chú UI** | "Nhập điểm và quản lý lớp: vào tab Lớp học" |
 
 
@@ -396,7 +396,6 @@ Phạm vi: Batch 2 (TKB đúng năm học), Batch 3 (xem điểm, điểm danh).
 | Module       | Trạng thái hiện tại |
 | ------------ | ------------------- |
 | Đơn xin nghỉ | UI mock, chưa API   |
-| Bài tập      | "Đang phát triển"   |
 | Thông báo    | Dữ liệu giả         |
 
 
@@ -553,12 +552,16 @@ Chạy **1 lần** theo thứ tự sau để verify dữ liệu xuyên suốt c�
 
 Các module sau **chưa hoàn thiện** theo [MOBILE_PROGRESS.md](./MOBILE_PROGRESS.md) §6:
 
-- Bài tập (GV tạo/chấm, HS nộp)
 - Đơn xin nghỉ API thật / duyệt đơn GV
 - Học bạ điện tử / GVCN chốt GPA & Hạnh kiểm
 - Đổi mật khẩu / quên mật khẩu
 - Push notification (FCM)
 - Chat / tab Tin nhắn HS
+
+Smoke check scope removal:
+
+- [ ] Student home and quick actions do not show Bài tập.
+- [ ] Teacher home does not show Bài tập; teacher can still open Lớp học của tôi → Nhập điểm.
 
 ---
 

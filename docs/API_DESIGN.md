@@ -23,7 +23,7 @@ Quản lý đăng nhập, cấp lại token và thông tin hồ sơ người dù
 
 ## 2. Module Học tập & Tra cứu (Học sinh / Phụ huynh)
 
-Xem thông tin lịch học, kết quả học tập và nộp bài.
+Xem thông tin lịch học, kết quả học tập và đơn từ.
 
 | Method | Endpoint | Quyền truy cập | Mô tả nghiệp vụ / Cấu trúc dữ liệu |
 | :--- | :--- | :--- | :--- |
@@ -34,8 +34,6 @@ Xem thông tin lịch học, kết quả học tập và nộp bài.
 | **GET** | `/api/students/{studentId}/timetable` | Học sinh / Phụ huynh | *(Legacy doc)* — **Thực tế mobile dùng** `/api/timetable/weekly/by-student/{studentId}`. |
 | **GET** | `/api/students/{studentId}/grades` | Học sinh / Phụ huynh | Xem điểm trung bình các môn học trong học kỳ.<br>- **Query Parameters:** `semesterId` (bắt buộc). |
 | **GET** | `/api/students/{studentId}/grades/{subjectId}` | Học sinh / Phụ huynh | Xem chi tiết toàn bộ điểm số thành phần (Miệng, 15 phút, 1 tiết, Giữa kỳ, Cuối kỳ) của một môn học cụ thể.<br>- **Query Parameters:** `semesterId` (bắt buộc). |
-| **GET** | `/api/students/{studentId}/assignments` | Học sinh / Phụ huynh | Xem danh sách bài tập được giao.<br>- **Query Parameters:** `status` (Pending/Submitted/Graded), `semesterId`. |
-| **POST** | `/api/students/{studentId}/assignments/{assignmentId}/submit` | Học sinh | Nộp bài làm cho bài tập đã giao.<br>- **Request Body:** `{ "contentText": "...", "fileUrl": "...", "linkUrl": "..." }` |
 | **GET** | `/api/students/{studentId}/summaries/semester/{semesterId}` | Học sinh / Phụ huynh | Tra cứu điểm tổng kết học kỳ (GPA học kỳ, Hạnh kiểm, Học lực/Xếp loại dựa trên `RankId` và thông tin giáo viên đánh giá). |
 | **GET** | `/api/students/{studentId}/summaries/yearly/{academicYearId}` | Học sinh / Phụ huynh | Tra cứu tổng kết học tập cả năm học (GPA cả năm, Hạnh kiểm cả năm, Xếp loại học lực cuối năm). |
 
@@ -57,7 +55,7 @@ Quản lý đơn xin nghỉ học của học sinh.
 
 ## 4. Module Nghiệp vụ Giáo viên
 
-Điểm danh, nhập điểm, giao bài tập, chấm điểm và đánh giá tổng kết cuối kỳ/năm.
+Điểm danh, nhập điểm trực tiếp và đánh giá tổng kết cuối kỳ/năm.
 
 | Method | Endpoint | Quyền truy cập | Mô tả nghiệp vụ / Cấu trúc dữ liệu |
 | :--- | :--- | :--- | :--- |
@@ -67,11 +65,6 @@ Quản lý đơn xin nghỉ học của học sinh.
 | **POST** | `/api/classes/{classId}/attendance` | Giáo viên | Gửi điểm danh hàng loạt (Bulk entry) cho một buổi học cụ thể.<br>- **Request Body:** `{ "timetableId": 1, "attendanceDate": "YYYY-MM-DD", "records": [ { "studentId": 1, "status": "P"/"A"/"L", "note": "..." } ] }` |
 | **GET** | `/api/classes/{classId}/attendance` | Giáo viên | Tra cứu lịch sử điểm danh của lớp.<br>- **Query Parameters:** `startDate`, `endDate`. |
 | **POST** | `/api/classes/{classId}/grades` | Giáo viên | Nhập hoặc cập nhật điểm số hàng loạt cho học sinh theo cột đánh giá (`AssessmentId`).<br>- **Request Body:** `{ "assessmentId": 1, "grades": [ { "studentId": 1, "score": 8.5, "comment": "..." } ] }` |
-| **POST** | `/api/classes/{classId}/assignments` | Giáo viên | Giao bài tập mới cho lớp học.<br>- **Request Body:** `{ "teachingAssignmentId": 1, "title": "...", "description": "...", "attachmentUrl": "...", "dueDate": "YYYY-MM-DD HH:mm:ss" }` |
-| **PUT** | `/api/assignments/{assignmentId}` | Giáo viên | Cập nhật thông tin bài tập đã giao. |
-| **DELETE** | `/api/assignments/{assignmentId}` | Giáo viên | Xóa bài tập đã giao (Soft delete, cập nhật cột `IsDeleted = 1`). |
-| **GET** | `/api/assignments/{assignmentId}/submissions` | Giáo viên | Lấy danh sách bài làm học sinh đã nộp cho bài tập này. |
-| **PUT** | `/api/submissions/{submissionId}/grade` | Giáo viên | Chấm điểm bài nộp và đưa ra nhận xét.<br>- **Request Body:** `{ "score": 9.0, "feedback": "..." }` |
 | **POST** | `/api/classes/{classId}/newsfeed` | Giáo viên | Đăng thông báo/bài viết lên bảng tin lớp học. |
 | **GET** | `/api/classes/{classId}/summaries/semester/{semesterId}` | Giáo viên (GVCN) | Lấy bảng tổng hợp kết quả học kỳ của học sinh lớp chủ nhiệm (GPA, Hạnh kiểm, Xếp loại). |
 | **PUT** | `/api/classes/{classId}/students/{studentId}/summaries/semester/{semesterId}` | Giáo viên (GVCN) | GVCN đánh giá Hạnh kiểm và chốt xếp loại Học tập Học kỳ cho học sinh.<br>- **Request Body:** `{ "conduct": "Tốt" / "Khá" / "Trung Bình" / "Yếu", "rankId": 1 }` |

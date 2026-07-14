@@ -2,7 +2,7 @@
 
 Ghi nhận các thay đổi đáng chú ý theo phiên **Mobile Completion Sprint** (07/2026).
 
-**Tham chiếu:** [MOBILE_TEST_MATRIX.md](./MOBILE_TEST_MATRIX.md) · [API_DESIGN.md](./API_DESIGN.md)
+**Tham chiếu:** [MOBILE_TEST_MATRIX.md](./tests/MOBILE_TEST_MATRIX.md) · [API_DESIGN.md](./API_DESIGN.md)
 
 ---
 
@@ -36,12 +36,13 @@ Ghi nhận các thay đổi đáng chú ý theo phiên **Mobile Completion Sprin
 
 - Báo cáo điểm tổ (FE + BE).
 - `teacher_classes_view.dart` → thay bằng `teacher_my_classes_view.dart`.
+- Module Bài tập/Assignments đã loại khỏi scope; grading đi qua màn Nhập điểm của giáo viên.
 
 - **PH–HS:** `ParentStudentService.CreateAsync` — chặn liên kết trùng / HS đã có PH (TC-A07).
 
 ### QA & Tests
 
-- Ma trận test thủ công `MOBILE_TEST_MATRIX.md` — **đã test pass toàn bộ** (13/07/2026).
+- Ma trận test thủ công `docs/tests/MOBILE_TEST_MATRIX.md` — **đã test pass toàn bộ** (13/07/2026).
 - **Integration tests API (40 tests, 206 total suite):**
   - `Integration/MobileTestMatrixIntegrationTests.cs` — luồng runtime (TKB, điểm danh, điểm, PH)
   - `Integration/MasterDataIntegrationTests.cs` — TC-A03 (năm học, lớp, môn, ca, xếp loại)

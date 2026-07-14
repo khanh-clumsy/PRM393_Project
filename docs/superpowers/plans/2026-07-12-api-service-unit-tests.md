@@ -29,15 +29,13 @@
 | 13 | ParentStudentService | `Services/ParentStudentServiceTests.cs` | ❌ | 5 |
 | 14 | AttendanceService | `Services/AttendanceServiceTests.cs` | ❌ | 7 |
 | 15 | GradeService | `Services/GradeServiceTests.cs` | ❌ | 7 |
-| 16 | AssignmentService | `Services/AssignmentServiceTests.cs` | ❌ | 6 |
-| 17 | SubmissionService | `Services/SubmissionServiceTests.cs` | ❌ | 6 |
-| 18 | StudentRequestService | `Services/StudentRequestServiceTests.cs` | ❌ | 6 |
-| 19 | StudentSemesterSummaryService | `Services/StudentSemesterSummaryServiceTests.cs` | ❌ | 5 |
-| 20 | StudentYearlySummaryService | `Services/StudentYearlySummaryServiceTests.cs` | ❌ | 5 |
-| 21 | AnnouncementService | `Services/AnnouncementServiceTests.cs` | ❌ | 6 |
-| 22 | NotificationLogService | `Services/NotificationLogServiceTests.cs` | ❌ | 5 |
-| 23 | AssessmentTypeService | `Services/AssessmentTypeServiceTests.cs` | ❌ | 5 |
-| 24 | AssessmentService | `Services/AssessmentServiceTests.cs` | ❌ | 5 |
+| 16 | StudentRequestService | `Services/StudentRequestServiceTests.cs` | ❌ | 6 |
+| 17 | StudentSemesterSummaryService | `Services/StudentSemesterSummaryServiceTests.cs` | ❌ | 5 |
+| 18 | StudentYearlySummaryService | `Services/StudentYearlySummaryServiceTests.cs` | ❌ | 5 |
+| 19 | AnnouncementService | `Services/AnnouncementServiceTests.cs` | ❌ | 6 |
+| 20 | NotificationLogService | `Services/NotificationLogServiceTests.cs` | ❌ | 5 |
+| 21 | AssessmentTypeService | `Services/AssessmentTypeServiceTests.cs` | ❌ | 5 |
+| 22 | AssessmentService | `Services/AssessmentServiceTests.cs` | ❌ | 5 |
 | — | AuthController | `Controllers/AuthControllerTests.cs` | ✅ 4 test | 4 (giữ nguyên) |
 
 **Tổng mục tiêu:** ~140 unit test, tất cả pass với `dotnet test`.
@@ -1559,177 +1557,6 @@ git commit -m "test: add GradeService unit tests"
 
 ---
 
-### Task 13: AssignmentServiceTests + SubmissionServiceTests
-
-**Files:**
-- Create: `api/PRM393API.Tests/Services/AssignmentServiceTests.cs`
-- Create: `api/PRM393API.Tests/Services/SubmissionServiceTests.cs`
-
-- [ ] **Step 1: AssignmentServiceTests**
-
-```csharp
-using Moq;
-using PRM393API.DTOs;
-using PRM393API.Models;
-using PRM393API.Repositories.Interfaces;
-using PRM393API.Services;
-
-namespace PRM393API.Tests.Services;
-
-public class AssignmentServiceTests
-{
-    private readonly Mock<IAssignmentRepository> _repo = new();
-    private readonly AssignmentService _sut;
-
-    public AssignmentServiceTests() => _sut = new AssignmentService(_repo.Object);
-
-    private static Assignment Sample() => new()
-    {
-        AssignmentId = 1,
-        TeachingAssignmentId = 1,
-        Title = "Bài 1",
-        DueDate = DateTime.UtcNow.AddDays(7),
-        CreatedBy = 3,
-        CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow,
-        IsDeleted = false,
-    };
-
-    [Fact]
-    public async Task CreateAsync_SetsIsDeletedFalse()
-    {
-        _repo.Setup(r => r.CreateAsync(It.IsAny<Assignment>())).ReturnsAsync((Assignment a) => a);
-        var result = await _sut.CreateAsync(new CreateAssignmentDto(1, "Bài mới", null, null, DateTime.UtcNow.AddDays(3), 3));
-        _repo.Verify(r => r.CreateAsync(It.Is<Assignment>(a => !a.IsDeleted)), Times.Once);
-        Assert.Equal("Bài mới", result.Title);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_NotFound_ReturnsNull()
-    {
-        _repo.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((Assignment?)null);
-        Assert.Null(await _sut.UpdateAsync(99, new UpdateAssignmentDto("X", null, null, null)));
-    }
-
-    [Fact]
-    public async Task DeleteAsync_CallsSoftDelete()
-    {
-        _repo.Setup(r => r.SoftDeleteAsync(1)).ReturnsAsync(true);
-        Assert.True(await _sut.DeleteAsync(1));
-        _repo.Verify(r => r.SoftDeleteAsync(1), Times.Once);
-    }
-
-    [Fact]
-    public async Task GetByTeachingAssignmentAsync_ReturnsList()
-    {
-        _repo.Setup(r => r.GetByTeachingAssignmentAsync(1)).ReturnsAsync(new[] { Sample() });
-        Assert.Single(await _sut.GetByTeachingAssignmentAsync(1));
-    }
-
-    [Fact]
-    public async Task GetByIdAsync_Existing_ReturnsDto()
-    {
-        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(Sample());
-        Assert.Equal("Bài 1", (await _sut.GetByIdAsync(1))!.Title);
-    }
-
-    [Fact]
-    public async Task GetAllAsync_ReturnsList()
-    {
-        _repo.Setup(r => r.GetAllAsync()).ReturnsAsync(new[] { Sample() });
-        Assert.Single(await _sut.GetAllAsync());
-    }
-}
-```
-
-- [ ] **Step 2: SubmissionServiceTests**
-
-```csharp
-using Moq;
-using PRM393API.DTOs;
-using PRM393API.Models;
-using PRM393API.Repositories.Interfaces;
-using PRM393API.Services;
-
-namespace PRM393API.Tests.Services;
-
-public class SubmissionServiceTests
-{
-    private readonly Mock<ISubmissionRepository> _repo = new();
-    private readonly SubmissionService _sut;
-
-    public SubmissionServiceTests() => _sut = new SubmissionService(_repo.Object);
-
-    private static Submission Sample() => new()
-    {
-        SubmissionId = 1,
-        AssignmentId = 1,
-        StudentId = 10,
-        ContentText = "Bài làm",
-        SubmittedAt = DateTime.UtcNow,
-    };
-
-    [Fact]
-    public async Task CreateAsync_SetsSubmittedAt()
-    {
-        _repo.Setup(r => r.CreateAsync(It.IsAny<Submission>())).ReturnsAsync((Submission s) => s);
-        var result = await _sut.CreateAsync(new CreateSubmissionDto(1, 10, "Nộp bài", null, null));
-        Assert.Equal("Nộp bài", result.ContentText);
-        _repo.Verify(r => r.CreateAsync(It.Is<Submission>(s => s.SubmittedAt <= DateTime.UtcNow)), Times.Once);
-    }
-
-    [Fact]
-    public async Task GradeAsync_NotFound_ReturnsNull()
-    {
-        _repo.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((Submission?)null);
-        Assert.Null(await _sut.GradeAsync(99, new GradeSubmissionDto(8.0m, "OK", 3)));
-    }
-
-    [Fact]
-    public async Task GradeAsync_SetsScoreAndFeedback()
-    {
-        var existing = Sample();
-        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(existing);
-        _repo.Setup(r => r.GradeAsync(1, It.IsAny<Submission>())).ReturnsAsync((int _, Submission s) => s);
-        var result = await _sut.GradeAsync(1, new GradeSubmissionDto(8.5m, "Khá", 3));
-        Assert.NotNull(result);
-        Assert.Equal(8.5m, result!.Score);
-    }
-
-    [Fact]
-    public async Task GetByAssignmentAsync_ReturnsList()
-    {
-        _repo.Setup(r => r.GetByAssignmentAsync(1)).ReturnsAsync(new[] { Sample() });
-        Assert.Single(await _sut.GetByAssignmentAsync(1));
-    }
-
-    [Fact]
-    public async Task GetByStudentAsync_ReturnsList()
-    {
-        _repo.Setup(r => r.GetByStudentAsync(10)).ReturnsAsync(new[] { Sample() });
-        Assert.Single(await _sut.GetByStudentAsync(10));
-    }
-
-    [Fact]
-    public async Task DeleteAsync_ReturnsRepoResult()
-    {
-        _repo.Setup(r => r.DeleteAsync(1)).ReturnsAsync(true);
-        Assert.True(await _sut.DeleteAsync(1));
-    }
-}
-```
-
-- [ ] **Step 3: Chạy & commit**
-
-Run: `dotnet test PRM393API.Tests/PRM393API.Tests.csproj --filter "FullyQualifiedName~AssignmentServiceTests|FullyQualifiedName~SubmissionServiceTests"`
-
-```bash
-git add api/PRM393API.Tests/Services/AssignmentServiceTests.cs api/PRM393API.Tests/Services/SubmissionServiceTests.cs
-git commit -m "test: add Assignment and Submission service tests"
-```
-
----
-
 ### Task 14: StudentRequestServiceTests
 
 **Files:**
@@ -2411,7 +2238,7 @@ git commit -m "test: complete API service unit test suite"
 
 **Gaps ngoài phạm vi:**
 - Controller tests cho 23 controller còn lại (chỉ service layer trong plan này).
-- Integration test E2E API (mobile QA matrix riêng tại `docs/MOBILE_TEST_MATRIX.md`).
+- Integration test E2E API (mobile QA matrix riêng tại `docs/tests/MOBILE_TEST_MATRIX.md`).
 
 ---
 

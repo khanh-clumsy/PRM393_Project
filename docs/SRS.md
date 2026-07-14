@@ -10,7 +10,7 @@
 - **Tên dự án:** Ứng dụng Quản lý & Giao tiếp Giáo dục FSchool (Mobile App & Web API Backend).
 - **Nền tảng ứng dụng:** Android / iOS (Flutter mobile app) & .NET 8 Web API.
 - **Mục đích:** Số hóa toàn bộ quy trình quản lý học tập, kết nối thông tin giữa Nhà trường, Giáo viên, Học sinh và Phụ huynh nhằm thay thế cho sổ liên lạc truyền thống.
-- **Phạm vi hệ thống:** Quản lý thông tin hồ sơ, tổ chuyên môn, điểm danh chuyên cần, lịch học/lịch giảng dạy, phân công công tác, giao nhận bài tập, bảng tin thông báo và tổng kết kết quả học tập định kỳ (Học bạ điện tử).
+- **Phạm vi hệ thống:** Quản lý thông tin hồ sơ, tổ chuyên môn, điểm danh chuyên cần, lịch học/lịch giảng dạy, phân công công tác, nhập điểm trực tiếp, bảng tin thông báo và tổng kết kết quả học tập định kỳ (Học bạ điện tử).
 
 ---
 
@@ -23,8 +23,8 @@ Hệ thống phân quyền chặt chẽ dựa trên các vai trò cốt lõi. Tr
 | **Quản trị viên (Admin)** | Quyền hạn cao nhất. CRUD tài khoản người dùng, thiết lập năm học, kỳ học, lớp học, môn học. Thực hiện phân công giáo viên giảng dạy (`TeachingAssignments`), lập thời khóa biểu (`Timetables`), cấu hình bộ tiêu chuẩn xếp loại học lực (`AcademicRanks`), và đăng thông báo toàn trường. |
 | **Trưởng bộ môn (HeadOfDept)** | Đại diện tổ chuyên môn (ví dụ: Tổ Toán-Tin, Tổ Văn). Có quyền tạo lớp học, phân công giảng dạy và xếp thời khóa biểu cho tổ chuyên môn của mình. Ngoài ra, Trưởng bộ môn vẫn có các quyền của Giáo viên nếu trực tiếp giảng dạy. |
 | **Giáo viên (Teacher)** | Xem lịch giảng dạy cá nhân. Tiến hành điểm danh chuyên cần (`AttendanceRecords`) và nhập điểm số các cột đánh giá (`Grades`) cho các lớp được phân công. Giáo viên Chủ nhiệm (GVCN) thực hiện đánh giá hạnh kiểm, tổng kết điểm trung bình (GPA) học kỳ và cả năm (`StudentSemesterSummaries`, `StudentYearlySummaries`) cho học sinh lớp mình chủ nhiệm. Đăng bài lên bảng tin lớp chủ nhiệm/lớp giảng dạy. |
-| **Học sinh (Student)** | Xem thời khóa biểu cá nhân, tra cứu bảng điểm chi tiết môn học, xem danh sách bài tập và nộp bài trực tuyến. Xem thông tin tổng kết học kỳ và cả năm (Học bạ điện tử). Gửi đơn xin phép nghỉ học. |
-| **Phụ huynh (Parent)** | Liên kết với tài khoản của một hoặc nhiều con em để theo dõi. Quyền lợi tra cứu tương tự Học sinh (Xem thời khóa biểu, điểm danh, bảng điểm, bài tập và học bạ điện tử). Có thể trực tiếp gửi đơn xin nghỉ học thay cho con em. |
+| **Học sinh (Student)** | Xem thời khóa biểu cá nhân, tra cứu bảng điểm chi tiết môn học. Xem thông tin tổng kết học kỳ và cả năm (Học bạ điện tử). Gửi đơn xin phép nghỉ học. |
+| **Phụ huynh (Parent)** | Liên kết với tài khoản của một hoặc nhiều con em để theo dõi. Quyền lợi tra cứu tương tự Học sinh (Xem thời khóa biểu, điểm danh, bảng điểm và học bạ điện tử). Có thể trực tiếp gửi đơn xin nghỉ học thay cho con em. |
 
 > [!IMPORTANT]  
 > - **Cột `DepartmentId` trên bảng `Users`** chỉ áp dụng cho vai trò Giáo viên, đóng vai trò như một thẻ lọc (Soft constraint) phục vụ tìm kiếm/lọc danh sách trên UI và báo cáo. Hệ thống không thiết lập các ràng buộc cứng (Hard constraints) gây phức tạp khi phân công giảng dạy chéo bộ môn.
@@ -47,7 +47,6 @@ Hệ thống phân quyền chặt chẽ dựa trên các vai trò cốt lõi. Tr
 ### 3.3. Nghiệp vụ Giảng dạy & Đánh giá (Dành cho Giáo viên)
 - **Quản lý chuyên cần:** Điểm danh học sinh trong tiết học được phân công (Các trạng thái: `P` - Có mặt, `A` - Vắng mặt, `L` - Đi muộn). Cho phép ghi chú lý do.
 - **Quản lý điểm số:** Nhập và cập nhật điểm số cho học sinh theo các đầu điểm được cấu hình sẵn (`AssessmentTypes`: Kiểm tra miệng, 15 phút, 1 tiết, Giữa kỳ, Cuối kỳ). Hỗ trợ nhập điểm hàng loạt (Bulk entry) theo lớp học.
-- **Giao và chấm bài tập:** Tạo bài tập mới (tiêu đề, nội dung, hạn nộp, file đính kèm). Xem danh sách bài nộp và chấm điểm, phản hồi ý kiến cho từng bài làm của học sinh.
 - **Tổng kết học kỳ & năm học (Chỉ dành cho GVCN):**
   - Tiến hành đánh giá xếp loại Hạnh kiểm (Tốt, Khá, Trung Bình, Yếu) vào cuối học kỳ và cuối năm học.
   - Chốt điểm trung bình học kỳ (GPA) và cả năm học, hệ thống tự động ánh xạ xếp loại học lực (`RankId`) dựa trên thang điểm thiết lập trong `AcademicRanks`. Dữ liệu được lưu trữ trực tiếp vào `StudentSemesterSummaries` và `StudentYearlySummaries` để phục vụ kết xuất học bạ điện tử (không tính toán on-the-fly để tối ưu hiệu năng).
@@ -55,7 +54,6 @@ Hệ thống phân quyền chặt chẽ dựa trên các vai trò cốt lõi. Tr
 ### 3.4. Tra cứu Học tập & Đơn từ (Dành cho Học sinh & Phụ huynh)
 - **Theo dõi học tập:** Xem thời khóa biểu hàng tuần, theo dõi chi tiết điểm số của từng môn học (bao gồm điểm thành phần và điểm trung bình môn).
 - **Học bạ điện tử:** Xem bảng tổng kết học tập cuối kỳ và cả năm học (GPA, Hạnh kiểm, Xếp loại học lực).
-- **Quản lý bài tập:** Xem danh sách bài tập cần hoàn thành, xem hạn nộp và nộp bài làm trực tuyến dưới dạng text, liên kết hoặc tải lên file đính kèm.
 - **Xin nghỉ học:** Tạo đơn xin phép nghỉ học (chọn ngày nghỉ, lý do nghỉ, tải kèm minh chứng y tế/gia đình nếu có). Theo dõi trạng thái phê duyệt của giáo viên. Giáo viên có quyền duyệt (`Approved`) hoặc từ chối (`Rejected`) đơn xin nghỉ.
 
 ### 3.5. Bảng tin & Thông báo (Dành cho toàn bộ người dùng)
@@ -76,7 +74,7 @@ Hệ thống phân quyền chặt chẽ dựa trên các vai trò cốt lõi. Tr
   - Hệ thống menu điều hướng rõ ràng, hỗ trợ trải nghiệm mượt mà trên cả hệ điều hành Android và iOS.
 - **Hiệu năng & Tối ưu hóa:**
   - Tốc độ phản hồi các API nghiệp vụ thông thường (điểm danh, nhập điểm, tra cứu lịch học) phải dưới 2 giây dưới điều kiện mạng ổn định.
-  - Sử dụng cơ chế Lazy Loading / Phân trang đối với các danh sách dữ liệu lớn như danh sách học sinh, bài tập hoặc log thông báo.
+  - Sử dụng cơ chế Lazy Loading / Phân trang đối với các danh sách dữ liệu lớn như danh sách học sinh hoặc log thông báo.
   - Đánh Index đầy đủ cho các trường tra cứu tần suất cao trong cơ sở dữ liệu (ví dụ: `RefreshTokens.Token`, `StudentClasses.StudentId`, `StudentClasses.ClassId`, v.v.) nhằm triệt tiêu hiện tượng Full Table Scan.
 - **Bảo mật hệ thống:**
   - Mã hóa toàn bộ dữ liệu truyền tải qua HTTPS.
