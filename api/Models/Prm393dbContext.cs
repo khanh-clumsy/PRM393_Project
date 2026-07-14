@@ -27,8 +27,6 @@ public partial class Prm393dbContext : DbContext
 
     public virtual DbSet<AssessmentType> AssessmentTypes { get; set; }
 
-    public virtual DbSet<Assignment> Assignments { get; set; }
-
     public virtual DbSet<AttendanceRecord> AttendanceRecords { get; set; }
 
     public virtual DbSet<Class> Classes { get; set; }
@@ -56,8 +54,6 @@ public partial class Prm393dbContext : DbContext
     public virtual DbSet<StudentYearlySummary> StudentYearlySummaries { get; set; }
 
     public virtual DbSet<Subject> Subjects { get; set; }
-
-    public virtual DbSet<Submission> Submissions { get; set; }
 
     public virtual DbSet<TeachingAssignment> TeachingAssignments { get; set; }
 
@@ -115,20 +111,6 @@ public partial class Prm393dbContext : DbContext
             entity.HasOne(d => d.TeachingAssignment).WithMany(p => p.Assessments)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Assess_TA");
-        });
-
-        modelBuilder.Entity<Assignment>(entity =>
-        {
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getutcdate())");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.Assignments)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Assign_CreatedBy");
-
-            entity.HasOne(d => d.TeachingAssignment).WithMany(p => p.Assignments)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Assign_TA");
         });
 
         modelBuilder.Entity<AttendanceRecord>(entity =>
@@ -279,21 +261,6 @@ public partial class Prm393dbContext : DbContext
         modelBuilder.Entity<Subject>(entity =>
         {
             entity.Property(e => e.IsActive).HasDefaultValue(true);
-        });
-
-        modelBuilder.Entity<Submission>(entity =>
-        {
-            entity.Property(e => e.SubmittedAt).HasDefaultValueSql("(getutcdate())");
-
-            entity.HasOne(d => d.Assignment).WithMany(p => p.Submissions)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Sub_Assignments");
-
-            entity.HasOne(d => d.GradedByNavigation).WithMany(p => p.SubmissionGradedByNavigations).HasConstraintName("FK_Sub_GradedBy");
-
-            entity.HasOne(d => d.Student).WithMany(p => p.SubmissionStudents)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Sub_Students");
         });
 
         modelBuilder.Entity<TeachingAssignment>(entity =>

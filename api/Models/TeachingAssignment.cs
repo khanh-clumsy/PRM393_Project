@@ -26,9 +26,6 @@ public partial class TeachingAssignment
     [InverseProperty("TeachingAssignment")]
     public virtual ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
 
-    [InverseProperty("TeachingAssignment")]
-    public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
-
     [ForeignKey("ClassId")]
     [InverseProperty("TeachingAssignments")]
     public virtual Class Class { get; set; } = null!;

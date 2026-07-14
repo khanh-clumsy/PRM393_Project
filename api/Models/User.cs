@@ -54,9 +54,6 @@ public partial class User
     [InverseProperty("Author")]
     public virtual ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
 
-    [InverseProperty("CreatedByNavigation")]
-    public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
-
     [InverseProperty("RecordedByNavigation")]
     public virtual ICollection<AttendanceRecord> AttendanceRecordRecordedByNavigations { get; set; } = new List<AttendanceRecord>();
 
@@ -115,12 +112,6 @@ public partial class User
 
     [InverseProperty("Student")]
     public virtual ICollection<StudentYearlySummary> StudentYearlySummaryStudents { get; set; } = new List<StudentYearlySummary>();
-
-    [InverseProperty("GradedByNavigation")]
-    public virtual ICollection<Submission> SubmissionGradedByNavigations { get; set; } = new List<Submission>();
-
-    [InverseProperty("Student")]
-    public virtual ICollection<Submission> SubmissionStudents { get; set; } = new List<Submission>();
 
     [InverseProperty("Teacher")]
     public virtual ICollection<TeachingAssignment> TeachingAssignments { get; set; } = new List<TeachingAssignment>();
