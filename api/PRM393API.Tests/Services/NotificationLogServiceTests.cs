@@ -38,8 +38,8 @@ public class NotificationLogServiceTests
     {
         var updated = Sample(isRead: true);
         updated.ReadAt = DateTime.UtcNow;
-        _repo.Setup(r => r.MarkReadAsync(1)).ReturnsAsync(updated);
-        var result = await _sut.MarkReadAsync(1);
+        _repo.Setup(r => r.MarkReadAsync(1, 10)).ReturnsAsync(updated);
+        var result = await _sut.MarkReadAsync(1, 10);
         Assert.NotNull(result);
         Assert.True(result!.IsRead);
     }
@@ -47,8 +47,8 @@ public class NotificationLogServiceTests
     [Fact]
     public async Task MarkReadAsync_NotFound_ReturnsNull()
     {
-        _repo.Setup(r => r.MarkReadAsync(99)).ReturnsAsync((NotificationLog?)null);
-        Assert.Null(await _sut.MarkReadAsync(99));
+        _repo.Setup(r => r.MarkReadAsync(99, 10)).ReturnsAsync((NotificationLog?)null);
+        Assert.Null(await _sut.MarkReadAsync(99, 10));
     }
 
     [Fact]
@@ -63,5 +63,19 @@ public class NotificationLogServiceTests
     {
         _repo.Setup(r => r.DeleteAsync(1)).ReturnsAsync(true);
         Assert.True(await _sut.DeleteAsync(1));
+    }
+
+    [Fact]
+    public async Task CountUnreadAsync_ReturnsUnreadCount()
+    {
+        _repo.Setup(r => r.CountUnreadAsync(10)).ReturnsAsync(3);
+        Assert.Equal(3, await _sut.CountUnreadAsync(10));
+    }
+
+    [Fact]
+    public async Task MarkAllReadAsync_CallsRepositoryForOwner()
+    {
+        _repo.Setup(r => r.MarkAllReadAsync(10)).ReturnsAsync(2);
+        Assert.Equal(2, await _sut.MarkAllReadAsync(10));
     }
 }

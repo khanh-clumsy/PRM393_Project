@@ -9,9 +9,14 @@ namespace PRM393API.Tests.Services;
 public class StudentRequestServiceTests
 {
     private readonly Mock<IStudentRequestRepository> _repo = new();
+    private readonly Mock<IParentStudentRepository> _parentStudentRepo = new();
+    private readonly Mock<ITeachingAssignmentRepository> _teachingAssignmentRepo = new();
     private readonly StudentRequestService _sut;
 
-    public StudentRequestServiceTests() => _sut = new StudentRequestService(_repo.Object);
+    public StudentRequestServiceTests() => _sut = new StudentRequestService(
+        _repo.Object,
+        _parentStudentRepo.Object,
+        _teachingAssignmentRepo.Object);
 
     private static StudentRequest Sample() => new()
     {
@@ -22,6 +27,8 @@ public class StudentRequestServiceTests
         Reason = "ốm",
         Status = "Pending",
         CreatedAt = DateTime.UtcNow,
+        Student = new User { UserId = 10, FullName = "Nguyễn Văn A", Username = "student01", PasswordHash = "x" },
+        RequestedByNavigation = new User { UserId = 10, FullName = "Nguyễn Văn A", Username = "student01", PasswordHash = "x" },
     };
 
     [Fact]
@@ -35,6 +42,23 @@ public class StudentRequestServiceTests
     }
 
     [Fact]
+    public async Task CreateForCurrentUserAsync_StudentForOtherStudent_ThrowsUnauthorizedAccessException()
+    {
+        var dto = new CreateStudentRequestDto(11, 10, new DateOnly(2025, 11, 2), "việc gia đình", null);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.CreateForCurrentUserAsync(dto, 10, "Student"));
+    }
+
+    [Fact]
+    public async Task CreateForCurrentUserAsync_ParentWithoutRelationship_ThrowsUnauthorizedAccessException()
+    {
+        _parentStudentRepo.Setup(r => r.GetByParentAsync(20)).ReturnsAsync(Array.Empty<ParentStudent>());
+        var dto = new CreateStudentRequestDto(10, 20, new DateOnly(2025, 11, 2), "việc gia đình", null);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.CreateForCurrentUserAsync(dto, 20, "Parent"));
+    }
+
+    [Fact]
     public async Task ReviewAsync_Approved_SetsReviewedAt()
     {
         var existing = Sample();
@@ -43,6 +67,26 @@ public class StudentRequestServiceTests
         var result = await _sut.ReviewAsync(1, new ReviewStudentRequestDto("Approved", 3, "OK"));
         Assert.Equal("Approved", result!.Status);
         Assert.NotNull(result.ReviewedAt);
+    }
+
+    [Fact]
+    public async Task ReviewAsync_RejectedRequestAlreadyReviewed_ThrowsInvalidOperationException()
+    {
+        var existing = Sample();
+        existing.Status = "Approved";
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(existing);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _sut.ReviewAsync(1, new ReviewStudentRequestDto("Rejected", 3, "Không hợp lệ")));
+    }
+
+    [Fact]
+    public async Task ReviewAsync_InvalidStatus_ThrowsArgumentException()
+    {
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(Sample());
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _sut.ReviewAsync(1, new ReviewStudentRequestDto("Pending", 3, null)));
     }
 
     [Fact]
@@ -63,7 +107,20 @@ public class StudentRequestServiceTests
     public async Task GetByStudentAsync_ReturnsList()
     {
         _repo.Setup(r => r.GetByStudentAsync(10)).ReturnsAsync(new[] { Sample() });
-        Assert.Single(await _sut.GetByStudentAsync(10));
+        var result = (await _sut.GetByStudentAsync(10)).Single();
+        Assert.Equal("Nguyễn Văn A", result.StudentName);
+        Assert.Equal("Nguyễn Văn A", result.RequestedByName);
+    }
+
+    [Fact]
+    public async Task GetPendingForTeacherAsync_ReturnsOnlyStudentsInTeacherClasses()
+    {
+        _teachingAssignmentRepo.Setup(r => r.GetByTeacherAsync(3))
+            .ReturnsAsync([new TeachingAssignment { TeacherId = 3, ClassId = 101 }]);
+        _repo.Setup(r => r.GetPendingByClassIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 101 }))))
+            .ReturnsAsync([Sample()]);
+
+        Assert.Single(await _sut.GetPendingForTeacherAsync(3));
     }
 
     [Fact]

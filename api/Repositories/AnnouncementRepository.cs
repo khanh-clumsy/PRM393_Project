@@ -22,7 +22,24 @@ public class AnnouncementRepository(Prm393dbContext db) : IAnnouncementRepositor
             .Include(a => a.AnnouncementTargets)
             .Where(a => !a.IsDeleted &&
                         a.AnnouncementTargets.Any(t => t.ClassId == classId || t.ClassId == null))
+            .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
+
+    public async Task<IEnumerable<Announcement>> GetFeedByClassIdsAsync(IEnumerable<int> classIds, bool includeAll)
+    {
+        var ids = classIds.Distinct().ToList();
+        var query = db.Announcements
+            .Include(a => a.AnnouncementTargets)
+            .Where(a => !a.IsDeleted);
+
+        if (!includeAll)
+        {
+            query = query.Where(a => a.AnnouncementTargets.Any(t =>
+                t.ClassId == null || (t.ClassId.HasValue && ids.Contains(t.ClassId.Value))));
+        }
+
+        return await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
+    }
 
     public async Task<Announcement> CreateAsync(Announcement announcement, List<int?> targetClassIds)
     {

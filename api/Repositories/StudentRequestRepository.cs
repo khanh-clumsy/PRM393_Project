@@ -7,13 +7,38 @@ namespace PRM393API.Repositories;
 public class StudentRequestRepository(Prm393dbContext db) : IStudentRequestRepository
 {
     public async Task<StudentRequest?> GetByIdAsync(int id) =>
-        await db.StudentRequests.FindAsync(id);
+        await db.StudentRequests
+            .Include(r => r.Student)
+            .Include(r => r.RequestedByNavigation)
+            .FirstOrDefaultAsync(r => r.StudentRequestId == id);
 
     public async Task<IEnumerable<StudentRequest>> GetByStudentAsync(int studentId) =>
-        await db.StudentRequests.Where(r => r.StudentId == studentId).ToListAsync();
+        await db.StudentRequests
+            .Include(r => r.Student)
+            .Include(r => r.RequestedByNavigation)
+            .Where(r => r.StudentId == studentId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
 
     public async Task<IEnumerable<StudentRequest>> GetPendingAsync() =>
-        await db.StudentRequests.Where(r => r.Status == "Pending").ToListAsync();
+        await db.StudentRequests
+            .Include(r => r.Student)
+            .Include(r => r.RequestedByNavigation)
+            .Where(r => r.Status == "Pending")
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+    public async Task<IEnumerable<StudentRequest>> GetPendingByClassIdsAsync(IEnumerable<int> classIds)
+    {
+        var ids = classIds.Distinct().ToList();
+        return await db.StudentRequests
+            .Include(r => r.Student)
+            .Include(r => r.RequestedByNavigation)
+            .Where(r => r.Status == "Pending" &&
+                        db.StudentClasses.Any(sc => sc.StudentId == r.StudentId && ids.Contains(sc.ClassId)))
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+    }
 
     public async Task<StudentRequest> CreateAsync(StudentRequest request)
     {

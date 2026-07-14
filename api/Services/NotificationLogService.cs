@@ -13,6 +13,8 @@ public class NotificationLogService(INotificationLogRepository repo) : INotifica
     public async Task<IEnumerable<NotificationLogDto>> GetUnreadByUserAsync(int userId) =>
         (await repo.GetUnreadByUserAsync(userId)).Select(ToDto);
 
+    public async Task<int> CountUnreadAsync(int userId) => await repo.CountUnreadAsync(userId);
+
     public async Task<NotificationLogDto> CreateAsync(CreateNotificationLogDto dto)
     {
         var entity = new NotificationLog
@@ -27,11 +29,13 @@ public class NotificationLogService(INotificationLogRepository repo) : INotifica
         return ToDto(await repo.CreateAsync(entity));
     }
 
-    public async Task<NotificationLogDto?> MarkReadAsync(int id)
+    public async Task<NotificationLogDto?> MarkReadAsync(int id, int userId)
     {
-        var updated = await repo.MarkReadAsync(id);
+        var updated = await repo.MarkReadAsync(id, userId);
         return updated is null ? null : ToDto(updated);
     }
+
+    public async Task<int> MarkAllReadAsync(int userId) => await repo.MarkAllReadAsync(userId);
 
     public async Task<bool> DeleteAsync(int id) => await repo.DeleteAsync(id);
 

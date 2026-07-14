@@ -5,7 +5,10 @@ using PRM393API.Services.Interfaces;
 
 namespace PRM393API.Services;
 
-public class StudentRequestService(IStudentRequestRepository repo) : IStudentRequestService
+public class StudentRequestService(
+    IStudentRequestRepository repo,
+    IParentStudentRepository parentStudentRepo,
+    ITeachingAssignmentRepository teachingAssignmentRepo) : IStudentRequestService
 {
     public async Task<StudentRequestDto?> GetByIdAsync(int id)
     {
@@ -18,6 +21,12 @@ public class StudentRequestService(IStudentRequestRepository repo) : IStudentReq
 
     public async Task<IEnumerable<StudentRequestDto>> GetPendingAsync() =>
         (await repo.GetPendingAsync()).Select(ToDto);
+
+    public async Task<IEnumerable<StudentRequestDto>> GetPendingForTeacherAsync(int teacherId)
+    {
+        var classIds = (await teachingAssignmentRepo.GetByTeacherAsync(teacherId)).Select(ta => ta.ClassId).Distinct().ToList();
+        return (await repo.GetPendingByClassIdsAsync(classIds)).Select(ToDto);
+    }
 
     public async Task<StudentRequestDto> CreateAsync(CreateStudentRequestDto dto)
     {
@@ -34,10 +43,39 @@ public class StudentRequestService(IStudentRequestRepository repo) : IStudentReq
         return ToDto(await repo.CreateAsync(entity));
     }
 
+    public async Task<StudentRequestDto> CreateForCurrentUserAsync(CreateStudentRequestDto dto, int currentUserId, string role)
+    {
+        if (role.Equals("Student", StringComparison.OrdinalIgnoreCase) && dto.StudentId != currentUserId)
+        {
+            throw new UnauthorizedAccessException("Student can only create leave requests for self.");
+        }
+
+        if (role.Equals("Parent", StringComparison.OrdinalIgnoreCase))
+        {
+            var children = await parentStudentRepo.GetByParentAsync(currentUserId);
+            if (!children.Any(ps => ps.StudentId == dto.StudentId))
+            {
+                throw new UnauthorizedAccessException("Parent is not linked to this student.");
+            }
+        }
+
+        return await CreateAsync(dto with { RequestedBy = currentUserId });
+    }
+
     public async Task<StudentRequestDto?> ReviewAsync(int id, ReviewStudentRequestDto dto)
     {
         var existing = await repo.GetByIdAsync(id);
         if (existing is null) return null;
+        if (!dto.Status.Equals("Approved", StringComparison.OrdinalIgnoreCase) &&
+            !dto.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Status must be Approved or Rejected.", nameof(dto));
+        }
+
+        if (!existing.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Only pending requests can be reviewed.");
+        }
 
         existing.Status = dto.Status;
         existing.ReviewedBy = dto.ReviewedBy;
@@ -50,5 +88,6 @@ public class StudentRequestService(IStudentRequestRepository repo) : IStudentReq
     public async Task<bool> DeleteAsync(int id) => await repo.DeleteAsync(id);
 
     private static StudentRequestDto ToDto(StudentRequest r) =>
-        new(r.StudentRequestId, r.StudentId, r.RequestedBy, r.LeaveDate, r.Reason, r.AttachmentUrl, r.Status, r.ReviewedBy, r.ReviewedAt, r.ReviewNote, r.CreatedAt);
+        new(r.StudentRequestId, r.StudentId, r.Student?.FullName, r.RequestedBy, r.RequestedByNavigation?.FullName,
+            r.LeaveDate, r.Reason, r.AttachmentUrl, r.Status, r.ReviewedBy, r.ReviewedAt, r.ReviewNote, r.CreatedAt);
 }

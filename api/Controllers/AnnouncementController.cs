@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRM393API.DTOs;
 using PRM393API.Services.Interfaces;
+using System.Security.Claims;
 
 namespace PRM393API.Controllers;
 
@@ -24,6 +25,14 @@ public class AnnouncementController(IAnnouncementService service) : ControllerBa
     public async Task<IActionResult> GetByClass(int classId) =>
         Ok(await service.GetByClassAsync(classId));
 
+    [HttpGet("my-feed")]
+    public async Task<IActionResult> GetMyFeed()
+    {
+        var userId = GetCurrentUserId();
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+        return Ok(await service.GetMyFeedAsync(userId, role));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAnnouncementDto dto)
     {
@@ -44,4 +53,7 @@ public class AnnouncementController(IAnnouncementService service) : ControllerBa
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+
+    private int GetCurrentUserId() =>
+        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("Missing user id claim."));
 }
