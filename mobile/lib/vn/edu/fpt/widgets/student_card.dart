@@ -6,8 +6,6 @@ class StudentCard extends StatelessWidget {
   final bool isPresent;
   final String currentClass;
   final String currentClassTime;
-  final String upcomingAssignment;
-  final String upcomingAssignmentDue;
 
   const StudentCard({
     super.key,
@@ -16,8 +14,6 @@ class StudentCard extends StatelessWidget {
     this.isPresent = true,
     required this.currentClass,
     required this.currentClassTime,
-    required this.upcomingAssignment,
-    required this.upcomingAssignmentDue,
   });
 
   @override
@@ -95,7 +91,7 @@ class StudentCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Hai block: Lớp học hiện tại & Bài tập sắp tới
+          // Hai block: Lớp học hiện tại & Điểm số
           Row(
             children: [
               // Lớp học hiện tại
@@ -143,7 +139,6 @@ class StudentCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              // Bài tập sắp tới
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(12),
@@ -155,18 +150,18 @@ class StudentCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Bài tập sắp tới',
+                      const Text(
+                        'Điểm số',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade500,
+                          color: Colors.grey,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        upcomingAssignment,
-                        style: const TextStyle(
+                      const Text(
+                        'Giáo viên nhập trực tiếp',
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF212121),
@@ -175,12 +170,12 @@ class StudentCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        upcomingAssignmentDue,
-                        style: const TextStyle(
+                      const Text(
+                        'Xem tại tab Điểm số',
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFC62828),
+                          color: Color(0xFFE65100),
                         ),
                       ),
                     ],

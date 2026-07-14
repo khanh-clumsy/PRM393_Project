@@ -78,18 +78,6 @@ class TeacherHomeView extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const TeacherLeaveReviewView()),
                 ),
               ),
-              const SizedBox(height: 8),
-              _buildActionTile(
-                context,
-                icon: Icons.assignment_outlined,
-                label: 'Bài tập',
-                subtitle: 'Sắp có',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Tính năng bài tập đang phát triển.')),
-                  );
-                },
-              ),
             ],
           ),
         ),

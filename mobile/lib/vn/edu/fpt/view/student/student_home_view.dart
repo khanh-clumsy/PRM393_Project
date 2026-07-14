@@ -63,8 +63,6 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                   isPresent: true,
                   currentClass: 'Chưa có tiết hiện tại',
                   currentClassTime: '—',
-                  upcomingAssignment: 'Chưa có bài tập sắp tới',
-                  upcomingAssignmentDue: '—',
                 ),
                 const SizedBox(height: 24),
                 const QuickActions(),

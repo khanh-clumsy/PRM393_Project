@@ -4,7 +4,6 @@ import '../view/shared/attendance_view.dart';
 import '../view/shared/timetable_view.dart';
 import 'package:prm393_mobile/vn/edu/fpt/view/student/leave_request_view.dart';
 import '../view/student/student_grade_view.dart';
-import '../view/student/student_assignment_view.dart';
 
 class QuickActionItemData {
   final IconData icon;
@@ -52,11 +51,6 @@ class QuickActions extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const LeaveRequestListPage()),
           );
         },
-      ),
-      QuickActionItemData(
-        icon: Icons.assignment_outlined,
-        label: 'Bài tập',
-        onTap: () => Get.to(() => const StudentAssignmentView()),
       ),
       QuickActionItemData(
         icon: Icons.more_horiz_rounded,

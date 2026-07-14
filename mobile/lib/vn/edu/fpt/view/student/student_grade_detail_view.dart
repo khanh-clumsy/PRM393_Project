@@ -14,7 +14,7 @@ class StudentGradeDetailView extends StatelessWidget {
     final lower = typeName.toLowerCase();
     if (lower.contains('miệng') || lower.contains('attendance')) return Icons.record_voice_over_outlined;
     if (lower.contains('15 phút') || lower.contains('quiz')) return Icons.quiz_outlined;
-    if (lower.contains('1 tiết') || lower.contains('assignment')) return Icons.assignment_outlined;
+    if (lower.contains('1 tiết')) return Icons.fact_check_outlined;
     if (lower.contains('giữa kỳ') || lower.contains('midterm') || lower.contains('practical')) return Icons.laptop_chromebook_outlined;
     if (lower.contains('cuối kỳ') || lower.contains('final')) return Icons.school_outlined;
     return Icons.article_outlined;

@@ -76,8 +76,8 @@ class _StudentMainViewState extends State<StudentMainView> {
             badgeCount: 3,
           ),
           CustomBottomNavBarItem(
-            icon: Icons.assignment_outlined,
-            activeIcon: Icons.assignment,
+            icon: Icons.event_busy_outlined,
+            activeIcon: Icons.event_busy,
             label: 'Đơn từ',
           ),
           CustomBottomNavBarItem(
