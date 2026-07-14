@@ -311,48 +311,7 @@ CREATE TABLE StudentYearlySummaries (
 GO
 
 -- ============================================================
--- PHẦN 7: ASSIGNMENTS & SUBMISSIONS
--- ============================================================
-
-CREATE TABLE Assignments (
-    AssignmentId            INT             NOT NULL IDENTITY(1,1),
-    TeachingAssignmentId    INT             NOT NULL,
-    Title                   NVARCHAR(200)   NOT NULL,
-    Description             NVARCHAR(MAX)   NULL,
-    AttachmentUrl           NVARCHAR(500)   NULL,
-    DueDate                 DATETIME2       NOT NULL,
-    CreatedBy               INT             NOT NULL,
-    CreatedAt               DATETIME2       NOT NULL DEFAULT GETUTCDATE(),
-    UpdatedAt               DATETIME2       NOT NULL DEFAULT GETUTCDATE(),
-    IsDeleted               BIT             NOT NULL DEFAULT 0,
-    CONSTRAINT PK_Assignments PRIMARY KEY (AssignmentId),
-    CONSTRAINT FK_Assign_TA        FOREIGN KEY (TeachingAssignmentId) REFERENCES TeachingAssignments(TeachingAssignmentId),
-    CONSTRAINT FK_Assign_CreatedBy FOREIGN KEY (CreatedBy)            REFERENCES Users(UserId)
-);
-GO
-
-CREATE TABLE Submissions (
-    SubmissionId    INT             NOT NULL IDENTITY(1,1),
-    AssignmentId    INT             NOT NULL,
-    StudentId       INT             NOT NULL,
-    ContentText     NVARCHAR(MAX)   NULL,
-    FileUrl         NVARCHAR(500)   NULL,
-    LinkUrl         NVARCHAR(500)   NULL,
-    SubmittedAt     DATETIME2       NOT NULL DEFAULT GETUTCDATE(),
-    Score           DECIMAL(5,2)    NULL,
-    Feedback        NVARCHAR(500)   NULL,
-    GradedBy        INT             NULL,
-    GradedAt        DATETIME2       NULL,
-    CONSTRAINT PK_Submissions PRIMARY KEY (SubmissionId),
-    CONSTRAINT FK_Sub_Assignments FOREIGN KEY (AssignmentId) REFERENCES Assignments(AssignmentId),
-    CONSTRAINT FK_Sub_Students    FOREIGN KEY (StudentId)    REFERENCES Users(UserId),
-    CONSTRAINT FK_Sub_GradedBy    FOREIGN KEY (GradedBy)     REFERENCES Users(UserId),
-    CONSTRAINT UQ_Submissions     UNIQUE (AssignmentId, StudentId)
-);
-GO
-
--- ============================================================
--- PHẦN 8: STUDENT REQUESTS
+-- PHẦN 7: STUDENT REQUESTS
 -- ============================================================
 
 CREATE TABLE StudentRequests (
@@ -445,12 +404,6 @@ CREATE INDEX IX_SSS_SemesterId ON StudentSemesterSummaries(SemesterId);
 
 CREATE INDEX IX_SYS_StudentId       ON StudentYearlySummaries(StudentId);
 CREATE INDEX IX_SYS_AcademicYearId  ON StudentYearlySummaries(AcademicYearId);
-
-CREATE INDEX IX_Assign_DueDate   ON Assignments(DueDate);
-CREATE INDEX IX_Assign_IsDeleted ON Assignments(IsDeleted);
-
-CREATE INDEX IX_Sub_AssignmentId ON Submissions(AssignmentId);
-CREATE INDEX IX_Sub_StudentId    ON Submissions(StudentId);
 
 CREATE INDEX IX_SR_StudentId ON StudentRequests(StudentId);
 CREATE INDEX IX_SR_Status    ON StudentRequests(Status);
@@ -631,22 +584,6 @@ INSERT INTO Grades (AssessmentId, StudentId, Score, EnteredBy) VALUES
     (1, 6, 8.5, 3),
     (1, 7, 7.0, 3),
     (1, 8, 9.0, 3);
-GO
-
--- Assignments
-INSERT INTO Assignments (TeachingAssignmentId, Title, Description, DueDate, CreatedBy) VALUES
-    (1, N'Bài tập chương 1: Mệnh đề và tập hợp',
-       N'Làm bài tập từ trang 15 đến trang 20 - SGK Toán 10',
-       '2025-09-25 23:59:00', 3),
-    (1, N'Ôn tập kiểm tra 1 tiết chương 1',
-       N'Giải đề cương ôn tập giáo viên phát, nộp trước ngày kiểm tra',
-       '2025-10-14 23:59:00', 3);
-GO
-
--- Submissions
-INSERT INTO Submissions (AssignmentId, StudentId, LinkUrl, SubmittedAt) VALUES
-    (1, 6, 'https://drive.google.com/file/student01-bt1', '2025-09-24 20:30:00'),
-    (1, 7, 'https://drive.google.com/file/student02-bt1', '2025-09-25 18:00:00');
 GO
 
 -- StudentRequests
