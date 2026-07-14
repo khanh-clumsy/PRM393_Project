@@ -5,11 +5,13 @@ import '../view/student/notifications_view.dart';
 class StudentWelcomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String welcomeLine;
   final bool showNotificationBadge;
+  final int unreadCount;
 
   const StudentWelcomeAppBar({
     super.key,
     required this.welcomeLine,
     this.showNotificationBadge = true,
+    this.unreadCount = 0,
   });
 
   @override
@@ -38,16 +40,27 @@ class StudentWelcomeAppBar extends StatelessWidget implements PreferredSizeWidge
                 color: Color(0xFF424242),
                 size: 26,
               ),
-              if (showNotificationBadge)
+              if (showNotificationBadge && unreadCount > 0)
                 Positioned(
-                  right: 2,
-                  top: 2,
+                  right: -2,
+                  top: -2,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: const BoxDecoration(
                       color: Colors.red,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          height: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ),

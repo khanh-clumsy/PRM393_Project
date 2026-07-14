@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:prm393_mobile/vn/edu/fpt/widgets/custom_bottom_nav_bar.dart';
+import '../../controllers/notification_controller.dart';
 import '../../controllers/user_controller.dart';
 import 'student_home_view.dart';
 import 'student_grade_view.dart';
@@ -22,6 +23,7 @@ class _StudentMainViewState extends State<StudentMainView> {
   void initState() {
     super.initState();
     Get.put(UserController(profileOnly: true), permanent: true);
+    Get.put(NotificationController(), permanent: true);
   }
 
   final List<Widget> _pages = [

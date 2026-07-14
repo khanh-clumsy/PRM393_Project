@@ -1,169 +1,129 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
+import '../../controllers/leave_request_controller.dart';
 import '../../controllers/user_controller.dart';
+import '../../models/student_request_model.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/student_welcome_app_bar.dart';
 
-class LeaveRequestData {
-  final String title;
-  final String date;
-  final String status;
-  final String details;
-  final IconData icon;
-  final Color iconBackground;
-  final Color iconColor;
-
-  const LeaveRequestData({
-    required this.title,
-    required this.date,
-    required this.status,
-    required this.details,
-    required this.icon,
-    this.iconBackground = const Color(0xFFF5F5F5),
-    this.iconColor = Colors.grey,
-  });
-}
-
 class LeaveRequestListPage extends StatefulWidget {
-  const LeaveRequestListPage({super.key});
+  final String? controllerTag;
+  final int? studentId;
+  final int? requestedBy;
+  final String? title;
+  final String? subtitle;
+
+  const LeaveRequestListPage({
+    super.key,
+    this.controllerTag,
+    this.studentId,
+    this.requestedBy,
+    this.title,
+    this.subtitle,
+  });
 
   @override
   State<LeaveRequestListPage> createState() => _LeaveRequestListPageState();
 }
 
 class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
-  final List<LeaveRequestData> _history = [
-    const LeaveRequestData(
-      title: 'Nghỉ ốm',
-      date: '20/10/2023',
-      status: 'Đã duyệt',
-      details: 'Sốt cao và đau đầu. Bác sĩ khuyên nghỉ 2 ngày. Đã đính kèm giấy xác nhận y tế.',
-      icon: Icons.vaccines_outlined,
-      iconBackground: Color(0xFFE8F5E9),
-      iconColor: Color(0xFF2E7D32),
-    ),
-    const LeaveRequestData(
-      title: 'Nghỉ việc riêng',
-      date: '25/10/2023',
-      status: 'Chờ duyệt',
-      details: 'Tham dự lễ cưới người thân ở tỉnh khác. Xin nghỉ 1 ngày.',
-      icon: Icons.people_outline_rounded,
-      iconBackground: Color(0xFFFFF3E0),
-      iconColor: Color(0xFFE65100),
-    ),
-    const LeaveRequestData(
-      title: 'Nghỉ phép',
-      date: '02/11/2023',
-      status: 'Từ chối',
-      details: 'Dự định đi du lịch ngắn. Ghi chú: không duyệt vì trùng tuần thi giữa kỳ.',
-      icon: Icons.flight_takeoff_outlined,
-      iconBackground: Color(0xFFFFEBEE),
-      iconColor: Color(0xFFC62828),
-    ),
-  ];
+  late final LeaveRequestController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.put(LeaveRequestController(), tag: widget.controllerTag);
+    if (widget.studentId != null && widget.requestedBy != null) {
+      _ctrl.init(studentId: widget.studentId!, requestedBy: widget.requestedBy!);
+    } else {
+      _ctrl.initForCurrentStudent();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final userController = Get.find<UserController>();
+    final userController = Get.isRegistered<UserController>() ? Get.find<UserController>() : null;
 
     return Obx(() {
       return Scaffold(
         backgroundColor: const Color(0xFFF9FAFC),
-        appBar: StudentWelcomeAppBar(
-          welcomeLine: userController.welcomeText,
-          showNotificationBadge: false,
-        ),
+        appBar: userController == null
+            ? AppBar(
+                title: Text(widget.title ?? 'Đơn xin nghỉ'),
+                backgroundColor: Colors.white,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+              )
+            : StudentWelcomeAppBar(
+                welcomeLine: userController.welcomeText,
+                showNotificationBadge: false,
+              ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Đơn xin nghỉ',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF212121),
+          child: RefreshIndicator(
+            onRefresh: _ctrl.fetchRequests,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title ?? 'Đơn xin nghỉ',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Theo dõi và quản lý đơn xin nghỉ học của bạn.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.subtitle ?? 'Theo dõi và quản lý đơn xin nghỉ học.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                   ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final newRequest = await Navigator.push<LeaveRequestData>(
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const CreateLeaveRequestPage()),
-                      );
-                      if (newRequest != null) {
-                        setState(() => _history.insert(0, newRequest));
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Gửi đơn xin nghỉ thành công!'),
-                              backgroundColor: Color(0xFF2E7D32),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-                    label: const Text(
-                      'Tạo đơn mới',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE65100),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 2,
-                      shadowColor: const Color(0xFFE65100).withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        MaterialPageRoute(
+                          builder: (_) => CreateLeaveRequestPage(controllerTag: widget.controllerTag),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                      label: const Text('Tạo đơn mới', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE65100),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 2,
+                        shadowColor: const Color(0xFFE65100).withValues(alpha: 0.3),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 28),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Lịch sử gần đây',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF212121),
-                      ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Lịch sử gần đây',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_ctrl.isLoading.value)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 36),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_ctrl.errorMessage.value.isNotEmpty)
+                    _buildEmpty(_ctrl.errorMessage.value)
+                  else if (_ctrl.requests.isEmpty)
+                    _buildEmpty('Chưa có đơn xin nghỉ.')
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _ctrl.requests.length,
+                      itemBuilder: (context, index) => _buildHistoryItem(_ctrl.requests[index]),
                     ),
-                    TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFE65100),
-                        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                      child: const Text('Xem tất cả'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _history.length,
-                  itemBuilder: (context, index) => _buildHistoryItem(_history[index]),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -171,27 +131,32 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
     });
   }
 
-  Widget _buildHistoryItem(LeaveRequestData req) {
-    final isRejected = req.status == 'Từ chối';
-    final isApproved = req.status == 'Đã duyệt';
+  Widget _buildHistoryItem(StudentRequestModel req) {
+    final isRejected = req.status == 'Rejected';
+    final isApproved = req.status == 'Approved';
 
-    Color badgeBgColor;
-    Color badgeTextColor;
-    IconData statusIcon;
+    final badgeBgColor = isApproved
+        ? const Color(0xFFE8F5E9)
+        : isRejected
+            ? const Color(0xFFFFEBEE)
+            : const Color(0xFFFFF3E0);
+    final badgeTextColor = isApproved
+        ? const Color(0xFF2E7D32)
+        : isRejected
+            ? const Color(0xFFC62828)
+            : const Color(0xFFE65100);
+    final statusIcon = isApproved
+        ? Icons.check_circle_outline_rounded
+        : isRejected
+            ? Icons.cancel_outlined
+            : Icons.pending_actions_rounded;
 
-    if (isApproved) {
-      badgeBgColor = const Color(0xFFE8F5E9);
-      badgeTextColor = const Color(0xFF2E7D32);
-      statusIcon = Icons.check_circle_outline_rounded;
-    } else if (isRejected) {
-      badgeBgColor = const Color(0xFFFFEBEE);
-      badgeTextColor = const Color(0xFFC62828);
-      statusIcon = Icons.cancel_outlined;
-    } else {
-      badgeBgColor = const Color(0xFFFFF3E0);
-      badgeTextColor = const Color(0xFFE65100);
-      statusIcon = Icons.pending_actions_rounded;
-    }
+    final leaveDate = DateFormat('dd/MM/yyyy').format(DateTime.parse(req.leaveDate));
+    final detail = [
+      req.reason,
+      if (req.reviewNote != null && req.reviewNote!.trim().isNotEmpty) 'Ghi chú: ${req.reviewNote}',
+      if (req.attachmentUrl != null && req.attachmentUrl!.trim().isNotEmpty) 'Minh chứng: ${req.attachmentUrl}',
+    ].join('\n');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -200,11 +165,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 3)),
         ],
         border: Border.all(color: Colors.grey.shade100),
       ),
@@ -216,8 +177,8 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
               Container(
                 width: 42,
                 height: 42,
-                decoration: BoxDecoration(color: req.iconBackground, shape: BoxShape.circle),
-                child: Icon(req.icon, color: req.iconColor, size: 20),
+                decoration: BoxDecoration(color: badgeBgColor, shape: BoxShape.circle),
+                child: Icon(statusIcon, color: badgeTextColor, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -225,43 +186,25 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      req.title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF212121),
-                      ),
+                      req.studentName ?? 'Học sinh #${req.studentId}',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      req.date,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text(leaveDate, style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500)),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: badgeBgColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                decoration: BoxDecoration(color: badgeBgColor, borderRadius: BorderRadius.circular(20)),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(statusIcon, size: 13, color: badgeTextColor),
                     const SizedBox(width: 4),
                     Text(
-                      req.status,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: badgeTextColor,
-                      ),
+                      req.statusLabelVi,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: badgeTextColor),
                     ),
                   ],
                 ),
@@ -273,28 +216,31 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isRejected
-                  ? const Color(0xFFFFEBEE).withValues(alpha: 0.5)
-                  : const Color(0xFFF5F6F8),
+              color: isRejected ? const Color(0xFFFFEBEE).withValues(alpha: 0.5) : const Color(0xFFF5F6F8),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              req.details,
-              style: TextStyle(
-                fontSize: 12.5,
-                color: isRejected ? const Color(0xFFC62828) : Colors.grey.shade700,
-                height: 1.4,
-              ),
+              detail,
+              style: TextStyle(fontSize: 12.5, color: isRejected ? const Color(0xFFC62828) : Colors.grey.shade700, height: 1.4),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildEmpty(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 36),
+      child: Center(child: Text(message, style: TextStyle(color: Colors.grey.shade600))),
+    );
+  }
 }
 
 class CreateLeaveRequestPage extends StatefulWidget {
-  const CreateLeaveRequestPage({super.key});
+  final String? controllerTag;
+
+  const CreateLeaveRequestPage({super.key, this.controllerTag});
 
   @override
   State<CreateLeaveRequestPage> createState() => _CreateLeaveRequestPageState();
@@ -303,13 +249,21 @@ class CreateLeaveRequestPage extends StatefulWidget {
 class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
-
-  String _selectedType = 'Nghỉ ốm';
+  final _attachmentUrlController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+
+  late final LeaveRequestController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.find<LeaveRequestController>(tag: widget.controllerTag);
+  }
 
   @override
   void dispose() {
     _reasonController.dispose();
+    _attachmentUrlController.dispose();
     super.dispose();
   }
 
@@ -323,11 +277,7 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFFE65100),
-              onPrimary: Colors.white,
-              onSurface: Colors.black87,
-            ),
+            colorScheme: const ColorScheme.light(primary: Color(0xFFE65100), onPrimary: Colors.white, onSurface: Colors.black87),
           ),
           child: child!,
         );
@@ -340,23 +290,15 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dateString =
-        '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}';
+    final dateString = DateFormat('dd/MM/yyyy').format(_selectedDate);
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Tạo đơn xin nghỉ',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF212121)),
-        ),
+        title: const Text('Tạo đơn xin nghỉ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF212121))),
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF212121), size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -366,74 +308,33 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Điền thông tin đơn xin nghỉ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
-                ),
+                const Text('Điền thông tin đơn xin nghỉ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 24),
-                const Text(
-                  'Loại nghỉ',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedType,
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE65100), width: 1.5),
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'Nghỉ ốm', child: Text('Nghỉ ốm')),
-                    DropdownMenuItem(value: 'Nghỉ việc riêng', child: Text('Nghỉ việc riêng')),
-                    DropdownMenuItem(value: 'Nghỉ phép', child: Text('Nghỉ phép')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedType = val);
-                  },
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Ngày nghỉ',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
-                ),
+                const Text('Ngày nghỉ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: () => _selectDate(context),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          dateString,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
-                        ),
+                        Text(dateString, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                         const Icon(Icons.calendar_today_rounded, color: Color(0xFFE65100), size: 18),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Lý do',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
-                ),
+                const Text('Lý do', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _reasonController,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    hintText: 'Mô tả lý do xin nghỉ (ví dụ: ốm, việc gia đình)...',
-                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                    hintText: 'Mô tả lý do xin nghỉ...',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -441,52 +342,31 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
                     ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return 'Vui lòng nhập lý do xin nghỉ';
-                    }
-                    return null;
-                  },
+                  validator: (val) => val == null || val.trim().isEmpty ? 'Vui lòng nhập lý do xin nghỉ' : null,
+                ),
+                const SizedBox(height: 20),
+                const Text('Link minh chứng (tuỳ chọn)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _attachmentUrlController,
+                  decoration: InputDecoration(
+                    hintText: 'https://...',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE65100), width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
                 ),
                 const SizedBox(height: 36),
-                AppButton(
-                  label: 'Gửi đơn',
-                  fullWidth: true,
-                  borderRadius: 30,
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      IconData icon;
-                      Color iconBg;
-                      Color iconColor;
-
-                      if (_selectedType == 'Nghỉ ốm') {
-                        icon = Icons.vaccines_outlined;
-                        iconBg = const Color(0xFFE8F5E9);
-                        iconColor = const Color(0xFF2E7D32);
-                      } else if (_selectedType == 'Nghỉ phép') {
-                        icon = Icons.flight_takeoff_outlined;
-                        iconBg = const Color(0xFFFFEBEE);
-                        iconColor = const Color(0xFFC62828);
-                      } else {
-                        icon = Icons.people_outline_rounded;
-                        iconBg = const Color(0xFFFFF3E0);
-                        iconColor = const Color(0xFFE65100);
-                      }
-
-                      Navigator.pop(
-                        context,
-                        LeaveRequestData(
-                          title: _selectedType,
-                          date: dateString,
-                          status: 'Chờ duyệt',
-                          details: _reasonController.text.trim(),
-                          icon: icon,
-                          iconBackground: iconBg,
-                          iconColor: iconColor,
-                        ),
-                      );
-                    }
-                  },
+                Obx(
+                  () => AppButton(
+                    label: _ctrl.isSubmitting.value ? 'Đang gửi...' : 'Gửi đơn',
+                    fullWidth: true,
+                    borderRadius: 30,
+                    onPressed: _ctrl.isSubmitting.value ? null : _submit,
+                  ),
                 ),
               ],
             ),
@@ -494,5 +374,20 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    final ok = await _ctrl.submitRequest(
+      leaveDate: _selectedDate,
+      reason: _reasonController.text.trim(),
+      attachmentUrl: _attachmentUrlController.text,
+    );
+    if (ok && mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gửi đơn xin nghỉ thành công!'), backgroundColor: Color(0xFF2E7D32)),
+      );
+    }
   }
 }

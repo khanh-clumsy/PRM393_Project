@@ -1,46 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../controllers/announcement_feed_controller.dart';
+import '../../controllers/notification_controller.dart';
 import '../../controllers/user_controller.dart';
+import '../../core/utils/relative_time.dart';
 import '../../widgets/student_card.dart';
 import '../../widgets/quick_actions.dart';
 import '../../widgets/news_card.dart';
 import '../../widgets/student_welcome_app_bar.dart';
 
-class StudentHomeView extends StatelessWidget {
+class StudentHomeView extends StatefulWidget {
   const StudentHomeView({super.key});
+
+  @override
+  State<StudentHomeView> createState() => _StudentHomeViewState();
+}
+
+class _StudentHomeViewState extends State<StudentHomeView> {
+  late final AnnouncementFeedController _feedCtrl;
+  late final NotificationController _notifCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _feedCtrl = Get.put(AnnouncementFeedController(), tag: 'student_home_feed');
+    _notifCtrl = Get.find<NotificationController>();
+    _feedCtrl.loadFeed();
+    _notifCtrl.refreshUnreadCount();
+  }
 
   @override
   Widget build(BuildContext context) {
     final userController = Get.find<UserController>();
 
-    final newsList = [
-      const NewsItemData(
-        id: '1',
-        title: 'Thông báo khai giảng năm học mới',
-        excerpt:
-            'Hội trường lớn vào thứ Hai tuần tới. Ban giám hiệu sẽ giới thiệu chương trình học, nội quy và đội ngũ giáo viên năm học này.',
-        timeAgo: '2 giờ trước',
-        tag: 'Sự kiện',
-        imageUrl: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600&auto=format&fit=crop',
-        likes: 24,
-        comments: 5,
-      ),
-      const NewsItemData(
-        id: '2',
-        title: 'Mở đăng ký Hội thi Khoa học Kỹ thuật',
-        excerpt:
-            'Học sinh quan tâm vui lòng nộp đề cương dự án tại phòng Hóa trước thứ Sáu. Giải thưởng hấp dẫn dành cho các nhóm xuất sắc.',
-        timeAgo: '5 giờ trước',
-        tag: 'Thông báo',
-        likes: 42,
-        comments: 12,
-      ),
-    ];
-
     return Obx(() {
+      final newsList = _feedCtrl.feedItems.take(3).map((a) {
+        final excerpt = a.content.length > 120 ? '${a.content.substring(0, 120)}...' : a.content;
+        return NewsItemData(
+          id: '${a.announcementId}',
+          title: a.title,
+          excerpt: excerpt,
+          timeAgo: formatRelativeTimeVi(a.createdAt),
+          tag: a.announcementType,
+        );
+      }).toList();
+
       return Scaffold(
         backgroundColor: const Color(0xFFF9FAFC),
-        appBar: StudentWelcomeAppBar(welcomeLine: userController.welcomeText),
+        appBar: StudentWelcomeAppBar(
+          welcomeLine: userController.welcomeText,
+          unreadCount: _notifCtrl.unreadCount.value,
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -88,7 +98,21 @@ class StudentHomeView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                ...newsList.map((news) => NewsCard(news: news)),
+                if (_feedCtrl.isLoading.value)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (newsList.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      _feedCtrl.errorMessage.value.isNotEmpty ? _feedCtrl.errorMessage.value : 'Chua co tin tuc moi',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  )
+                else
+                  ...newsList.map((news) => NewsCard(news: news)),
                 const SizedBox(height: 12),
               ],
             ),

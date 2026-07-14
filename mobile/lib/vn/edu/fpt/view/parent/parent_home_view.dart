@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/timetable_controller.dart';
+import '../../core/storage/local_storage.dart';
 import '../../core/parent_relationship_helper.dart';
 import '../../widgets/app_button.dart';
 import '../student/notifications_view.dart';
 import '../shared/attendance_view.dart';
 import '../shared/timetable_view.dart';
 import '../student/student_grade_view.dart';
+import '../student/leave_request_view.dart';
 
 class ParentHomeView extends StatelessWidget {
   const ParentHomeView({super.key});
@@ -144,6 +146,33 @@ class ParentHomeView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _openLeaveForChild(TimetableController controller) async {
+    final studentId = controller.targetStudentId.value;
+    if (studentId == null) {
+      Get.snackbar('Thông báo', 'Vui lòng chọn con trước.');
+      return;
+    }
+
+    final parentIdStr = await LocalStorage.getUserId();
+    final parentId = int.tryParse(parentIdStr ?? '');
+    if (parentId == null) {
+      Get.snackbar('Thông báo', 'Không tìm thấy tài khoản phụ huynh.');
+      return;
+    }
+
+    Get.to(
+      () => LeaveRequestListPage(
+        controllerTag: 'parent_leave_$studentId',
+        studentId: studentId,
+        requestedBy: parentId,
+        title: 'Đơn xin nghỉ',
+        subtitle: controller.studentName.value.isNotEmpty
+            ? 'Đơn xin nghỉ của ${controller.studentName.value}'
+            : 'Đơn xin nghỉ của con',
       ),
     );
   }
@@ -435,7 +464,18 @@ class ParentHomeView extends StatelessWidget {
                         },
                       ),
                     ),
-                    const Expanded(child: SizedBox()),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionCard(
+                        context,
+                        title: 'Đơn xin nghỉ',
+                        subtitle: 'Tạo và theo dõi đơn',
+                        icon: Icons.event_busy_outlined,
+                        color: const Color(0xFF6A1B9A),
+                        bgColor: const Color(0xFFF3E5F5),
+                        onTap: () => _openLeaveForChild(controller),
+                      ),
+                    ),
                   ],
                 ),
               ],

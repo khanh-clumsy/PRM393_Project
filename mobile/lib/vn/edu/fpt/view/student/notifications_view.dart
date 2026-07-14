@@ -1,26 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class NotificationItemData {
-  final String id;
-  final String title;
-  final String description;
-  final String timeAgo;
-  final IconData icon;
-  final Color iconBackground;
-  final Color iconColor;
-  bool isUnread;
-
-  NotificationItemData({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.timeAgo,
-    required this.icon,
-    required this.iconBackground,
-    required this.iconColor,
-    this.isUnread = false,
-  });
-}
+import '../../controllers/announcement_feed_controller.dart';
+import '../../controllers/notification_controller.dart';
+import '../../core/utils/relative_time.dart';
+import '../../models/announcement_model.dart';
+import '../../models/notification_log_model.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -31,94 +16,27 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   int _activeTab = 0;
+  late final AnnouncementFeedController _feedCtrl;
+  late final NotificationController _notifCtrl;
 
-  final List<NotificationItemData> _schoolNotifications = [
-    NotificationItemData(
-      id: 's1',
-      title: 'Thay đổi lịch học Toán',
-      description: 'Thầy Anderson đã đổi giờ bắt đầu tiết Giải tích nâng cao ngày mai thành 8:30.',
-      timeAgo: '2 phút trước',
-      icon: Icons.school_rounded,
-      iconBackground: const Color(0xFFFFF3E0),
-      iconColor: const Color(0xFFD84315),
-      isUnread: true,
-    ),
-    NotificationItemData(
-      id: 's2',
-      title: 'Thông báo toàn trường',
-      description: 'Thư viện sẽ đóng cửa chiều nay để bảo trì hệ thống điều hòa.',
-      timeAgo: '15 phút trước',
-      icon: Icons.campaign_rounded,
-      iconBackground: const Color(0xFFFFEBEE),
-      iconColor: const Color(0xFFC62828),
-      isUnread: true,
-    ),
-    NotificationItemData(
-      id: 's3',
-      title: 'Bài tập mới',
-      description: 'Câu hỏi ôn tập chương 4 đã được đăng trên cổng thông tin môn Vật lý.',
-      timeAgo: 'Hôm qua, 16:30',
-      icon: Icons.assignment_rounded,
-      iconBackground: const Color(0xFFE8EAF6),
-      iconColor: const Color(0xFF3F51B5),
-      isUnread: false,
-    ),
-    NotificationItemData(
-      id: 's4',
-      title: 'Tin nhắn từ cô Davis',
-      description: 'Các em làm bài thuyết trình nhóm rất tốt. Điểm đã được cập nhật trên tab Học tập.',
-      timeAgo: 'Hôm qua, 14:15',
-      icon: Icons.person_rounded,
-      iconBackground: Colors.grey.shade100,
-      iconColor: Colors.grey.shade700,
-      isUnread: false,
-    ),
-    NotificationItemData(
-      id: 's5',
-      title: 'Nhắc sự kiện',
-      description: 'Hạn đăng ký Hội thi Khoa học Kỹ thuật là thứ Sáu tuần này. Hãy nộp đề cương sớm!',
-      timeAgo: 'Hôm qua, 09:00',
-      icon: Icons.calendar_today_rounded,
-      iconBackground: const Color(0xFFE0F2F1),
-      iconColor: const Color(0xFF00796B),
-      isUnread: false,
-    ),
-  ];
-
-  final List<NotificationItemData> _internalNotifications = [
-    NotificationItemData(
-      id: 'i1',
-      title: 'Bảo trì hệ thống',
-      description: 'Cổng thông tin FSchool sẽ tạm ngưng từ 0:00 đến 2:00 sáng nay để nâng cấp cơ sở dữ liệu.',
-      timeAgo: '1 giờ trước',
-      icon: Icons.settings_rounded,
-      iconBackground: const Color(0xFFECEFF1),
-      iconColor: const Color(0xFF546E7A),
-      isUnread: true,
-    ),
-    NotificationItemData(
-      id: 'i2',
-      title: 'Sách quá hạn',
-      description: 'Vui lòng trả cuốn "Nguyên lý Vật lý cổ điển" để tránh phí phạt trả muộn.',
-      timeAgo: '3 ngày trước',
-      icon: Icons.menu_book_rounded,
-      iconBackground: const Color(0xFFEFEBE9),
-      iconColor: const Color(0xFF5D4037),
-      isUnread: false,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _feedCtrl = Get.put(AnnouncementFeedController(), tag: 'notifications_feed');
+    _notifCtrl = Get.isRegistered<NotificationController>()
+        ? Get.find<NotificationController>()
+        : Get.put(NotificationController(), tag: 'notifications_log');
+    _feedCtrl.loadFeed();
+    _notifCtrl.refreshAll();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final activeList = _activeTab == 0 ? _schoolNotifications : _internalNotifications;
-    final unreadItems = activeList.where((item) => item.isUnread).toList();
-    final readItems = activeList.where((item) => !item.isUnread).toList();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Thông báo',
+          'Thong bao',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF212121)),
         ),
         centerTitle: true,
@@ -130,26 +48,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                for (final item in activeList) {
-                  item.isUnread = false;
-                }
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đã đánh dấu tất cả là đã đọc')),
-              );
-            },
-            child: const Text(
-              'Đọc hết',
-              style: TextStyle(
-                color: Color(0xFFD84315),
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
+          if (_activeTab == 1)
+            TextButton(
+              onPressed: _notifCtrl.markAllRead,
+              child: const Text(
+                'Doc het',
+                style: TextStyle(
+                  color: Color(0xFFD84315),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
             ),
-          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -162,49 +72,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
               child: Row(
                 children: [
-                  _buildTab(0, 'Trường & Lớp'),
-                  _buildTab(1, 'Hệ thống'),
+                  _buildTab(0, 'Truong & Lop'),
+                  _buildTab(1, 'He thong'),
                 ],
               ),
             ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                children: [
-                  ...unreadItems.map(_buildNotificationTile),
-                  if (readItems.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
-                      child: Text(
-                        'TRƯỚC ĐÓ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade500,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    ...readItems.map(_buildNotificationTile),
-                  ],
-                  if (unreadItems.isEmpty && readItems.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 60),
-                        child: Column(
-                          children: [
-                            Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade300),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Không có thông báo',
-                              style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              child: Obx(() {
+                if (_activeTab == 0) {
+                  return _buildAnnouncementList();
+                }
+                return _buildNotificationList();
+              }),
             ),
           ],
         ),
@@ -242,78 +121,177 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildNotificationTile(NotificationItemData item) {
+  Widget _buildAnnouncementList() {
+    if (_feedCtrl.isLoading.value) return const Center(child: CircularProgressIndicator());
+    if (_feedCtrl.errorMessage.value.isNotEmpty) return _buildEmpty(_feedCtrl.errorMessage.value);
+    if (_feedCtrl.feedItems.isEmpty) return _buildEmpty('Chua co bang tin');
+
+    return RefreshIndicator(
+      onRefresh: _feedCtrl.loadFeed,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        children: _feedCtrl.feedItems.map(_buildAnnouncementTile).toList(),
+      ),
+    );
+  }
+
+  Widget _buildNotificationList() {
+    if (_notifCtrl.isLoading.value) return const Center(child: CircularProgressIndicator());
+    if (_notifCtrl.errorMessage.value.isNotEmpty) return _buildEmpty(_notifCtrl.errorMessage.value);
+
+    final unreadItems = _notifCtrl.notifications.where((item) => !item.isRead).toList();
+    final readItems = _notifCtrl.notifications.where((item) => item.isRead).toList();
+    if (unreadItems.isEmpty && readItems.isEmpty) return _buildEmpty('Khong co thong bao');
+
+    return RefreshIndicator(
+      onRefresh: _notifCtrl.refreshAll,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        children: [
+          ...unreadItems.map(_buildNotificationTile),
+          if (readItems.isNotEmpty) ...[
+            _buildSectionLabel(),
+            ...readItems.map(_buildNotificationTile),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementTile(AnnouncementModel item) {
+    final urgent = item.priority.toLowerCase() == 'urgent';
+    return _buildBaseTile(
+      title: item.title,
+      description: item.content,
+      timeAgo: formatRelativeTimeVi(item.createdAt),
+      icon: _announcementIcon(item),
+      iconBackground: urgent ? const Color(0xFFFFEBEE) : const Color(0xFFFFF3E0),
+      iconColor: urgent ? const Color(0xFFC62828) : const Color(0xFFD84315),
+      isUnread: urgent,
+    );
+  }
+
+  Widget _buildNotificationTile(NotificationLogModel item) {
     return GestureDetector(
-      onTap: () => setState(() => item.isUnread = false),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: item.isUnread ? const Color(0xFFFFF8F5) : Colors.white,
-          border: Border(
-            bottom: BorderSide(color: Colors.grey.shade50.withValues(alpha: 0.8)),
-          ),
+      onTap: item.isRead ? null : () => _notifCtrl.markRead(item.notificationId),
+      child: _buildBaseTile(
+        title: item.title,
+        description: item.body,
+        timeAgo: formatRelativeTimeVi(item.createdAt),
+        icon: Icons.notifications_active_outlined,
+        iconBackground: const Color(0xFFECEFF1),
+        iconColor: const Color(0xFF546E7A),
+        isUnread: !item.isRead,
+      ),
+    );
+  }
+
+  Widget _buildBaseTile({
+    required String title,
+    required String description,
+    required String timeAgo,
+    required IconData icon,
+    required Color iconBackground,
+    required Color iconColor,
+    required bool isUnread,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isUnread ? const Color(0xFFFFF8F5) : Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade50.withValues(alpha: 0.8)),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: item.iconBackground,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(item.icon, color: item.iconColor, size: 20),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: item.isUnread ? FontWeight.bold : FontWeight.w600,
-                      color: const Color(0xFF212121),
-                    ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: iconBackground, shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                    color: const Color(0xFF212121),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.description,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.timeAgo,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: item.isUnread ? const Color(0xFFD84315) : Colors.grey.shade400,
-                      fontWeight: item.isUnread ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (item.isUnread)
-              Container(
-                margin: const EdgeInsets.only(top: 6),
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFD84315),
-                  shape: BoxShape.circle,
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.4),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  timeAgo,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isUnread ? const Color(0xFFD84315) : Colors.grey.shade400,
+                    fontWeight: isUnread ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isUnread)
+            Container(
+              margin: const EdgeInsets.only(top: 6),
+              width: 7,
+              height: 7,
+              decoration: const BoxDecoration(color: Color(0xFFD84315), shape: BoxShape.circle),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
+      child: Text(
+        'TRUOC DO',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade500,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmpty(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(message, style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
     );
+  }
+
+  IconData _announcementIcon(AnnouncementModel a) {
+    if (a.priority.toLowerCase() == 'urgent') return Icons.campaign_rounded;
+    if (a.announcementType.toLowerCase() == 'global' || a.announcementType.toLowerCase() == 'school') {
+      return Icons.school_rounded;
+    }
+    return Icons.class_rounded;
   }
 }

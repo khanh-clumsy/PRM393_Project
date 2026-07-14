@@ -47,10 +47,11 @@ Quản lý đơn xin nghỉ học của học sinh.
 
 | Method | Endpoint | Quyền truy cập | Mô tả nghiệp vụ / Cấu trúc dữ liệu |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/api/students/{studentId}/leave-requests` | Học sinh / Phụ huynh | Tạo đơn xin nghỉ học.<br>- **Request Body:** `{ "leaveDate": "YYYY-MM-DD", "reason": "...", "attachmentUrl": "..." }` |
-| **GET** | `/api/students/{studentId}/leave-requests` | Học sinh / Phụ huynh | Xem danh sách lịch sử đơn xin nghỉ học đã tạo. |
-| **GET** | `/api/teachers/{teacherId}/leave-requests` | Giáo viên | Lấy danh sách các đơn xin nghỉ học cần phê duyệt từ học sinh lớp chủ nhiệm hoặc học sinh lớp giảng dạy. |
-| **PUT** | `/api/leave-requests/{requestId}/status` | Giáo viên | Phê duyệt hoặc từ chối đơn xin nghỉ học.<br>- **Request Body:** `{ "status": "Approved" / "Rejected", "reviewNote": "..." }` |
+| **GET** | `/api/studentrequest/by-student/{studentId}` | Học sinh / Phụ huynh / Giáo viên | Xem lịch sử đơn xin nghỉ của học sinh.<br>- **Response:** `StudentRequestDto[]` có `studentName`, `requestedByName`, `leaveDate`, `reason`, `attachmentUrl`, `status`, `reviewNote`. |
+| **POST** | `/api/studentrequest` | Học sinh / Phụ huynh | Tạo đơn xin nghỉ học. API lấy người gửi từ JWT, không tin `requestedBy` từ client.<br>- **Request Body:** `{ "studentId": 10, "requestedBy": 10, "leaveDate": "YYYY-MM-DD", "reason": "...", "attachmentUrl": "..." }`<br>- **Rule:** Student chỉ tạo cho chính mình; Parent chỉ tạo cho con đã liên kết. |
+| **GET** | `/api/studentrequest/pending/for-teacher` | Giáo viên | Lấy đơn `Pending` của học sinh thuộc lớp giáo viên đang dạy. |
+| **GET** | `/api/studentrequest/pending` | Admin / tương thích cũ | Lấy toàn bộ đơn `Pending`. Mobile giáo viên dùng endpoint scoped ở trên. |
+| **PUT** | `/api/studentrequest/{requestId}/review` | Giáo viên | Phê duyệt hoặc từ chối đơn xin nghỉ học. API lấy `reviewedBy` từ JWT.<br>- **Request Body:** `{ "status": "Approved" / "Rejected", "reviewedBy": 3, "reviewNote": "..." }`<br>- **Rule:** Chỉ review đơn đang `Pending`; status chỉ `Approved` hoặc `Rejected`. |
 
 ---
 
@@ -83,8 +84,14 @@ Quản lý đơn xin nghỉ học của học sinh.
 
 | Method | Endpoint | Quyền truy cập | Mô tả nghiệp vụ / Cấu trúc dữ liệu |
 | :--- | :--- | :--- | :--- |
-| **GET** | `/api/announcements` | Đã đăng nhập | Xem danh sách các tin tức trên bảng tin của người dùng (tự động lọc theo lớp hoặc tin toàn trường). |
-| **PUT** | `/api/notifications/{notificationId}/read` | Đã đăng nhập | Đánh dấu một thông báo hệ thống gửi tới là đã đọc (`IsRead = 1`). |
+| **GET** | `/api/announcement` | Admin / tương thích cũ | Danh sách bảng tin không scoped, dùng cho CRUD Admin. |
+| **GET** | `/api/announcement/my-feed` | Đã đăng nhập | Feed mobile theo JWT: Student thấy Global + lớp đang học; Parent thấy Global + lớp của các con; Teacher thấy Global + lớp đang dạy; Admin thấy toàn bộ. Sort mới nhất trước. |
+| **GET** | `/api/announcement/by-class/{classId}` | Đã đăng nhập | Bảng tin theo lớp, gồm cả tin Global. |
+| **POST** | `/api/announcement` | Admin / Giáo viên | Đăng tin Global hoặc Class. Khi `targetClassIds` có lớp cụ thể, API fan-out `NotificationLog` cho học sinh và phụ huynh thuộc lớp đó. |
+| **GET** | `/api/notificationlog/me` | Đã đăng nhập | Log thông báo của user hiện tại, lấy `userId` từ JWT. |
+| **GET** | `/api/notificationlog/me/unread-count` | Đã đăng nhập | Badge unread cho mobile.<br>- **Response:** `{ "count": 3 }` |
+| **PUT** | `/api/notificationlog/{notificationId}/read` | Đã đăng nhập | Đánh dấu một thông báo là đã đọc; chỉ update log thuộc user hiện tại. |
+| **PUT** | `/api/notificationlog/me/read-all` | Đã đăng nhập | Đánh dấu toàn bộ log chưa đọc của user hiện tại. |
 
 ---
 

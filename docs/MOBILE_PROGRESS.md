@@ -1,8 +1,8 @@
 # Tiến độ triển khai Mobile — FSchool
 
-Tài liệu theo dõi tiến độ phát triển ứng dụng Flutter (`mobile/`). Cập nhật lần cuối: **09/07/2026**.
+Tài liệu theo dõi tiến độ phát triển ứng dụng Flutter (`mobile/`). Cập nhật lần cuối: **14/07/2026**.
 
-**Tham chiếu:** [SRS.md](./SRS.md) · [API_DESIGN.md](./API_DESIGN.md) · [FLUTTER_ARCHITECTURE_GUIDE.md](./FLUTTER_ARCHITECTURE_GUIDE.md) · [MOBILE_COMPLETION_PLAN.md](./MOBILE_COMPLETION_PLAN.md) *(kế hoạch 80–90% → 100%)* · [MOBILE_TEST_MATRIX.md](./MOBILE_TEST_MATRIX.md) *(kịch bản QA thủ công)*
+**Tham chiếu:** [SRS.md](./SRS.md) · [API_DESIGN.md](./API_DESIGN.md) · [FLUTTER_ARCHITECTURE_GUIDE.md](./FLUTTER_ARCHITECTURE_GUIDE.md) · [MOBILE_COMPLETION_PLAN.md](./MOBILE_COMPLETION_PLAN.md) *(kế hoạch 80–90% → 100%)* · [tests/MOBILE_TEST_MATRIX.md](./tests/MOBILE_TEST_MATRIX.md) *(QA sprint Completion)* · [tests/MOBILE_TEST_MATRIX_NEWSFEED_LEAVE.md](./tests/MOBILE_TEST_MATRIX_NEWSFEED_LEAVE.md) *(QA Bảng tin & Đơn nghỉ)*
 
 ---
 
@@ -39,14 +39,14 @@ Kiến trúc đã theo chuẩn dự án: **View → Controller → ApiClient (Di
 ```
 Tiến độ ước lượng theo SRS mobile:
 
-███████████████░░░░░  ~75–80%
+█████████████████░░░  ~85–90%
 
 ✅ Nền tảng + Auth + Routing role      [██████████] 100%
 ✅ Admin / HeadOfDept master data      [██████████] 100%
 ✅ TKB + Phân công + Phân lớp          [██████████] 100%
 ✅ Điểm danh + Nhập/xem điểm           [██████████] 100%
-⚠️ Bảng tin & Thông báo               [████░░░░░░]  40%
-⚠️ Đơn xin nghỉ                        [███░░░░░░░]  30%
+✅ Bảng tin & Thông báo               [██████████] 100%
+✅ Đơn xin nghỉ                        [██████████] 100%
 ❌ Bài tập                             [░░░░░░░░░░]   0%
 ❌ Học bạ / Tổng kết GVCN              [░░░░░░░░░░]   0%
 ❌ Bảo mật tài khoản (đổi/quên MK)     [░░░░░░░░░░]   0%
@@ -58,8 +58,8 @@ Tiến độ ước lượng theo SRS mobile:
 | Admin / HeadOfDept master data | 100% | ✅ Hoàn thành (sprint 09/07/2026) |
 | TKB + Phân công + Phân lớp | 100% | ✅ Hoàn thành (sprint 09/07/2026) |
 | Điểm danh + Nhập/xem điểm | 100% | ✅ Hoàn thành (sprint 09/07/2026) |
-| Bảng tin & Thông báo | 40% | ⚠️ Làm dở |
-| Đơn xin nghỉ | 30% | ⚠️ Làm dở |
+| Bảng tin & Thông báo | 100% | ✅ Đã nối API thật; chờ QA Flutter |
+| Đơn xin nghỉ | 100% | ✅ HS/PH tạo đơn, GV duyệt; chờ QA Flutter |
 | Bài tập | 0% | ❌ Chưa bắt đầu |
 | Học bạ / Tổng kết GVCN | 0% | ❌ Chưa bắt đầu |
 | Bảo mật tài khoản (đổi/quên MK) | 0% | ❌ Chưa bắt đầu |
@@ -133,6 +133,17 @@ Dashboard `admin_home_view.dart` với 13 module, mỗi module có view + contro
 | Xem TKB của con | `timetable_view.dart` | ✅ |
 | Xem điểm danh của con | `attendance_view.dart` | ✅ |
 | Xem bảng điểm con | `student_grade_view.dart` (targetStudentId) | ✅ |
+| Tạo/theo dõi đơn nghỉ cho con | `parent_home_view.dart`, `leave_request_view.dart` | ✅ |
+
+### 4.7. Bảng tin, thông báo & đơn nghỉ
+
+| Tính năng | File chính | API |
+|-----------|------------|-----|
+| Feed bảng tin theo user đăng nhập | `announcement_feed_controller.dart`, `student_home_view.dart`, `notifications_view.dart` | ✅ `/api/announcement/my-feed` |
+| Notification log + badge chưa đọc | `notification_controller.dart`, `student_welcome_app_bar.dart` | ✅ `/api/notificationlog/me`, `/me/unread-count`, `/me/read-all` |
+| GV đăng thông báo lớp | `teacher_class_announcement_view.dart`, `teacher_home_view.dart` | ✅ `/api/announcement` |
+| HS tạo và theo dõi đơn nghỉ | `leave_request_controller.dart`, `leave_request_view.dart` | ✅ `/api/studentrequest` |
+| GV duyệt/từ chối đơn nghỉ | `teacher_leave_review_controller.dart`, `teacher_leave_review_view.dart` | ✅ `/api/studentrequest/pending/for-teacher`, `/review` |
 
 ---
 
@@ -140,9 +151,6 @@ Dashboard `admin_home_view.dart` với 13 module, mỗi module có view + contro
 
 | Tính năng | File chính | Vấn đề hiện tại | Ưu tiên |
 |-----------|------------|-----------------|---------|
-| Đơn xin nghỉ | `leave_request_view.dart` | UI hoàn chỉnh nhưng dùng **dữ liệu cứng**, chưa gọi API | Cao |
-| Thông báo / Bảng tin (đọc) | `notifications_view.dart` | UI mock, chưa nối `announcement_controller` | Cao |
-| Trang chủ học sinh | `student_home_view.dart` | Tin tức & quick actions dùng **dữ liệu giả** | Trung bình |
 | Tab Tin nhắn (Student) | `student_main_view.dart` | Placeholder — module chat **đã loại khỏi SRS** | Thấp (nên gỡ) |
 
 ---
@@ -156,12 +164,10 @@ Theo [SRS.md](./SRS.md), các hạng mục sau **chưa có** trên mobile:
 | **Bài tập (Assignments)** | GV tạo bài, HS nộp bài, GV chấm | `student_assignment_view.dart` chỉ hiện “đang phát triển”; GV báo “coming soon” |
 | **Học bạ điện tử** | Xem tổng kết học kỳ/năm (GPA, Hạnh kiểm, Xếp loại) | Chưa có màn riêng; GPA hiển thị một phần trong `student_grade_view.dart` |
 | **GVCN chốt GPA & Hạnh kiểm** | Flow giáo viên chủ nhiệm chốt sổ cuối kỳ/năm | Chưa có controller/view |
-| **Duyệt đơn nghỉ (GV)** | Approve/Reject `StudentRequests` | Chưa có màn hình |
 | **Đổi mật khẩu** | Bảo mật tài khoản | `AccountController` chỉ đọc, chưa có form đổi MK |
 | **Quên mật khẩu** | Khôi phục qua email/SĐT | `api_client.dart` whitelist endpoint nhưng **chưa có UI** |
 | **Cập nhật hồ sơ cá nhân** | Sửa họ tên, ngày sinh, địa chỉ, avatar… | Chưa có form chỉnh sửa |
 | **Push notification** | Thông báo đẩy trên điện thoại | Chưa tích hợp FCM |
-| **Thông báo lớp (GV đăng bài)** | Bảng tin nội bộ lớp học | Chỉ có CRUD bảng tin Admin |
 | **Module Chat** | Tin nhắn 1-1 / nhóm | **Out of scope** — cần gỡ placeholder trên UI Student |
 
 ---
@@ -172,9 +178,9 @@ Theo [SRS.md](./SRS.md), các hạng mục sau **chưa có** trên mobile:
 |---------|-------|--------|---------|
 | **Admin** | CRUD toàn bộ master data, TKB, phân công, bảng tin | Dashboard thống kê | — |
 | **HeadOfDept** | Lớp, phân công, TKB trong phạm vi tổ; GV tổ | — | — |
-| **Teacher** | Điểm danh GV, nhập điểm, TKB, tab Lớp | — | Bài tập, duyệt đơn nghỉ, GVCN chốt sổ, thông báo lớp |
-| **Student** | Xem điểm, TKB | Đơn nghỉ (mock), thông báo (mock), trang chủ (mock) | Bài tập, học bạ đầy đủ, nộp đơn thật |
-| **Parent** | TKB con, điểm danh con, xem điểm con | — | Đơn nghỉ cho con, học bạ con |
+| **Teacher** | Điểm danh GV, nhập điểm, TKB, tab Lớp, thông báo lớp, duyệt đơn nghỉ | — | Bài tập, GVCN chốt sổ |
+| **Student** | Xem điểm, TKB, bảng tin/thông báo, tạo/theo dõi đơn nghỉ | — | Bài tập, học bạ đầy đủ |
+| **Parent** | TKB con, điểm danh con, xem điểm con, tạo/theo dõi đơn nghỉ cho con | — | Học bạ con |
 
 ---
 
@@ -200,14 +206,12 @@ Theo [SRS.md](./SRS.md), các hạng mục sau **chưa có** trên mobile:
 
 | # | Task | Phụ thuộc API | Độ ưu tiên |
 |---|------|---------------|------------|
-| 1 | Nối API đơn xin nghỉ (HS/PH tạo, theo dõi trạng thái) | `StudentRequests` endpoints | 🔴 Cao |
-| 2 | Màn duyệt đơn nghỉ cho Giáo viên | Cùng module trên | 🔴 Cao |
-| 3 | Module Bài tập (GV tạo/chấm, HS xem/nộp) | `Assignments`, `Submissions` | 🔴 Cao |
-| 4 | Học bạ điện tử + flow GVCN chốt GPA/Hạnh kiểm | `StudentSemesterSummaries`, `StudentYearlySummaries` | 🟠 Trung bình |
-| 5 | Thông báo đọc từ API + đánh dấu đã đọc | `Announcements` + notification log | 🟠 Trung bình |
-| 6 | Cập nhật profile + đổi mật khẩu + quên MK | Auth/User endpoints | 🟡 Thấp |
-| 7 | Dọn UI: gỡ tab Tin nhắn, hoàn thiện tab Lớp GV | — | 🟡 Thấp |
-| 8 | Push notification (FCM) | Backend + mobile config | 🟡 Thấp |
+| 1 | Chạy QA sprint Bảng tin & Đơn nghỉ | `docs/tests/MOBILE_TEST_MATRIX_NEWSFEED_LEAVE.md` | 🔴 Cao |
+| 2 | Module Bài tập (GV tạo/chấm, HS xem/nộp) | `Assignments`, `Submissions` | 🔴 Cao |
+| 3 | Học bạ điện tử + flow GVCN chốt GPA/Hạnh kiểm | `StudentSemesterSummaries`, `StudentYearlySummaries` | 🟠 Trung bình |
+| 4 | Cập nhật profile + đổi mật khẩu + quên MK | Auth/User endpoints | 🟡 Thấp |
+| 5 | Dọn UI: gỡ tab Tin nhắn, hoàn thiện tab Lớp GV | — | 🟡 Thấp |
+| 6 | Push notification (FCM) | Backend + mobile config | 🟡 Thấp |
 
 ---
 
@@ -226,6 +230,7 @@ Khi hoàn thành một module:
 
 | Phiên bản | Ngày | Nội dung |
 |-----------|------|----------|
+| v1.3 | 14/07/2026 | Implement Bảng tin/Thông báo + Đơn xin nghỉ mobile; QA Flutter để sprint sau |
 | v1.2 | 09/07/2026 | Hoàn thành Mobile Completion Sprint — 3 module → 100%, tổng ~75–80% |
 | v1.1 | 09/07/2026 | Thêm §8 link tới MOBILE_COMPLETION_PLAN.md |
 | v1.0 | 09/07/2026 | Khởi tạo báo cáo tiến độ từ đánh giá commit `cfcf883` |
