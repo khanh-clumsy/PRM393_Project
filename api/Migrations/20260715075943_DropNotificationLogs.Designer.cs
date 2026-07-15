@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRM393API.Models;
 
@@ -11,9 +12,11 @@ using PRM393API.Models;
 namespace PRM393API.Migrations
 {
     [DbContext(typeof(Prm393dbContext))]
-    partial class Prm393dbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715075943_DropNotificationLogs")]
+    partial class DropNotificationLogs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

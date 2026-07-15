@@ -52,17 +52,6 @@ class QuickActions extends StatelessWidget {
           );
         },
       ),
-      QuickActionItemData(
-        icon: Icons.more_horiz_rounded,
-        label: 'Thêm',
-        backgroundColor: Colors.grey.shade200,
-        iconColor: Colors.grey.shade700,
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tính năng đang phát triển')),
-          );
-        },
-      ),
     ];
 
     return Column(

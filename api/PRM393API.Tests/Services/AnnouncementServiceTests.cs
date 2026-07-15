@@ -12,15 +12,13 @@ public class AnnouncementServiceTests
     private readonly Mock<IStudentClassRepository> _studentClassRepo = new();
     private readonly Mock<IParentStudentRepository> _parentStudentRepo = new();
     private readonly Mock<ITeachingAssignmentRepository> _teachingAssignmentRepo = new();
-    private readonly Mock<INotificationLogRepository> _notificationLogRepo = new();
     private readonly AnnouncementService _sut;
 
     public AnnouncementServiceTests() => _sut = new AnnouncementService(
         _repo.Object,
         _studentClassRepo.Object,
         _parentStudentRepo.Object,
-        _teachingAssignmentRepo.Object,
-        _notificationLogRepo.Object);
+        _teachingAssignmentRepo.Object);
 
     private static Announcement Sample() => new()
     {
@@ -103,28 +101,5 @@ public class AnnouncementServiceTests
         var result = (await _sut.GetMyFeedAsync(10, "Student")).ToList();
 
         Assert.Equal([1, 2], result.Select(a => a.AnnouncementId).ToArray());
-    }
-
-    [Fact]
-    public async Task CreateAsync_ClassAnnouncement_CreatesNotificationLogsForStudentsInTargetClasses()
-    {
-        var targetIds = new List<int?> { 101 };
-        var created = Sample();
-        created.AnnouncementId = 7;
-        created.Title = "Lịch kiểm tra";
-        created.Content = "Sáng mai kiểm tra";
-
-        _repo.Setup(r => r.CreateAsync(It.IsAny<Announcement>(), targetIds)).ReturnsAsync(created);
-        _studentClassRepo.Setup(r => r.GetByClassAsync(101)).ReturnsAsync([
-            new StudentClass { StudentId = 10, ClassId = 101 },
-            new StudentClass { StudentId = 11, ClassId = 101 },
-        ]);
-
-        await _sut.CreateAsync(new CreateAnnouncementDto(3, "Lịch kiểm tra", "Sáng mai kiểm tra", "Class", "Normal", targetIds));
-
-        _notificationLogRepo.Verify(r => r.CreateManyAsync(It.Is<IEnumerable<NotificationLog>>(logs =>
-            logs.Count() == 2 &&
-            logs.All(l => l.AnnouncementId == 7 && l.Title == "Lịch kiểm tra") &&
-            logs.Select(l => l.UserId).OrderBy(id => id).SequenceEqual(new[] { 10, 11 }))), Times.Once);
     }
 }

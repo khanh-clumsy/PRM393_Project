@@ -9,8 +9,7 @@ public class AnnouncementService(
     IAnnouncementRepository repo,
     IStudentClassRepository studentClassRepo,
     IParentStudentRepository parentStudentRepo,
-    ITeachingAssignmentRepository teachingAssignmentRepo,
-    INotificationLogRepository notificationLogRepo) : IAnnouncementService
+    ITeachingAssignmentRepository teachingAssignmentRepo) : IAnnouncementService
 {
     public async Task<IEnumerable<AnnouncementDto>> GetAllAsync() =>
         (await repo.GetAllAsync()).Select(ToDto);
@@ -51,7 +50,6 @@ public class AnnouncementService(
             UpdatedAt = now,
         };
         var created = await repo.CreateAsync(entity, dto.TargetClassIds);
-        await FanOutNotificationLogsAsync(created, dto.TargetClassIds);
         return ToDto(created);
     }
 
@@ -95,37 +93,6 @@ public class AnnouncementService(
         }
 
         return [];
-    }
-
-    private async Task FanOutNotificationLogsAsync(Announcement announcement, IEnumerable<int?> targetClassIds)
-    {
-        var concreteClassIds = targetClassIds.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
-        if (concreteClassIds.Count == 0) return;
-
-        var recipientIds = new HashSet<int>();
-        foreach (var classId in concreteClassIds)
-        {
-            foreach (var studentClass in await studentClassRepo.GetByClassAsync(classId))
-            {
-                recipientIds.Add(studentClass.StudentId);
-                foreach (var parentStudent in await parentStudentRepo.GetByStudentAsync(studentClass.StudentId))
-                {
-                    recipientIds.Add(parentStudent.ParentId);
-                }
-            }
-        }
-
-        var now = DateTime.UtcNow;
-        var logs = recipientIds.Select(userId => new NotificationLog
-        {
-            UserId = userId,
-            AnnouncementId = announcement.AnnouncementId,
-            Title = announcement.Title,
-            Body = announcement.Content.Length <= 500 ? announcement.Content : announcement.Content[..500],
-            IsRead = false,
-            CreatedAt = now,
-        });
-        await notificationLogRepo.CreateManyAsync(logs);
     }
 
     private static AnnouncementDto ToDto(Announcement a) =>

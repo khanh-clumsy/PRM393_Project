@@ -38,7 +38,4 @@ public partial class Announcement
     [ForeignKey("AuthorId")]
     [InverseProperty("Announcements")]
     public virtual User Author { get; set; } = null!;
-
-    [InverseProperty("Announcement")]
-    public virtual ICollection<NotificationLog> NotificationLogs { get; set; } = new List<NotificationLog>();
 }

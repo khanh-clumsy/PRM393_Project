@@ -365,21 +365,6 @@ CREATE TABLE AnnouncementTargets (
 );
 GO
 
-CREATE TABLE NotificationLogs (
-    NotificationId  INT             NOT NULL IDENTITY(1,1),
-    UserId          INT             NOT NULL,
-    AnnouncementId  INT             NULL,
-    Title           NVARCHAR(200)   NOT NULL,
-    Body            NVARCHAR(500)   NOT NULL,
-    IsRead          BIT             NOT NULL DEFAULT 0,
-    ReadAt          DATETIME2       NULL,
-    CreatedAt       DATETIME2       NOT NULL DEFAULT GETUTCDATE(),
-    CONSTRAINT PK_NotificationLogs PRIMARY KEY (NotificationId),
-    CONSTRAINT FK_NL_Users         FOREIGN KEY (UserId)         REFERENCES Users(UserId),
-    CONSTRAINT FK_NL_Announcements FOREIGN KEY (AnnouncementId) REFERENCES Announcements(AnnouncementId)
-);
-GO
-
 -- ============================================================
 -- INDEXES
 -- ============================================================
@@ -410,8 +395,6 @@ CREATE INDEX IX_SR_Status    ON StudentRequests(Status);
 
 CREATE INDEX IX_Ann_Type      ON Announcements(AnnouncementType);
 CREATE INDEX IX_Ann_CreatedAt ON Announcements(CreatedAt DESC);
-
-CREATE INDEX IX_NL_UserId_IsRead ON NotificationLogs(UserId, IsRead);
 
 CREATE INDEX IX_RefreshTokens_Token  ON RefreshTokens(Token);
 CREATE INDEX IX_RefreshTokens_UserId ON RefreshTokens(UserId);
@@ -608,12 +591,4 @@ GO
 INSERT INTO AnnouncementTargets (AnnouncementId, ClassId) VALUES
     (1, NULL),  -- global -> toàn trường
     (2, 1);     -- class  -> 10A1
-GO
-
--- NotificationLogs
-INSERT INTO NotificationLogs (UserId, AnnouncementId, Title, Body, IsRead) VALUES
-    (6,  2, N'Lịch kiểm tra 1 tiết Toán', N'Kiểm tra 1 tiết Toán chương 1 vào ngày 15/10/2025.', 0),
-    (7,  2, N'Lịch kiểm tra 1 tiết Toán', N'Kiểm tra 1 tiết Toán chương 1 vào ngày 15/10/2025.', 1),
-    (8,  2, N'Lịch kiểm tra 1 tiết Toán', N'Kiểm tra 1 tiết Toán chương 1 vào ngày 15/10/2025.', 0),
-    (12, 2, N'Lịch kiểm tra 1 tiết Toán', N'Con bạn có lịch kiểm tra Toán ngày 15/10/2025.',     0);
 GO

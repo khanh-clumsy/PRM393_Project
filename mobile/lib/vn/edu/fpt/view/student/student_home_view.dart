@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/announcement_feed_controller.dart';
-import '../../controllers/notification_controller.dart';
 import '../../controllers/user_controller.dart';
 import '../../core/utils/relative_time.dart';
-import '../../widgets/student_card.dart';
 import '../../widgets/quick_actions.dart';
 import '../../widgets/news_card.dart';
 import '../../widgets/student_welcome_app_bar.dart';
+import 'notifications_view.dart';
 
 class StudentHomeView extends StatefulWidget {
   const StudentHomeView({super.key});
@@ -18,15 +17,12 @@ class StudentHomeView extends StatefulWidget {
 
 class _StudentHomeViewState extends State<StudentHomeView> {
   late final AnnouncementFeedController _feedCtrl;
-  late final NotificationController _notifCtrl;
 
   @override
   void initState() {
     super.initState();
     _feedCtrl = Get.put(AnnouncementFeedController(), tag: 'student_home_feed');
-    _notifCtrl = Get.find<NotificationController>();
     _feedCtrl.loadFeed();
-    _notifCtrl.refreshUnreadCount();
   }
 
   @override
@@ -49,7 +45,6 @@ class _StudentHomeViewState extends State<StudentHomeView> {
         backgroundColor: const Color(0xFFF9FAFC),
         appBar: StudentWelcomeAppBar(
           welcomeLine: userController.welcomeText,
-          unreadCount: _notifCtrl.unreadCount.value,
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -57,14 +52,6 @@ class _StudentHomeViewState extends State<StudentHomeView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                StudentCard(
-                  studentName: userController.currentUserFullName.value,
-                  gradeInfo: '—',
-                  isPresent: true,
-                  currentClass: 'Chưa có tiết hiện tại',
-                  currentClassTime: '—',
-                ),
-                const SizedBox(height: 24),
                 const QuickActions(),
                 const SizedBox(height: 24),
                 Row(
@@ -80,8 +67,9 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                     ),
                     TextButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đang mở toàn bộ tin tức')),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const NotificationsPage()),
                         );
                       },
                       style: TextButton.styleFrom(
@@ -105,7 +93,7 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
-                      _feedCtrl.errorMessage.value.isNotEmpty ? _feedCtrl.errorMessage.value : 'Chua co tin tuc moi',
+                      _feedCtrl.errorMessage.value.isNotEmpty ? _feedCtrl.errorMessage.value : 'Chưa có tin tức mới',
                       style: TextStyle(color: Colors.grey.shade600),
                     ),
                   )

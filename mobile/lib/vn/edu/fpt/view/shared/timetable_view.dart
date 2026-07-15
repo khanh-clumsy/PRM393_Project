@@ -98,7 +98,6 @@ class TimetablePage extends StatelessWidget {
 
           return StudentWelcomeAppBar(
             welcomeLine: welcomeLine,
-            showNotificationBadge: role == 'student',
           );
         }),
       ),

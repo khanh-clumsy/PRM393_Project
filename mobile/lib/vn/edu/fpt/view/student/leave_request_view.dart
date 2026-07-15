@@ -58,7 +58,6 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
               )
             : StudentWelcomeAppBar(
                 welcomeLine: userController.welcomeText,
-                showNotificationBadge: false,
               ),
         body: SafeArea(
           child: RefreshIndicator(

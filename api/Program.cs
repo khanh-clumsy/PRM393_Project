@@ -39,7 +39,6 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<IGradeRepository, GradeRepository>();
 builder.Services.AddScoped<IStudentRequestRepository, StudentRequestRepository>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
-builder.Services.AddScoped<INotificationLogRepository, NotificationLogRepository>();
 builder.Services.AddScoped<IStudentSemesterSummaryRepository, StudentSemesterSummaryRepository>();
 builder.Services.AddScoped<IStudentYearlySummaryRepository, StudentYearlySummaryRepository>();
 
@@ -64,7 +63,6 @@ builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IStudentRequestService, StudentRequestService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
-builder.Services.AddScoped<INotificationLogService, NotificationLogService>();
 builder.Services.AddScoped<IStudentSemesterSummaryService, StudentSemesterSummaryService>();
 builder.Services.AddScoped<IStudentYearlySummaryService, StudentYearlySummaryService>();
 builder.Services.AddScoped<JwtHelper>();

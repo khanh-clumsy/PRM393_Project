@@ -73,9 +73,6 @@ public partial class User
     [InverseProperty("Student")]
     public virtual ICollection<Grade> GradeStudents { get; set; } = new List<Grade>();
 
-    [InverseProperty("User")]
-    public virtual ICollection<NotificationLog> NotificationLogs { get; set; } = new List<NotificationLog>();
-
     [InverseProperty("Parent")]
     public virtual ICollection<ParentStudent> ParentStudentParents { get; set; } = new List<ParentStudent>();
 

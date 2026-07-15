@@ -4,14 +4,10 @@ import '../view/student/notifications_view.dart';
 /// AppBar chung cho màn học sinh: không avatar ảnh mặc định, hiển thị tên thật.
 class StudentWelcomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String welcomeLine;
-  final bool showNotificationBadge;
-  final int unreadCount;
 
   const StudentWelcomeAppBar({
     super.key,
     required this.welcomeLine,
-    this.showNotificationBadge = true,
-    this.unreadCount = 0,
   });
 
   @override
@@ -32,39 +28,10 @@ class StudentWelcomeAppBar extends StatelessWidget implements PreferredSizeWidge
               MaterialPageRoute(builder: (_) => const NotificationsPage()),
             );
           },
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(
-                Icons.notifications_none_rounded,
-                color: Color(0xFF424242),
-                size: 26,
-              ),
-              if (showNotificationBadge && unreadCount > 0)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                    ),
-                    child: Center(
-                      child: Text(
-                        unreadCount > 99 ? '99+' : '$unreadCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+          icon: const Icon(
+            Icons.notifications_none_rounded,
+            color: Color(0xFF424242),
+            size: 26,
           ),
         ),
         const SizedBox(width: 8),

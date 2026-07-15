@@ -80,11 +80,7 @@ Quản lý đơn xin nghỉ học của học sinh.
 | **GET** | `/api/announcement` | Admin / tương thích cũ | Danh sách bảng tin không scoped, dùng cho CRUD Admin. |
 | **GET** | `/api/announcement/my-feed` | Đã đăng nhập | Feed mobile theo JWT: Student thấy Global + lớp đang học; Parent thấy Global + lớp của các con; Teacher thấy Global + lớp đang dạy; Admin thấy toàn bộ. Sort mới nhất trước. |
 | **GET** | `/api/announcement/by-class/{classId}` | Đã đăng nhập | Bảng tin theo lớp, gồm cả tin Global. |
-| **POST** | `/api/announcement` | Admin / Giáo viên | Đăng tin Global hoặc Class. Khi `targetClassIds` có lớp cụ thể, API fan-out `NotificationLog` cho học sinh và phụ huynh thuộc lớp đó. |
-| **GET** | `/api/notificationlog/me` | Đã đăng nhập | Log thông báo của user hiện tại, lấy `userId` từ JWT. |
-| **GET** | `/api/notificationlog/me/unread-count` | Đã đăng nhập | Badge unread cho mobile.<br>- **Response:** `{ "count": 3 }` |
-| **PUT** | `/api/notificationlog/{notificationId}/read` | Đã đăng nhập | Đánh dấu một thông báo là đã đọc; chỉ update log thuộc user hiện tại. |
-| **PUT** | `/api/notificationlog/me/read-all` | Đã đăng nhập | Đánh dấu toàn bộ log chưa đọc của user hiện tại. |
+| **POST** | `/api/announcement` | Admin / Giáo viên | Đăng tin Global hoặc Class (`targetClassIds`). Mobile đọc feed qua `my-feed` — không dùng `NotificationLog`. |
 
 ---
 

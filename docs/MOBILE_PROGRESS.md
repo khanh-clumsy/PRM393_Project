@@ -138,7 +138,6 @@ Dashboard `admin_home_view.dart` với 13 module, mỗi module có view + contro
 | Tính năng | File chính | API |
 |-----------|------------|-----|
 | Feed bảng tin theo user đăng nhập | `announcement_feed_controller.dart`, `student_home_view.dart`, `notifications_view.dart` | ✅ `/api/announcement/my-feed` |
-| Notification log + badge chưa đọc | `notification_controller.dart`, `student_welcome_app_bar.dart` | ✅ `/api/notificationlog/me`, `/me/unread-count`, `/me/read-all` |
 | GV đăng thông báo lớp | `teacher_class_announcement_view.dart`, `teacher_home_view.dart` | ✅ `/api/announcement` |
 | HS tạo và theo dõi đơn nghỉ | `leave_request_controller.dart`, `leave_request_view.dart` | ✅ `/api/studentrequest` |
 | GV duyệt/từ chối đơn nghỉ | `teacher_leave_review_controller.dart`, `teacher_leave_review_view.dart` | ✅ `/api/studentrequest/pending/for-teacher`, `/review` |

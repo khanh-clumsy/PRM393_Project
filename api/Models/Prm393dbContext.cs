@@ -35,8 +35,6 @@ public partial class Prm393dbContext : DbContext
 
     public virtual DbSet<Grade> Grades { get; set; }
 
-    public virtual DbSet<NotificationLog> NotificationLogs { get; set; }
-
     public virtual DbSet<ParentStudent> ParentStudents { get; set; }
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -155,17 +153,6 @@ public partial class Prm393dbContext : DbContext
             entity.HasOne(d => d.Student).WithMany(p => p.GradeStudents)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Grades_Students");
-        });
-
-        modelBuilder.Entity<NotificationLog>(entity =>
-        {
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
-
-            entity.HasOne(d => d.Announcement).WithMany(p => p.NotificationLogs).HasConstraintName("FK_NL_Announcements");
-
-            entity.HasOne(d => d.User).WithMany(p => p.NotificationLogs)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_NL_Users");
         });
 
         modelBuilder.Entity<ParentStudent>(entity =>
