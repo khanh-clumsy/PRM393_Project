@@ -10,6 +10,7 @@ Structural overview. For domain knowledge, follow links to docs/.
 PRM393_Project/
 ├── mobile/            Flutter mobile app (Android/iOS)
 ├── api/               ASP.NET Core 8 Web API (C#)
+├── web/               React Admin web (Vite + TypeScript)
 ├── docs/              Single source of truth documentation
 └── .claude/           Claude Code orchestration layer (this directory)
 ```
@@ -100,6 +101,26 @@ Refer to `docs/FLUTTER_ARCHITECTURE_GUIDE.md` for full Flutter conventions.
 
 ---
 
+## Admin Web Structure (`web/`)
+
+React + Vite admin portal for Admin role only. Calls API at `http://localhost:5088`; dev server at `http://localhost:5173`.
+
+```
+web/
+├── src/
+│   ├── app/               Router, App shell
+│   ├── core/              Auth, API client, config
+│   ├── features/          Admin modules (departments, classes, users, …)
+│   ├── layouts/           Admin layout & navigation
+│   └── components/        Shared UI components
+├── package.json
+└── README.md              Local run instructions
+```
+
+Plan & scope: `docs/superpowers/plans/2026-07-17-admin-web-react.md`
+
+---
+
 ## Documentation (`docs/`)
 
 ```
@@ -129,3 +150,5 @@ docs/
 | Find a migration | `api/Migrations/` |
 | Find a Flutter screen | `mobile/lib/features/<feature>/presentation/` |
 | Find Flutter data layer | `mobile/lib/features/<feature>/data/` |
+| Find Admin web feature | `web/src/features/<feature>/` |
+| Run Admin web locally | `web/README.md` |

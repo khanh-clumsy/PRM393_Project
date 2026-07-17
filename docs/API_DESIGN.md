@@ -3,6 +3,9 @@
 > [!NOTE]  
 > Tài liệu này mô tả chi tiết danh sách các endpoint HTTP, phương thức (Method), cấu trúc dữ liệu yêu cầu (Request Body) và mô tả nghiệp vụ nhằm đồng bộ hoàn toàn với cơ sở dữ liệu và đặc tả yêu cầu SRS của hệ thống FSchool.
 
+> [!NOTE] **CORS — Admin Web**  
+> API cho phép origin Vite dev của web Admin: `http://localhost:5173` và `http://127.0.0.1:5173` (policy `WebAdmin` trong `api/Program.cs`). Mobile và client khác không bị ảnh hưởng.
+
 ---
 
 ## 1. Module Xác thực & Tài khoản

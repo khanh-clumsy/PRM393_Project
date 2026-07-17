@@ -45,6 +45,13 @@ Single system covering all roles: Admin, HeadOfDept, Teacher, Student, Parent.
 - Assets: `mobile/assets/`
 - Dependencies: `mobile/pubspec.yaml`
 
+### Admin Web (React)
+- Implementation plan: `docs/superpowers/plans/2026-07-17-admin-web-react.md`
+- Source: `web/src/` (features under `web/src/features/`)
+- Run instructions: `web/README.md`
+- Auth gate: `web/src/core/auth/RequireAdmin.tsx`
+- API client: `web/src/core/api/client.ts`
+
 ### Backend (ASP.NET Core)
 - Entry point & DI: `api/Program.cs`
 - Configuration: `api/appsettings.Development.json`
@@ -70,3 +77,5 @@ Single system covering all roles: Admin, HeadOfDept, Teacher, Student, Parent.
 | Understand Flutter architecture | `docs/FLUTTER_ARCHITECTURE_GUIDE.md` |
 | Find app configuration | `api/appsettings.Development.json` |
 | Find DI / middleware setup | `api/Program.cs` |
+| Admin web module / screen | `web/src/features/<feature>/` |
+| Admin web plan & scope | `docs/superpowers/plans/2026-07-17-admin-web-react.md` |

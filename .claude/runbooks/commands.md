@@ -82,3 +82,26 @@ dart run build_runner build         # Run code generation (json_serializable, et
 dart run build_runner watch         # Watch mode for code generation
 dart run build_runner build --delete-conflicting-outputs  # Clean build
 ```
+
+---
+
+## Admin Web (working dir: `web/`)
+
+### Development
+```bash
+npm install                         # Install dependencies (first time)
+npm run dev                         # Vite dev server → http://localhost:5173
+```
+
+Requires API running at `http://localhost:5088` (`cd api && dotnet run`).
+
+### Build
+```bash
+npm run build                       # tsc + vite production build
+npm run preview                     # Preview production build locally
+```
+
+### Lint
+```bash
+npm run lint                        # oxlint
+```
