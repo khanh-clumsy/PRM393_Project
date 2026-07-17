@@ -57,12 +57,14 @@ public class TimetableService(
 
     public async Task<StudentWeeklyTimetableDto?> GetWeeklyByStudentAsync(int studentId, DateOnly date)
     {
+        var (weekStart, weekEnd) = GetWeekRange(date);
         var enrollmentContext = await academicContext.GetStudentEnrollmentAtDateAsync(studentId, date);
-        if (enrollmentContext.Enrollment is null)
+        var enrollment = await ResolveStudentEnrollmentForScheduleWeekAsync(studentId, weekStart, weekEnd)
+            ?? enrollmentContext.Enrollment;
+        if (enrollment is null)
             return null;
 
-        var (weekStart, weekEnd) = GetWeekRange(date);
-        var classId = enrollmentContext.Enrollment.ClassId;
+        var classId = enrollment.ClassId;
         var slots = (await repo.GetWeeklyByClassAsync(classId, weekStart, weekEnd))
             .Select(ToDetailDto)
             .ToList();
@@ -89,10 +91,50 @@ public class TimetableService(
             weekEnd,
             enrollmentContext.AcademicYear,
             enrollmentContext.Semester,
-            enrollmentContext.Enrollment,
+            enrollment,
             slots,
             attendance);
     }
+
+    private async Task<StudentEnrollmentDto?> ResolveStudentEnrollmentForScheduleWeekAsync(
+        int studentId,
+        DateOnly weekStart,
+        DateOnly weekEnd)
+    {
+        var enrollments = await db.StudentClasses
+            .Include(sc => sc.Class)
+                .ThenInclude(c => c.AcademicYear)
+            .Include(sc => sc.Student)
+            .Where(sc => sc.StudentId == studentId)
+            .OrderByDescending(sc => sc.Class.AcademicYear.StartDate)
+            .ThenByDescending(sc => sc.StudentClassId)
+            .ToListAsync();
+
+        if (enrollments.Count == 0) return null;
+
+        foreach (var enrollment in enrollments)
+        {
+            var hasSchedule = await db.Timetables
+                .Include(t => t.TeachingAssignment)
+                .AnyAsync(t => t.TeachingAssignment.ClassId == enrollment.ClassId
+                            && t.Date >= weekStart
+                            && t.Date <= weekEnd);
+            if (hasSchedule) return ToEnrollmentDto(enrollment);
+        }
+
+        return ToEnrollmentDto(enrollments.First());
+    }
+
+    private static StudentEnrollmentDto ToEnrollmentDto(StudentClass studentClass) =>
+        new(
+            studentClass.StudentClassId,
+            studentClass.StudentId,
+            studentClass.Student?.FullName,
+            studentClass.Student?.Username,
+            studentClass.ClassId,
+            studentClass.Class.ClassName,
+            studentClass.Class.AcademicYearId,
+            studentClass.Class.AcademicYear?.YearName ?? string.Empty);
 
     private static string ToDisplayAttendanceStatus(string status) =>
         status.Trim().ToUpperInvariant() switch

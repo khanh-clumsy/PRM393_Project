@@ -37,7 +37,7 @@ Hệ thống phân quyền chặt chẽ dựa trên các vai trò cốt lõi. Tr
 ### 3.1. Xác thực & Quản lý Tài khoản
 - **Đăng nhập hệ thống:** Xác thực tài khoản qua Username và Mật khẩu. Hỗ trợ cơ chế JWT Bearer Token & Refresh Token để duy trì trạng thái đăng nhập an toàn.
 - **Quản lý hồ sơ cá nhân:** Xem và cập nhật các thông tin nhân khẩu học cơ bản bao gồm: Họ tên, Ngày sinh (`DateOfBirth`), Giới tính (`Gender`), Địa chỉ (`Address`), Số điện thoại, Email, Ảnh đại diện (`AvatarUrl`).
-- **Bảo mật tài khoản:** Đổi mật khẩu cá nhân; khôi phục mật khẩu qua Email/Số điện thoại đã xác thực.
+- **Bảo mật tài khoản:** Đổi mật khẩu cá nhân; khôi phục mật khẩu chỉ qua Email bằng mã OTP 6 số, hết hạn sau 10 phút.
 
 ### 3.2. Quản lý Đào tạo & Phân công (Dành cho Admin)
 - **Quản lý danh mục cốt lõi:** CRUD các danh mục Năm học, Học kỳ, Tổ chuyên môn (`Departments`), Lớp học, Môn học, Thang điểm xếp loại (`AcademicRanks`).

@@ -27,13 +27,21 @@ public class UserService(IUserRepository repo) : IUserService
 
     public async Task<UserDto> CreateAsync(CreateUserDto dto)
     {
+        var email = NormalizeEmail(dto.Email);
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email là bắt buộc.");
+
+        var sameEmail = await repo.GetByEmailAsync(email);
+        if (sameEmail is not null)
+            throw new InvalidOperationException("Email đã tồn tại.");
+
         var user = new User
         {
             Username = dto.Username,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             FullName = dto.FullName,
             RoleId = dto.RoleId,
-            Email = dto.Email,
+            Email = email,
             PhoneNumber = dto.PhoneNumber,
             DepartmentId = dto.DepartmentId,
             DateOfBirth = dto.DateOfBirth,
@@ -53,7 +61,18 @@ public class UserService(IUserRepository repo) : IUserService
         if (existing is null) return null;
 
         existing.FullName = dto.FullName ?? existing.FullName;
-        existing.Email = dto.Email ?? existing.Email;
+        if (dto.Email is not null)
+        {
+            var email = NormalizeEmail(dto.Email);
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("Email là bắt buộc.");
+
+            var sameEmail = await repo.GetByEmailAsync(email);
+            if (sameEmail is not null && sameEmail.UserId != id)
+                throw new InvalidOperationException("Email đã tồn tại.");
+
+            existing.Email = email;
+        }
         existing.PhoneNumber = dto.PhoneNumber ?? existing.PhoneNumber;
         existing.Address = dto.Address ?? existing.Address;
         existing.Gender = dto.Gender ?? existing.Gender;
@@ -80,4 +99,7 @@ public class UserService(IUserRepository repo) : IUserService
         u.RoleId, u.Role?.RoleName ?? "", u.DepartmentId,
         u.DateOfBirth, u.Gender, u.Address, u.AvatarUrl,
         u.IsActive, u.CreatedAt);
+
+    private static string NormalizeEmail(string? email) =>
+        (email ?? string.Empty).Trim().ToLowerInvariant();
 }

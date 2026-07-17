@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import Button from '../../../components/ui/Button'
 import Modal from '../../../components/ui/Modal'
+import type { UserDto } from '../../auth/types'
 import type { TimetableSlot } from '../../slots/types'
 import type { TeachingAssignment } from '../../teaching-assignments/types'
 import { TIMETABLE_STATUS } from '../constants'
@@ -11,6 +12,7 @@ type LessonFormModalProps = {
   open: boolean
   context: LessonFormContext | null
   assignments: TeachingAssignment[]
+  teachers: UserDto[]
   slots: TimetableSlot[]
   submitting: boolean
   onClose: () => void
@@ -48,10 +50,19 @@ type LessonFormModalProps = {
 }
 
 /** Form thêm/sửa tiết — lịch thực tế hoặc lịch mẫu */
+/** Nhãn dropdown phân công — giống mobile: «Môn (Tên GV)» */
+function assignmentLabel(a: TeachingAssignment, teachers: UserDto[]): string {
+  const subject = a.subjectName ?? `Môn #${a.subjectId}`
+  const teacher =
+    teachers.find((t) => t.id === a.teacherId)?.fullName ?? '?'
+  return `${subject} (${teacher})`
+}
+
 export default function LessonFormModal({
   open,
   context,
   assignments,
+  teachers,
   slots,
   submitting,
   onClose,
@@ -189,9 +200,6 @@ export default function LessonFormModal({
         ? !!onDeleteTemplate
         : false
 
-  const deleteBlocked =
-    context?.kind === 'weekly-edit' && context.lesson.isAttendanceTaken
-
   return (
     <Modal
       open={open}
@@ -242,7 +250,7 @@ export default function LessonFormModal({
               <option value="">— Chọn môn / giáo viên —</option>
               {assignments.map((a) => (
                 <option key={a.teachingAssignmentId} value={a.teachingAssignmentId}>
-                  {a.subjectName ?? `Môn #${a.subjectId}`} — GV #{a.teacherId}
+                  {assignmentLabel(a, teachers)}
                 </option>
               ))}
             </select>
@@ -254,8 +262,12 @@ export default function LessonFormModal({
             <label>Phân công</label>
             <input
               value={
-                assignments.find((a) => a.teachingAssignmentId === teachingAssignmentId)
-                  ?.subjectName ?? `#${teachingAssignmentId}`
+                (() => {
+                  const a = assignments.find(
+                    (x) => x.teachingAssignmentId === teachingAssignmentId,
+                  )
+                  return a ? assignmentLabel(a, teachers) : `#${teachingAssignmentId}`
+                })()
               }
               disabled
             />
@@ -341,12 +353,6 @@ export default function LessonFormModal({
               />
             </div>
           </>
-        )}
-
-        {deleteBlocked && (
-          <p className="timetable-hint timetable-hint--warn">
-            Tiết đã điểm danh — không thể xóa qua giao diện này.
-          </p>
         )}
       </form>
     </Modal>

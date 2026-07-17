@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/timetable_controller.dart';
-import '../../core/storage/local_storage.dart';
 import '../../core/parent_relationship_helper.dart';
 import '../../widgets/app_button.dart';
 import '../student/notifications_view.dart';
@@ -9,6 +8,7 @@ import '../shared/attendance_view.dart';
 import '../shared/timetable_view.dart';
 import '../student/student_grade_view.dart';
 import '../student/leave_request_view.dart';
+import '../student/academic_report_view.dart';
 
 class ParentHomeView extends StatelessWidget {
   const ParentHomeView({super.key});
@@ -98,11 +98,39 @@ class ParentHomeView extends StatelessWidget {
     required Color color,
     required Color bgColor,
     required VoidCallback onTap,
+    bool wide = false,
   }) {
+    final iconBadge = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: 20),
+    );
+
+    final titleText = Text(
+      title,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 14,
+        color: Color(0xFF212121),
+      ),
+    );
+
+    final subtitleText = Text(
+      subtitle,
+      style: TextStyle(
+        fontSize: 11,
+        color: Colors.grey.shade500,
+      ),
+    );
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
+        width: wide ? double.infinity : null,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -116,65 +144,49 @@ class ParentHomeView extends StatelessWidget {
             )
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: bgColor,
-                shape: BoxShape.circle,
+        child: wide
+            ? Row(
+                children: [
+                  iconBadge,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        titleText,
+                        const SizedBox(height: 2),
+                        subtitleText,
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  iconBadge,
+                  const SizedBox(height: 12),
+                  titleText,
+                  const SizedBox(height: 2),
+                  subtitleText,
+                ],
               ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: Color(0xFF212121),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  Future<void> _openLeaveForChild(TimetableController controller) async {
-    final studentId = controller.targetStudentId.value;
-    if (studentId == null) {
-      Get.snackbar('Thông báo', 'Vui lòng chọn con trước.');
-      return;
-    }
-
-    final parentIdStr = await LocalStorage.getUserId();
-    final parentId = int.tryParse(parentIdStr ?? '');
-    if (parentId == null) {
-      Get.snackbar('Thông báo', 'Không tìm thấy tài khoản phụ huynh.');
-      return;
-    }
-
+  void _openLeaveForChild() {
     Get.to(
-      () => LeaveRequestListPage(
-        controllerTag: 'parent_leave_$studentId',
-        studentId: studentId,
-        requestedBy: parentId,
+      () => const LeaveRequestListPage(
+        controllerTag: 'parent_leave',
         title: 'Đơn xin nghỉ',
-        subtitle: controller.studentName.value.isNotEmpty
-            ? 'Đơn xin nghỉ của ${controller.studentName.value}'
-            : 'Đơn xin nghỉ của con',
       ),
     );
+  }
+
+  void _openAcademicReport() {
+    Get.to(() => const AcademicReportView());
   }
 
   @override
@@ -311,7 +323,7 @@ class ParentHomeView extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Danh sách con
+                // Danh sách con — chạm để chọn con đang xem
                 if (controller.linkedStudents.isNotEmpty) ...[
                   const Text(
                     'Con của bạn',
@@ -321,18 +333,30 @@ class ParentHomeView extends StatelessWidget {
                       color: Color(0xFF212121),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    controller.selectedChildName.value.isNotEmpty
+                        ? 'Đang xem: ${controller.selectedChildName.value}'
+                        : 'Chạm vào tên con để chọn',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
                   const SizedBox(height: 12),
                   ...controller.linkedStudents.map((s) {
+                    final id = s['studentId'] as int;
+                    final selected = controller.targetStudentId.value == id;
                     return InkWell(
-                      onTap: () => _showChildInfoModal(s),
+                      onTap: () => controller.switchToStudent(id),
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: selected ? const Color(0xFFFFF3E0) : Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade100),
+                          border: Border.all(
+                            color: selected ? const Color(0xFFE65100) : Colors.grey.shade100,
+                            width: selected ? 1.5 : 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.04),
@@ -345,10 +369,14 @@ class ParentHomeView extends StatelessWidget {
                           children: [
                             CircleAvatar(
                               radius: 22,
-                              backgroundColor: Colors.grey.shade100,
+                              backgroundColor: selected
+                                  ? const Color(0xFFFFE0B2)
+                                  : Colors.grey.shade100,
                               child: Icon(
                                 Icons.person_outline_rounded,
-                                color: Colors.grey.shade600,
+                                color: selected
+                                    ? const Color(0xFFE65100)
+                                    : Colors.grey.shade600,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -358,10 +386,12 @@ class ParentHomeView extends StatelessWidget {
                                 children: [
                                   Text(
                                     s['studentName'] ?? 'Học sinh',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
-                                      color: Color(0xFF212121),
+                                      color: selected
+                                          ? const Color(0xFFE65100)
+                                          : const Color(0xFF212121),
                                     ),
                                   ),
                                   if ((s['relationship'] as String?)?.isNotEmpty == true)
@@ -375,7 +405,14 @@ class ParentHomeView extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            Icon(Icons.info_outline_rounded, color: Colors.grey.shade400, size: 20),
+                            if (selected)
+                              const Icon(Icons.check_circle, color: Color(0xFFE65100), size: 22)
+                            else
+                              IconButton(
+                                onPressed: () => _showChildInfoModal(s),
+                                icon: Icon(Icons.info_outline_rounded, color: Colors.grey.shade400, size: 20),
+                                tooltip: 'Thông tin',
+                              ),
                           ],
                         ),
                       ),
@@ -417,66 +454,83 @@ class ParentHomeView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionCard(
-                        context,
-                        title: 'Xem điểm danh',
-                        subtitle: 'Theo dõi chuyên cần',
-                        icon: Icons.fact_check_outlined,
-                        color: const Color(0xFF2E7D32),
-                        bgColor: const Color(0xFFE8F5E9),
-                        onTap: () {
-                          Get.to(() => const AttendanceView());
-                        },
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _buildActionCard(
+                          context,
+                          title: 'Xem điểm danh',
+                          subtitle: 'Theo dõi chuyên cần',
+                          icon: Icons.fact_check_outlined,
+                          color: const Color(0xFF2E7D32),
+                          bgColor: const Color(0xFFE8F5E9),
+                          onTap: () {
+                            Get.to(() => const AttendanceView());
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildActionCard(
-                        context,
-                        title: 'Xem bảng điểm',
-                        subtitle: 'Kết quả học tập',
-                        icon: Icons.grade_outlined,
-                        color: const Color(0xFF1565C0),
-                        bgColor: const Color(0xFFE3F2FD),
-                        onTap: () {
-                          Get.to(() => const StudentGradeView());
-                        },
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildActionCard(
+                          context,
+                          title: 'Xem bảng điểm',
+                          subtitle: 'Kết quả học tập',
+                          icon: Icons.grade_outlined,
+                          color: const Color(0xFF1565C0),
+                          bgColor: const Color(0xFFE3F2FD),
+                          onTap: () {
+                            Get.to(() => const StudentGradeView());
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionCard(
-                        context,
-                        title: 'Xem lịch học',
-                        subtitle: 'Thời khóa biểu con',
-                        icon: Icons.calendar_month_outlined,
-                        color: const Color(0xFFE65100),
-                        bgColor: const Color(0xFFFFF3E0),
-                        onTap: () {
-                          Get.to(() => const TimetablePage());
-                        },
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _buildActionCard(
+                          context,
+                          title: 'Xem lịch học',
+                          subtitle: 'Thời khóa biểu con',
+                          icon: Icons.calendar_month_outlined,
+                          color: const Color(0xFFE65100),
+                          bgColor: const Color(0xFFFFF3E0),
+                          onTap: () {
+                            Get.to(() => const TimetablePage());
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildActionCard(
-                        context,
-                        title: 'Đơn xin nghỉ',
-                        subtitle: 'Tạo và theo dõi đơn',
-                        icon: Icons.event_busy_outlined,
-                        color: const Color(0xFF6A1B9A),
-                        bgColor: const Color(0xFFF3E5F5),
-                        onTap: () => _openLeaveForChild(controller),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildActionCard(
+                          context,
+                          title: 'Đơn xin nghỉ',
+                          subtitle: 'Tạo và theo dõi đơn',
+                          icon: Icons.event_busy_outlined,
+                          color: const Color(0xFF6A1B9A),
+                          bgColor: const Color(0xFFF3E5F5),
+                          onTap: _openLeaveForChild,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildActionCard(
+                  context,
+                  title: 'Học bạ',
+                  subtitle: 'Tổng kết học kỳ / năm',
+                  icon: Icons.menu_book_outlined,
+                  color: const Color(0xFF00838F),
+                  bgColor: const Color(0xFFE0F7FA),
+                  onTap: _openAcademicReport,
+                  wide: true,
                 ),
               ],
             ),

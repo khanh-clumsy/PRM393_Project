@@ -27,4 +27,19 @@ public class AuthRepository(Prm393dbContext db) : IAuthRepository
         token.IsRevoked = true;
         await db.SaveChangesAsync();
     }
+
+    public async Task<User?> GetByEmailAsync(string email) =>
+        await db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == email);
+
+    public async Task SaveChangesAsync() => await db.SaveChangesAsync();
+
+    public async Task RevokeAllRefreshTokensAsync(int userId)
+    {
+        var tokens = await db.RefreshTokens
+            .Where(t => t.UserId == userId && !t.IsRevoked)
+            .ToListAsync();
+
+        foreach (var token in tokens)
+            token.IsRevoked = true;
+    }
 }

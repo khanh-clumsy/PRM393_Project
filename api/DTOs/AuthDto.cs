@@ -6,6 +6,8 @@ public record RefreshRequestDto(string RefreshToken);
 
 public record ForgotPasswordDto(string Email);
 
+public record ResetPasswordDto(string Email, string Code, string NewPassword);
+
 public record AuthTokenDto(string AccessToken, string RefreshToken, UserDto User);
 
 public enum LoginFailureReason
@@ -16,3 +18,15 @@ public enum LoginFailureReason
 }
 
 public record LoginResultDto(AuthTokenDto? Token, LoginFailureReason Failure = LoginFailureReason.None);
+
+public enum ForgotPasswordResult
+{
+    Success,
+    EmailFailed,
+}
+
+public enum ResetPasswordResult
+{
+    Success,
+    InvalidOrExpired,
+}

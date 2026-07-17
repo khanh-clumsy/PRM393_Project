@@ -25,6 +25,10 @@ public class ClassController(IClassService service) : ControllerBase
     public async Task<IActionResult> GetByYear(int academicYearId) =>
         Ok(await service.GetByAcademicYearAsync(academicYearId));
 
+    [HttpGet("by-homeroom/{teacherId:int}")]
+    public async Task<IActionResult> GetByHomeroom(int teacherId) =>
+        Ok(await service.GetByHomeroomTeacherAsync(teacherId));
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateClassDto dto)
     {

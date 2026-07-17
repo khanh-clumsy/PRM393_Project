@@ -23,6 +23,8 @@ public partial class Prm393dbContext : DbContext
 
     public virtual DbSet<AnnouncementTarget> AnnouncementTargets { get; set; }
 
+    public virtual DbSet<AnnouncementRead> AnnouncementReads { get; set; }
+
     public virtual DbSet<Assessment> Assessments { get; set; }
 
     public virtual DbSet<AssessmentType> AssessmentTypes { get; set; }
@@ -96,6 +98,19 @@ public partial class Prm393dbContext : DbContext
                 .HasConstraintName("FK_AT_Announcements");
 
             entity.HasOne(d => d.Class).WithMany(p => p.AnnouncementTargets).HasConstraintName("FK_AT_Classes");
+        });
+
+        modelBuilder.Entity<AnnouncementRead>(entity =>
+        {
+            entity.Property(e => e.ReadAt).HasDefaultValueSql("(getutcdate())");
+
+            entity.HasOne(d => d.Announcement).WithMany(p => p.AnnouncementReads)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_AR_Announcements");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AnnouncementReads)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_AR_Users");
         });
 
         modelBuilder.Entity<Assessment>(entity =>
@@ -296,6 +311,7 @@ public partial class Prm393dbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.HasIndex(e => e.Email, "UQ_Users_Email").IsUnique();
 
             entity.HasOne(d => d.Department).WithMany(p => p.Users).HasConstraintName("FK_Users_Departments");
 

@@ -4,7 +4,6 @@ import '../../controllers/teacher_classes_controller.dart';
 import '../../models/teaching_assignment_model.dart';
 import '../../widgets/app_button.dart';
 import 'teacher_attendance_view.dart';
-import 'teacher_grade_entry_view.dart';
 import 'teacher_class_students_view.dart';
 
 class TeacherMyClassesView extends StatelessWidget {
@@ -65,15 +64,6 @@ class TeacherMyClassesView extends StatelessWidget {
                                 ?.semesterName,
                             onAttendance: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const TeacherAttendanceView()),
-                            ),
-                            onGrades: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => TeacherGradeEntryView(
-                                  initialYearId: controller.selectedYearId.value,
-                                  initialSemesterId: a.semesterId,
-                                  initialAssignmentId: a.teachingAssignmentId,
-                                ),
-                              ),
                             ),
                             onStudents: () => Navigator.of(context).push(
                               MaterialPageRoute(
@@ -160,14 +150,12 @@ class _ClassAssignmentCard extends StatelessWidget {
   final TeachingAssignmentModel assignment;
   final String? semesterName;
   final VoidCallback onAttendance;
-  final VoidCallback onGrades;
   final VoidCallback onStudents;
 
   const _ClassAssignmentCard({
     required this.assignment,
     this.semesterName,
     required this.onAttendance,
-    required this.onGrades,
     required this.onStudents,
   });
 
@@ -218,13 +206,6 @@ class _ClassAssignmentCard extends StatelessWidget {
                     onPressed: onAttendance,
                     icon: const Icon(Icons.fact_check_outlined, size: 18),
                     label: const Text('Điểm danh', style: TextStyle(fontSize: 13)),
-                  ),
-                ),
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: onGrades,
-                    icon: const Icon(Icons.edit_note, size: 18),
-                    label: const Text('Nhập điểm', style: TextStyle(fontSize: 13)),
                   ),
                 ),
               ],

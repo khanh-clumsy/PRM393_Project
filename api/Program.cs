@@ -39,6 +39,7 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<IGradeRepository, GradeRepository>();
 builder.Services.AddScoped<IStudentRequestRepository, StudentRequestRepository>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
+builder.Services.AddScoped<IAnnouncementReadRepository, AnnouncementReadRepository>();
 builder.Services.AddScoped<IStudentSemesterSummaryRepository, StudentSemesterSummaryRepository>();
 builder.Services.AddScoped<IStudentYearlySummaryRepository, StudentYearlySummaryRepository>();
 
@@ -63,9 +64,12 @@ builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IStudentRequestService, StudentRequestService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
+builder.Services.AddScoped<IClassSummaryService, ClassSummaryService>();
 builder.Services.AddScoped<IStudentSemesterSummaryService, StudentSemesterSummaryService>();
 builder.Services.AddScoped<IStudentYearlySummaryService, StudentYearlySummaryService>();
 builder.Services.AddScoped<JwtHelper>();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;

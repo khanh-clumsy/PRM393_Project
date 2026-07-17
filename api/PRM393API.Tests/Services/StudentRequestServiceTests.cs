@@ -11,12 +11,14 @@ public class StudentRequestServiceTests
     private readonly Mock<IStudentRequestRepository> _repo = new();
     private readonly Mock<IParentStudentRepository> _parentStudentRepo = new();
     private readonly Mock<ITeachingAssignmentRepository> _teachingAssignmentRepo = new();
+    private readonly Mock<IClassRepository> _classRepo = new();
     private readonly StudentRequestService _sut;
 
     public StudentRequestServiceTests() => _sut = new StudentRequestService(
         _repo.Object,
         _parentStudentRepo.Object,
-        _teachingAssignmentRepo.Object);
+        _teachingAssignmentRepo.Object,
+        _classRepo.Object);
 
     private static StudentRequest Sample() => new()
     {
@@ -117,7 +119,22 @@ public class StudentRequestServiceTests
     {
         _teachingAssignmentRepo.Setup(r => r.GetByTeacherAsync(3))
             .ReturnsAsync([new TeachingAssignment { TeacherId = 3, ClassId = 101 }]);
-        _repo.Setup(r => r.GetPendingByClassIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 101 }))))
+        _classRepo.Setup(r => r.GetByHomeroomTeacherAsync(3))
+            .ReturnsAsync(Array.Empty<Class>());
+        _repo.Setup(r => r.GetPendingByClassIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(101))))
+            .ReturnsAsync([Sample()]);
+
+        Assert.Single(await _sut.GetPendingForTeacherAsync(3));
+    }
+
+    [Fact]
+    public async Task GetPendingForTeacherAsync_IncludesHomeroomClasses()
+    {
+        _teachingAssignmentRepo.Setup(r => r.GetByTeacherAsync(3))
+            .ReturnsAsync(Array.Empty<TeachingAssignment>());
+        _classRepo.Setup(r => r.GetByHomeroomTeacherAsync(3))
+            .ReturnsAsync([new Class { ClassId = 55, ClassName = "10A1", AcademicYearId = 1, HomeroomTeacherId = 3 }]);
+        _repo.Setup(r => r.GetPendingByClassIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(55))))
             .ReturnsAsync([Sample()]);
 
         Assert.Single(await _sut.GetPendingForTeacherAsync(3));
@@ -126,7 +143,18 @@ public class StudentRequestServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsRepoResult()
     {
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(Sample());
         _repo.Setup(r => r.DeleteAsync(1)).ReturnsAsync(true);
         Assert.True(await _sut.DeleteAsync(1));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_NonPending_ThrowsInvalidOperationException()
+    {
+        var existing = Sample();
+        existing.Status = "Approved";
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(existing);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteAsync(1));
     }
 }

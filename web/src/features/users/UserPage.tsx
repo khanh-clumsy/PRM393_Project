@@ -418,11 +418,6 @@ export default function UserPage() {
                   </option>
                 ))}
               </select>
-              {departments.length === 0 && (
-                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                  Chưa có phòng ban — hãy tạo phòng ban trước.
-                </p>
-              )}
             </div>
           )}
 

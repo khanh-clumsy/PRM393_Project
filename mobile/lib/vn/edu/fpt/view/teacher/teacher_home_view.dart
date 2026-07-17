@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../shared/timetable_view.dart';
 import 'teacher_class_announcement_view.dart';
+import 'teacher_class_summary_view.dart';
 import 'teacher_leave_review_view.dart';
 import 'teacher_my_classes_view.dart';
 
@@ -45,7 +46,7 @@ class TeacherHomeView extends StatelessWidget {
                 context,
                 icon: Icons.class_outlined,
                 label: 'Lớp học của tôi',
-                subtitle: 'Điểm danh, nhập điểm, danh sách lớp',
+                subtitle: 'Điểm danh, danh sách lớp',
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const TeacherMyClassesView()),
                 ),
@@ -76,6 +77,16 @@ class TeacherHomeView extends StatelessWidget {
                 subtitle: 'Đơn chờ phê duyệt của học sinh',
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const TeacherLeaveReviewView()),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildActionTile(
+                context,
+                icon: Icons.menu_book_outlined,
+                label: 'Tổng kết lớp',
+                subtitle: 'Xem học bạ lớp chủ nhiệm (chỉ đọc)',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TeacherClassSummaryView()),
                 ),
               ),
             ],

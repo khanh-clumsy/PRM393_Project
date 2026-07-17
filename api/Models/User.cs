@@ -10,6 +10,7 @@ namespace PRM393API.Models;
 [Index("Username", Name = "IX_Users_Username")]
 [Index("Username", Name = "UQ_Users_Username", IsUnique = true)]
 [Index("PhoneNumber", Name = "UQ_Users_PhoneNumber", IsUnique = true)]
+[Index("Email", Name = "UQ_Users_Email", IsUnique = true)]
 public partial class User
 {
     [Key]
@@ -33,13 +34,20 @@ public partial class User
     public string? Address { get; set; }
 
     [StringLength(150)]
-    public string? Email { get; set; }
+    public string Email { get; set; } = null!;
 
     [StringLength(20)]
     public string? PhoneNumber { get; set; }
 
     [StringLength(500)]
     public string? AvatarUrl { get; set; }
+
+    // OTP đặt lại mật khẩu, chỉ một mã hoạt động tại một thời điểm.
+    [StringLength(6)]
+    public string? PasswordResetCode { get; set; }
+
+    // Thời điểm OTP hết hạn theo UTC.
+    public DateTime? PasswordResetCodeExpiresAt { get; set; }
 
     public int RoleId { get; set; }
 
@@ -53,6 +61,9 @@ public partial class User
 
     [InverseProperty("Author")]
     public virtual ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
+
+    [InverseProperty("User")]
+    public virtual ICollection<AnnouncementRead> AnnouncementReads { get; set; } = new List<AnnouncementRead>();
 
     [InverseProperty("RecordedByNavigation")]
     public virtual ICollection<AttendanceRecord> AttendanceRecordRecordedByNavigations { get; set; } = new List<AttendanceRecord>();

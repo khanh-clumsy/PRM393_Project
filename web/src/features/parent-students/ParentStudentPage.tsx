@@ -213,7 +213,6 @@ export default function ParentStudentPage() {
     },
   ]
 
-  const selectedRelationshipOption = RELATIONSHIP_OPTIONS.find((o) => o.value === relationship)
   const filterParentName = parentFilter !== '' ? parentNameById.get(parentFilter) : undefined
 
   return (
@@ -231,24 +230,26 @@ export default function ParentStudentPage() {
         }
       />
 
-      <div className="ui-field" style={{ maxWidth: 480, marginBottom: 24 }}>
-        <label htmlFor="ps-parent-filter">Phụ huynh</label>
-        <select
-          id="ps-parent-filter"
-          value={parentFilter}
-          onChange={(e) => {
-            const v = e.target.value
-            setParentFilter(v === '' ? '' : Number(v))
-          }}
-          disabled={loadingInit || submitting || parents.length === 0}
-        >
-          <option value="">— Chọn phụ huynh —</option>
-          {parents.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.fullName} ({p.username})
-            </option>
-          ))}
-        </select>
+      <div className="ui-filters">
+        <div className="ui-field">
+          <label htmlFor="ps-parent-filter">Phụ huynh</label>
+          <select
+            id="ps-parent-filter"
+            value={parentFilter}
+            onChange={(e) => {
+              const v = e.target.value
+              setParentFilter(v === '' ? '' : Number(v))
+            }}
+            disabled={loadingInit || submitting || parents.length === 0}
+          >
+            <option value="">— Chọn phụ huynh —</option>
+            {parents.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.fullName} ({p.username})
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {loadingInit && (
@@ -350,12 +351,6 @@ export default function ParentStudentPage() {
                   </option>
                 ))}
               </select>
-              {availableStudents.length === 0 && (
-                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                  Không còn học sinh khả dụng cho phụ huynh này. Học sinh đã liên kết phụ huynh khác
-                  sẽ bị API từ chối khi thêm.
-                </p>
-              )}
             </div>
           ) : (
             <div className="ui-field">
@@ -382,11 +377,6 @@ export default function ParentStudentPage() {
                 </option>
               ))}
             </select>
-            {selectedRelationshipOption && (
-              <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                {selectedRelationshipOption.description}
-              </p>
-            )}
           </div>
         </form>
       </Modal>

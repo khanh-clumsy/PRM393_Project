@@ -17,7 +17,8 @@ Quản lý đăng nhập, cấp lại token và thông tin hồ sơ người dù
 | **POST** | `/api/auth/login` | Public | Đăng nhập hệ thống.<br>- **Request Body:** `{ "username": "...", "password": "..." }`<br>- **Response:** Trả về JWT Access Token, Refresh Token và thông tin vai trò (`RoleId`, `RoleName`). |
 | **POST** | `/api/auth/refresh` | Public | Cấp lại Access Token mới khi hết hạn sử dụng Refresh Token.<br>- **Request Body:** `{ "refreshToken": "..." }`<br>- **Response:** Trả về cặp Access Token và Refresh Token mới. |
 | **POST** | `/api/auth/logout` | Đã đăng nhập | Đăng xuất hệ thống, hủy Refresh Token trên database. |
-| **POST** | `/api/auth/forgot-password` | Public | Đệ trình yêu cầu quên mật khẩu.<br>- **Request Body:** `{ "email": "..." }` hoặc `{ "phoneNumber": "..." }` |
+| **POST** | `/api/auth/forgot-password` | Public | Gửi OTP đặt lại mật khẩu qua email.<br>- **Request Body:** `{ "email": "..." }`<br>- **Response:** `200` với thông báo chung cho email hợp lệ/không tồn tại; `503` nếu SMTP lỗi khi gửi email hợp lệ. |
+| **POST** | `/api/auth/reset-password` | Public | Đặt lại mật khẩu bằng OTP.<br>- **Request Body:** `{ "email": "...", "code": "123456", "newPassword": "..." }`<br>- **Response:** `200` nếu thành công và thu hồi mọi refresh token; `400` nếu OTP sai/hết hạn hoặc mật khẩu dưới 8 ký tự. |
 | **GET** | `/api/users/profile` | Đã đăng nhập | Lấy thông tin chi tiết hồ sơ cá nhân.<br>- **Response:** Trả về thông tin chi tiết: `UserId`, `Username`, `FullName`, `DateOfBirth`, `Gender`, `Address`, `Email`, `PhoneNumber`, `AvatarUrl`, `RoleId`, `DepartmentId`. |
 | **PUT** | `/api/users/profile` | Đã đăng nhập | Cập nhật thông tin cá nhân.<br>- **Request Body:** `{ "fullName": "...", "dateOfBirth": "YYYY-MM-DD", "gender": "...", "address": "...", "email": "...", "phoneNumber": "...", "avatarUrl": "..." }` |
 | **PUT** | `/api/users/password` | Đã đăng nhập | Đổi mật khẩu tài khoản.<br>- **Request Body:** `{ "oldPassword": "...", "newPassword": "..." }` |
@@ -69,10 +70,11 @@ Quản lý đơn xin nghỉ học của học sinh.
 | **GET** | `/api/classes/{classId}/attendance` | Giáo viên | Tra cứu lịch sử điểm danh của lớp.<br>- **Query Parameters:** `startDate`, `endDate`. |
 | **POST** | `/api/classes/{classId}/grades` | Giáo viên | Nhập hoặc cập nhật điểm số hàng loạt cho học sinh theo cột đánh giá (`AssessmentId`).<br>- **Request Body:** `{ "assessmentId": 1, "grades": [ { "studentId": 1, "score": 8.5, "comment": "..." } ] }` |
 | **POST** | `/api/classes/{classId}/newsfeed` | Giáo viên | Đăng thông báo/bài viết lên bảng tin lớp học. |
-| **GET** | `/api/classes/{classId}/summaries/semester/{semesterId}` | Giáo viên (GVCN) | Lấy bảng tổng hợp kết quả học kỳ của học sinh lớp chủ nhiệm (GPA, Hạnh kiểm, Xếp loại). |
-| **PUT** | `/api/classes/{classId}/students/{studentId}/summaries/semester/{semesterId}` | Giáo viên (GVCN) | GVCN đánh giá Hạnh kiểm và chốt xếp loại Học tập Học kỳ cho học sinh.<br>- **Request Body:** `{ "conduct": "Tốt" / "Khá" / "Trung Bình" / "Yếu", "rankId": 1 }` |
-| **GET** | `/api/classes/{classId}/summaries/yearly/{academicYearId}` | Giáo viên (GVCN) | Lấy bảng tổng hợp kết quả cả năm học của học sinh lớp chủ nhiệm. |
-| **PUT** | `/api/classes/{classId}/students/{studentId}/summaries/yearly/{academicYearId}` | Giáo viên (GVCN) | GVCN đánh giá Hạnh kiểm và chốt xếp loại Học tập Cả năm cho học sinh.<br>- **Request Body:** `{ "yearlyConduct": "...", "rankId": 1 }` |
+| **GET** | `/api/classes/{classId}/summaries/semester/{semesterId}` | Giáo viên (GVCN) | Lấy bảng tổng hợp kết quả học kỳ của học sinh lớp chủ nhiệm (GPA, Hạnh kiểm, Xếp loại).<br>**Implement:** `GET /api/class/{classId}/summaries/semester/{semesterId}` |
+| **PUT** | `/api/classes/{classId}/students/{studentId}/summaries/semester/{semesterId}` | Giáo viên (GVCN) | GVCN đánh giá Hạnh kiểm và chốt xếp loại Học tập Học kỳ cho học sinh.<br>- **Request Body:** `{ "conduct": "Tốt" / "Khá" / "Trung Bình" / "Yếu", "rankId": 1, "gpa": 8.5 }` — **Implement:** `/api/class/...` |
+| **GET** | `/api/classes/{classId}/summaries/yearly/{academicYearId}` | Giáo viên (GVCN) | Lấy bảng tổng hợp kết quả cả năm học của học sinh lớp chủ nhiệm.<br>**Implement:** `GET /api/class/{classId}/summaries/yearly/{academicYearId}` |
+| **PUT** | `/api/classes/{classId}/students/{studentId}/summaries/yearly/{academicYearId}` | Giáo viên (GVCN) | GVCN đánh giá Hạnh kiểm và chốt xếp loại Học tập Cả năm cho học sinh.<br>- **Request Body:** `{ "yearlyConduct": "...", "rankId": 1, "yearlyGpa": 8.5 }` — **Implement:** `/api/class/...` |
+| **GET** | `/api/class/by-homeroom/{teacherId}` | Giáo viên | Danh sách lớp chủ nhiệm của GV (dùng cho màn Tổng kết lớp). |
 
 ---
 
@@ -81,9 +83,11 @@ Quản lý đơn xin nghỉ học của học sinh.
 | Method | Endpoint | Quyền truy cập | Mô tả nghiệp vụ / Cấu trúc dữ liệu |
 | :--- | :--- | :--- | :--- |
 | **GET** | `/api/announcement` | Admin / tương thích cũ | Danh sách bảng tin không scoped, dùng cho CRUD Admin. |
-| **GET** | `/api/announcement/my-feed` | Đã đăng nhập | Feed mobile theo JWT: Student thấy Global + lớp đang học; Parent thấy Global + lớp của các con; Teacher thấy Global + lớp đang dạy; Admin thấy toàn bộ. Sort mới nhất trước. |
+| **GET** | `/api/announcement/my-feed` | Đã đăng nhập | Feed mobile theo JWT: Student thấy Global + lớp đang học; Parent thấy Global + lớp của các con; Teacher thấy Global + lớp đang dạy; Admin thấy toàn bộ. Mỗi item có `isRead` từ bảng `AnnouncementReads`. Sort mới nhất trước. |
 | **GET** | `/api/announcement/by-class/{classId}` | Đã đăng nhập | Bảng tin theo lớp, gồm cả tin Global. |
-| **POST** | `/api/announcement` | Admin / Giáo viên | Đăng tin Global hoặc Class (`targetClassIds`). Mobile đọc feed qua `my-feed` — không dùng `NotificationLog`. |
+| **PUT** | `/api/announcement/{id}/read` | Đã đăng nhập | Đánh dấu 1 tin đã đọc cho user hiện tại (`AnnouncementReads`). |
+| **PUT** | `/api/announcement/me/read-all` | Đã đăng nhập | Đánh dấu tất cả tin trong feed của user là đã đọc. |
+| **POST** | `/api/announcement` | Admin / Giáo viên | Đăng tin Global hoặc Class (`targetClassIds`). Mobile đọc feed qua `my-feed`. |
 
 ---
 

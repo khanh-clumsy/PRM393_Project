@@ -29,6 +29,21 @@ public class ClassServiceTests
     }
 
     [Fact]
+    public async Task GetByHomeroomTeacherAsync_ReturnsOnlyHomeroomClasses()
+    {
+        _repo.Setup(r => r.GetByHomeroomTeacherAsync(3)).ReturnsAsync(new[]
+        {
+            TestDataFactory.CreateClass(id: 1, homeroomTeacherId: 3, className: "10A1"),
+        });
+
+        var list = (await _sut.GetByHomeroomTeacherAsync(3)).ToList();
+
+        Assert.Single(list);
+        Assert.Equal(1, list[0].ClassId);
+        Assert.Equal(3, list[0].HomeroomTeacherId);
+    }
+
+    [Fact]
     public async Task CreateAsync_DuplicateHomeroomInSameYear_Throws()
     {
         var dto = new CreateClassDto("10A3", 1, 5);

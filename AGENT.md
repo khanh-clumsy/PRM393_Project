@@ -66,3 +66,10 @@ Agents must adhere strictly to these physical database rules defined in [001_ini
 ## 🚫 4. Out of Scope Features
 * **Chat module** (1-1 chat, group chat) đã được loại bỏ hoàn toàn. Tuyệt đối không sinh code, không thiết lập WebSocket hay tạo các bảng/endpoint liên quan đến nhắn tin.
 * **HeadOfDept class updates:** Trưởng bộ môn tuyệt đối không có quyền write đối với cấu trúc lớp hay phân công giảng dạy.
+
+---
+
+## 🧪 5. Flutter Test Command Guidance
+* Nếu `flutter test` bị treo, chạy quá lâu, hoặc không trả kết quả rõ ràng trong thời gian hợp lý, không tiếp tục lặp lại cùng một lệnh.
+* Hãy tìm cách kiểm tra khác phù hợp hơn: chạy test file cụ thể, dùng `dart test` nếu áp dụng được, chạy `flutter analyze`, giới hạn test theo `--plain-name`, hoặc kiểm tra thủ công bằng `flutter run`/hot reload khi lỗi là UI layout.
+* Khi phải bỏ qua một lệnh test vì bị treo, ghi rõ lệnh đã thử, hiện tượng gặp phải, và lệnh thay thế đã dùng để xác minh.

@@ -309,7 +309,7 @@ class TimetablePage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Danh sách lịch học
+              // Danh sách lịch (GV: lịch dạy; HS/PH: lịch học)
               controller.filteredTimetablesByDay.isEmpty
                   ? Center(
                       child: Padding(
@@ -319,7 +319,9 @@ class TimetablePage extends StatelessWidget {
                             Icon(Icons.event_available_outlined, size: 56, color: Colors.grey.shade300),
                             const SizedBox(height: 12),
                             Text(
-                              'Không có lịch học hôm nay',
+                              controller.userRole.value.toLowerCase() == 'teacher'
+                                  ? 'Chưa có lịch dạy hôm nay'
+                                  : 'Chưa có lịch học hôm nay',
                               style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
                             ),
                           ],

@@ -35,6 +35,9 @@ public partial class Announcement
     [InverseProperty("Announcement")]
     public virtual ICollection<AnnouncementTarget> AnnouncementTargets { get; set; } = new List<AnnouncementTarget>();
 
+    [InverseProperty("Announcement")]
+    public virtual ICollection<AnnouncementRead> AnnouncementReads { get; set; } = new List<AnnouncementRead>();
+
     [ForeignKey("AuthorId")]
     [InverseProperty("Announcements")]
     public virtual User Author { get; set; } = null!;

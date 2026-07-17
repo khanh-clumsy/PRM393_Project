@@ -29,6 +29,7 @@ internal sealed class IntegrationServiceProvider : IDisposable
     public IClassService Class { get; }
     public IAcademicRankService AcademicRank { get; }
     public ITimetableSlotService TimetableSlot { get; }
+    public FakeEmailService Email { get; } = new();
 
     public IntegrationServiceProvider(
         IntegrationSeedMode seedMode = IntegrationSeedMode.Full,
@@ -58,7 +59,7 @@ internal sealed class IntegrationServiceProvider : IDisposable
 
         var jwt = TestDataFactory.CreateJwtHelper();
         AcademicContext = new AcademicContextService(Db);
-        Auth = new AuthService(authRepo, userRepo, jwt);
+        Auth = new AuthService(authRepo, jwt, Email);
         Timetable = new TimetableService(timetableRepo, Db, AcademicContext);
         Attendance = new AttendanceService(attendanceRepo);
         ParentStudent = new ParentStudentService(parentStudentRepo);

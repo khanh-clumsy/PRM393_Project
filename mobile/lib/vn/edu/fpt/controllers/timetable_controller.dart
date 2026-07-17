@@ -50,6 +50,8 @@ class TimetableController extends GetxController with SubmitGuardMixin {
   
   final RxString userRole = ''.obs;
   final RxString studentName = ''.obs;
+  /// Tên con đang chọn (PH) — khác `studentName` (tên phụ huynh trên dashboard).
+  final RxString selectedChildName = ''.obs;
 
   // Student/Parent: studentId đang xem
   final RxnInt targetStudentId = RxnInt();
@@ -289,6 +291,7 @@ class TimetableController extends GetxController with SubmitGuardMixin {
 
           final firstStudent = linkedStudents.first;
           targetStudentId.value = firstStudent['studentId'];
+          selectedChildName.value = firstStudent['studentName'] ?? '';
           selectedClassId.value = firstStudent['classId'];
           if (firstStudent['academicYearId'] != null) {
             selectedYearId.value = firstStudent['academicYearId'];
@@ -302,15 +305,16 @@ class TimetableController extends GetxController with SubmitGuardMixin {
   }
 
   Future<void> switchToStudent(int studentId) async {
-    if (targetStudentId.value == studentId) return;
-    targetStudentId.value = studentId;
     final child = linkedStudents.firstWhereOrNull((s) => s['studentId'] == studentId);
     if (child != null) {
+      selectedChildName.value = child['studentName'] ?? '';
       selectedClassId.value = child['classId'];
       if (child['academicYearId'] != null) {
         selectedYearId.value = child['academicYearId'];
       }
     }
+    if (targetStudentId.value == studentId) return;
+    targetStudentId.value = studentId;
     await fetchWeeklyTimetables();
   }
 

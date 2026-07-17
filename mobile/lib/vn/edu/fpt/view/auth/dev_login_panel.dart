@@ -21,30 +21,51 @@ class DevLoginPanel extends StatelessWidget {
     if (!kDebugMode) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFD8B8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(Icons.bug_report_outlined, size: 18, color: Colors.grey.shade700),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE65100).withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  size: 18,
+                  color: Color(0xFFE65100),
+                ),
+              ),
               const SizedBox(width: 6),
-              Text(
-                'Đăng nhập nhanh (dev)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+              const Expanded(
+                child: Text(
+                  'Đăng nhập nhanh (dev)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             'MK: $devLoginPassword · chỉ hiện khi chạy debug',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 11,
+              height: 1.35,
+              color: Colors.grey.shade700,
+            ),
           ),
           const SizedBox(height: 10),
           Obx(() {
@@ -55,11 +76,16 @@ class DevLoginPanel extends StatelessWidget {
               children: kDevLoginAccounts.map((account) {
                 return AppButton(
                   label: account.label,
-                  onPressed: isLoading ? null : () => onPickAccount(account.phoneNumber, account.password),
+                  onPressed: isLoading
+                      ? null
+                      : () => onPickAccount(account.phoneNumber, account.password),
                   variant: AppButtonVariant.outlined,
-                  height: 36,
-                  borderRadius: 8,
-                  labelStyle: const TextStyle(fontSize: 13),
+                  height: 34,
+                  borderRadius: 10,
+                  labelStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 );
               }).toList(),
             );

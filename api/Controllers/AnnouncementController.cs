@@ -33,6 +33,22 @@ public class AnnouncementController(IAnnouncementService service) : ControllerBa
         return Ok(await service.GetMyFeedAsync(userId, role));
     }
 
+    [HttpPut("{id:int}/read")]
+    public async Task<IActionResult> MarkRead(int id)
+    {
+        var ok = await service.MarkReadAsync(GetCurrentUserId(), id);
+        return ok ? Ok(new { announcementId = id, isRead = true }) : NotFound(new { message = "Không tìm thấy thông báo." });
+    }
+
+    [HttpPut("me/read-all")]
+    public async Task<IActionResult> MarkAllRead()
+    {
+        var userId = GetCurrentUserId();
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+        var count = await service.MarkAllReadAsync(userId, role);
+        return Ok(new { marked = count });
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAnnouncementDto dto)
     {

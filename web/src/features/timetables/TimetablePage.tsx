@@ -375,7 +375,7 @@ export default function TimetablePage() {
         subtitle="Quản lý lịch mẫu và lịch thực tế theo lớp"
       />
 
-      <div className="timetable-filters">
+      <div className="ui-filters">
         <div className="ui-field">
           <label htmlFor="tt-year">Năm học</label>
           <select
@@ -393,7 +393,6 @@ export default function TimetablePage() {
               lookup.academicYears.map((y) => (
                 <option key={y.academicYearId} value={y.academicYearId}>
                   {y.yearName}
-                  {y.isActive ? ' (đang dùng)' : ''}
                 </option>
               ))
             )}
@@ -537,11 +536,6 @@ export default function TimetablePage() {
       {!loadingInit && filtersReady && mode === 'template' && (
         <>
           <div className="timetable-toolbar">
-            <p className="timetable-hint" style={{ margin: 0 }}>
-              {className && semesterName
-                ? `Lịch mẫu — ${className}, ${semesterName}. Nhấn ô trống để thêm tiết.`
-                : 'Lịch mẫu theo tuần lặp lại.'}
-            </p>
             <Button
               variant="primary"
               onClick={() => setGenerateConfirm(true)}
@@ -550,12 +544,6 @@ export default function TimetablePage() {
               Sinh lịch học kỳ
             </Button>
           </div>
-
-          {filteredAssignments.length === 0 && (
-            <p className="timetable-hint timetable-hint--warn">
-              Chưa có phân công giảng dạy cho lớp và học kỳ này — thêm tại «Phân công giảng dạy».
-            </p>
-          )}
 
           {loadingGrid && (
             <div className="state-panel">
@@ -600,6 +588,7 @@ export default function TimetablePage() {
         open={formContext !== null}
         context={formContext}
         assignments={filteredAssignments}
+        teachers={lookup?.teachers ?? []}
         slots={slots}
         submitting={submitting}
         onClose={() => {

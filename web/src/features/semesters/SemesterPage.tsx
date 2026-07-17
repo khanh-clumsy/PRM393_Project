@@ -229,28 +229,29 @@ export default function SemesterPage() {
         }
       />
 
-      <div className="ui-field" style={{ maxWidth: 320, marginBottom: 24 }}>
-        <label htmlFor="semester-year-filter">Lọc theo năm học</label>
-        <select
-          id="semester-year-filter"
-          value={yearFilter}
-          onChange={(e) => {
-            const v = e.target.value
-            setYearFilter(v === '' ? '' : Number(v))
-          }}
-          disabled={loading || submitting || years.length === 0}
-        >
-          {years.length === 0 ? (
-            <option value="">Chưa có năm học</option>
-          ) : (
-            years.map((y) => (
-              <option key={y.academicYearId} value={y.academicYearId}>
-                {y.yearName}
-                {y.isActive ? ' (đang dùng)' : ''}
-              </option>
-            ))
-          )}
-        </select>
+      <div className="ui-filters">
+        <div className="ui-field">
+          <label htmlFor="semester-year-filter">Lọc theo năm học</label>
+          <select
+            id="semester-year-filter"
+            value={yearFilter}
+            onChange={(e) => {
+              const v = e.target.value
+              setYearFilter(v === '' ? '' : Number(v))
+            }}
+            disabled={loading || submitting || years.length === 0}
+          >
+            {years.length === 0 ? (
+              <option value="">Chưa có năm học</option>
+            ) : (
+              years.map((y) => (
+                <option key={y.academicYearId} value={y.academicYearId}>
+                  {y.yearName}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
       </div>
 
       {loading && (

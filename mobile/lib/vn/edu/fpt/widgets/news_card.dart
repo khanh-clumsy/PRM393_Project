@@ -7,8 +7,6 @@ class NewsItemData {
   final String timeAgo;
   final String tag;
   final String? imageUrl;
-  final int likes;
-  final int comments;
 
   const NewsItemData({
     required this.id,
@@ -17,40 +15,28 @@ class NewsItemData {
     required this.timeAgo,
     required this.tag,
     this.imageUrl,
-    this.likes = 0,
-    this.comments = 0,
   });
 }
 
-class NewsCard extends StatefulWidget {
+class NewsCard extends StatelessWidget {
   final NewsItemData news;
+  final VoidCallback? onTap;
 
-  const NewsCard({super.key, required this.news});
-
-  @override
-  State<NewsCard> createState() => _NewsCardState();
-}
-
-class _NewsCardState extends State<NewsCard> {
-  bool _isLiked = false;
-  late int _likeCount;
-
-  @override
-  void initState() {
-    super.initState();
-    _likeCount = widget.news.likes;
-  }
+  const NewsCard({super.key, required this.news, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -60,8 +46,7 @@ class _NewsCardState extends State<NewsCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Phần hình ảnh (nếu có)
-          if (widget.news.imageUrl != null)
+          if (news.imageUrl != null)
             Stack(
               children: [
                 ClipRRect(
@@ -70,18 +55,20 @@ class _NewsCardState extends State<NewsCard> {
                     topRight: Radius.circular(16),
                   ),
                   child: Image.network(
-                    widget.news.imageUrl!,
+                    news.imageUrl!,
                     height: 150,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      // Fallback khi không tải được ảnh từ mạng
                       return Container(
                         height: 150,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [const Color(0xFFE65100).withOpacity(0.8), const Color(0xFFFFB74D)],
+                            colors: [
+                              const Color(0xFFE65100).withValues(alpha: 0.8),
+                              const Color(0xFFFFB74D),
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -95,18 +82,17 @@ class _NewsCardState extends State<NewsCard> {
                     },
                   ),
                 ),
-                // Nhãn danh mục (Tag) đè lên ảnh
                 Positioned(
                   top: 12,
                   left: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.95),
+                      color: Colors.white.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      widget.news.tag,
+                      news.tag,
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -118,7 +104,6 @@ class _NewsCardState extends State<NewsCard> {
               ],
             )
           else
-            // Nếu không có ảnh, vẽ một dải tag nhỏ
             Padding(
               padding: const EdgeInsets.only(left: 16, top: 16),
               child: Container(
@@ -129,7 +114,7 @@ class _NewsCardState extends State<NewsCard> {
                   border: Border.all(color: const Color(0xFFFFCC80), width: 0.5),
                 ),
                 child: Text(
-                  widget.news.tag,
+                  news.tag,
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -138,20 +123,18 @@ class _NewsCardState extends State<NewsCard> {
                 ),
               ),
             ),
-          // Nội dung tin tức
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Dòng thời gian và Tiêu đề
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
-                        widget.news.title,
+                        news.title,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -162,7 +145,7 @@ class _NewsCardState extends State<NewsCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      widget.news.timeAgo,
+                      news.timeAgo,
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey.shade500,
@@ -171,9 +154,8 @@ class _NewsCardState extends State<NewsCard> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Mô tả tóm tắt
                 Text(
-                  widget.news.excerpt,
+                  news.excerpt,
                   style: TextStyle(
                     fontSize: 12.5,
                     color: Colors.grey.shade600,
@@ -182,82 +164,12 @@ class _NewsCardState extends State<NewsCard> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                // Thao tác dưới cùng (Like, Comment, Share)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        // Nút thích
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isLiked = !_isLiked;
-                              _likeCount = _isLiked ? _likeCount + 1 : _likeCount - 1;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              Icon(
-                                _isLiked ? Icons.favorite : Icons.favorite_border,
-                                size: 18,
-                                color: _isLiked ? Colors.red : Colors.grey.shade600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$_likeCount',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Số bình luận
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.chat_bubble_outline_rounded,
-                              size: 18,
-                              color: Colors.grey.shade600,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${widget.news.comments}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    // Nút chia sẻ
-                    GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã sao chép liên kết')),
-                        );
-                      },
-                      child: Icon(
-                        Icons.share_outlined,
-                        size: 18,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
         ],
       ),
+    ),
     );
   }
 }

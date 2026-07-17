@@ -4,6 +4,7 @@ import '../view/shared/attendance_view.dart';
 import '../view/shared/timetable_view.dart';
 import 'package:prm393_mobile/vn/edu/fpt/view/student/leave_request_view.dart';
 import '../view/student/student_grade_view.dart';
+import '../view/student/academic_report_view.dart';
 
 class QuickActionItemData {
   final IconData icon;
@@ -24,6 +25,10 @@ class QuickActionItemData {
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
 
+  Future<void> _openAcademicReport() async {
+    Get.to(() => const AcademicReportView());
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<QuickActionItemData> actions = [
@@ -36,6 +41,11 @@ class QuickActions extends StatelessWidget {
         icon: Icons.bar_chart_rounded,
         label: 'Điểm số',
         onTap: () => Get.to(() => const StudentGradeView()),
+      ),
+      QuickActionItemData(
+        icon: Icons.menu_book_outlined,
+        label: 'Học bạ',
+        onTap: _openAcademicReport,
       ),
       QuickActionItemData(
         icon: Icons.calendar_month_outlined,

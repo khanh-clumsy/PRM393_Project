@@ -20,7 +20,7 @@ void main() {
     });
 
     expect(m.status, 'Pending');
-    expect(m.statusLabelVi, 'Cho duyet');
+    expect(m.statusLabelVi, 'Chờ duyệt');
     expect(m.studentName, 'Nguyen Van A');
   });
 }

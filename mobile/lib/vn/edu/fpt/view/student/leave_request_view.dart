@@ -34,12 +34,41 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
   @override
   void initState() {
     super.initState();
-    _ctrl = Get.put(LeaveRequestController(), tag: widget.controllerTag);
-    if (widget.studentId != null && widget.requestedBy != null) {
-      _ctrl.init(studentId: widget.studentId!, requestedBy: widget.requestedBy!);
-    } else {
-      _ctrl.initForCurrentStudent();
+    final tag = widget.controllerTag;
+    if (tag != null && Get.isRegistered<LeaveRequestController>(tag: tag)) {
+      Get.delete<LeaveRequestController>(tag: tag);
     }
+    _ctrl = Get.put(LeaveRequestController(), tag: tag);
+    _ctrl.bootstrap(studentId: widget.studentId, requestedBy: widget.requestedBy);
+  }
+
+  Widget _buildChildFilter() {
+    if (_ctrl.linkedStudents.length <= 1) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Con:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _ctrl.linkedStudents.map((s) {
+              final id = s['studentId'] as int;
+              final name = s['studentName'] as String? ?? 'HS';
+              final selected = _ctrl.targetStudentId.value == id;
+              return ChoiceChip(
+                label: Text(name),
+                selected: selected,
+                onSelected: (_) => _ctrl.switchToStudent(id, name),
+                selectedColor: const Color(0xFFFFE0B2),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -47,6 +76,12 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
     final userController = Get.isRegistered<UserController>() ? Get.find<UserController>() : null;
 
     return Obx(() {
+      final childName = _ctrl.targetStudentName.value.trim();
+      final subtitle = widget.subtitle ??
+          (childName.isNotEmpty
+              ? 'Đơn xin nghỉ của $childName'
+              : 'Theo dõi và quản lý đơn xin nghỉ học.');
+
       return Scaffold(
         backgroundColor: const Color(0xFFF9FAFC),
         appBar: userController == null
@@ -74,10 +109,11 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    widget.subtitle ?? 'Theo dõi và quản lý đơn xin nghỉ học.',
+                    subtitle,
                     style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 18),
+                  _buildChildFilter(),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -131,8 +167,9 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
   }
 
   Widget _buildHistoryItem(StudentRequestModel req) {
-    final isRejected = req.status == 'Rejected';
-    final isApproved = req.status == 'Approved';
+    final isRejected = req.isRejected;
+    final isApproved = req.isApproved;
+    final isPending = req.isPending;
 
     final badgeBgColor = isApproved
         ? const Color(0xFFE8F5E9)
@@ -153,7 +190,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
     final leaveDate = DateFormat('dd/MM/yyyy').format(DateTime.parse(req.leaveDate));
     final detail = [
       req.reason,
-      if (req.reviewNote != null && req.reviewNote!.trim().isNotEmpty) 'Ghi chú: ${req.reviewNote}',
+      if (req.reviewNote != null && req.reviewNote!.trim().isNotEmpty) 'Ghi chú GV: ${req.reviewNote}',
       if (req.attachmentUrl != null && req.attachmentUrl!.trim().isNotEmpty) 'Minh chứng: ${req.attachmentUrl}',
     ].join('\n');
 
@@ -185,11 +222,18 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      req.studentName ?? 'Học sinh #${req.studentId}',
+                      'Ngày nghỉ: $leaveDate',
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
                     ),
                     const SizedBox(height: 2),
-                    Text(leaveDate, style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500)),
+                    Text(
+                      isPending
+                          ? 'Chờ GVCN / GV dạy lớp duyệt'
+                          : (req.requestedByName != null
+                              ? 'Người gửi: ${req.requestedByName}'
+                              : 'Đơn xin nghỉ'),
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
+                    ),
                   ],
                 ),
               ),
@@ -220,12 +264,51 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage> {
             ),
             child: Text(
               detail,
-              style: TextStyle(fontSize: 12.5, color: isRejected ? const Color(0xFFC62828) : Colors.grey.shade700, height: 1.4),
+              style: TextStyle(
+                fontSize: 12.5,
+                color: isRejected ? const Color(0xFFC62828) : Colors.grey.shade700,
+                height: 1.4,
+              ),
             ),
+          ),
+          if (isPending) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _ctrl.isSubmitting.value ? null : () => _confirmCancel(req),
+                icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC62828)),
+                label: const Text('Hủy đơn', style: TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmCancel(StudentRequestModel req) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hủy đơn xin nghỉ?'),
+        content: const Text('Chỉ hủy được khi đơn còn chờ duyệt. Bạn chắc chắn muốn hủy?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Không')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hủy đơn', style: TextStyle(color: Color(0xFFC62828))),
           ),
         ],
       ),
     );
+    if (ok != true || !mounted) return;
+    final success = await _ctrl.cancelRequest(req.studentRequestId);
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã hủy đơn xin nghỉ.'), backgroundColor: Color(0xFF2E7D32)),
+      );
+    }
   }
 
   Widget _buildEmpty(String message) {
@@ -250,6 +333,14 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
   final _reasonController = TextEditingController();
   final _attachmentUrlController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  String? _reasonType;
+
+  static const _reasonTypes = <String>[
+    'Ốm / sức khỏe',
+    'Việc gia đình',
+    'Đi công tác / thi ngoài',
+    'Khác',
+  ];
 
   late final LeaveRequestController _ctrl;
 
@@ -308,6 +399,11 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Điền thông tin đơn xin nghỉ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(
+                  'Sau khi gửi, đơn chờ duyệt sẽ hiện cho giáo viên chủ nhiệm và giáo viên đang dạy lớp của bạn.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.35),
+                ),
                 const SizedBox(height: 24),
                 const Text('Ngày nghỉ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
                 const SizedBox(height: 8),
@@ -327,13 +423,33 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text('Lý do', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+                const Text('Loại lý do', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _reasonTypes.map((type) {
+                    final selected = _reasonType == type;
+                    return ChoiceChip(
+                      label: Text(type),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _reasonType = type),
+                      selectedColor: const Color(0xFFFFE0B2),
+                      labelStyle: TextStyle(
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        color: selected ? const Color(0xFFE65100) : Colors.black87,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                const Text('Nội dung / mô tả', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _reasonController,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    hintText: 'Mô tả lý do xin nghỉ...',
+                    hintText: 'Mô tả chi tiết lý do xin nghỉ...',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -341,7 +457,7 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
                     ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Vui lòng nhập lý do xin nghỉ' : null,
+                  validator: (val) => val == null || val.trim().isEmpty ? 'Vui lòng nhập nội dung' : null,
                 ),
                 const SizedBox(height: 20),
                 const Text('Link minh chứng (tuỳ chọn)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
@@ -377,9 +493,17 @@ class _CreateLeaveRequestPageState extends State<CreateLeaveRequestPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_reasonType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn loại lý do'), backgroundColor: Color(0xFFC62828)),
+      );
+      return;
+    }
+    final body = _reasonController.text.trim();
+    final reason = '[$_reasonType] $body';
     final ok = await _ctrl.submitRequest(
       leaveDate: _selectedDate,
-      reason: _reasonController.text.trim(),
+      reason: reason,
       attachmentUrl: _attachmentUrlController.text,
     );
     if (ok && mounted) {

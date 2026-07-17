@@ -18,7 +18,8 @@ public class JwtHelper(IConfiguration config)
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
             new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.RoleId.ToString()),
+            // Phải là RoleName (Student/Parent/…) — my-feed và RBAC so khớp theo tên, không phải RoleId số.
+            new Claim(ClaimTypes.Role, user.Role?.RoleName ?? throw new InvalidOperationException("User role is required to issue JWT.")),
         };
 
         var token = new JwtSecurityToken(

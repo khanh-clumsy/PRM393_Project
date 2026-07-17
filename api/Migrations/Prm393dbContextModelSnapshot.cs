@@ -133,6 +133,37 @@ namespace PRM393API.Migrations
                     b.ToTable("Announcements");
                 });
 
+            modelBuilder.Entity("PRM393API.Models.AnnouncementRead", b =>
+                {
+                    b.Property<int>("ReadId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReadId"));
+
+                    b.Property<int>("AnnouncementId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReadAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("(getutcdate())");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ReadId");
+
+                    b.HasIndex("AnnouncementId");
+
+                    b.HasIndex(new[] { "UserId" }, "IX_AR_UserId");
+
+                    b.HasIndex(new[] { "UserId", "AnnouncementId" }, "UQ_AnnouncementReads")
+                        .IsUnique();
+
+                    b.ToTable("AnnouncementReads");
+                });
+
             modelBuilder.Entity("PRM393API.Models.AnnouncementTarget", b =>
                 {
                     b.Property<int>("TargetId")
@@ -846,6 +877,7 @@ namespace PRM393API.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
@@ -867,6 +899,13 @@ namespace PRM393API.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordResetCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<DateTime?>("PasswordResetCodeExpiresAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
@@ -897,6 +936,9 @@ namespace PRM393API.Migrations
                         .IsUnique()
                         .HasFilter("[PhoneNumber] IS NOT NULL");
 
+                    b.HasIndex(new[] { "Email" }, "UQ_Users_Email")
+                        .IsUnique();
+
                     b.HasIndex(new[] { "Username" }, "UQ_Users_Username")
                         .IsUnique();
 
@@ -912,6 +954,27 @@ namespace PRM393API.Migrations
                         .HasConstraintName("FK_Ann_Author");
 
                     b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("PRM393API.Models.AnnouncementRead", b =>
+                {
+                    b.HasOne("PRM393API.Models.Announcement", "Announcement")
+                        .WithMany("AnnouncementReads")
+                        .HasForeignKey("AnnouncementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_AR_Announcements");
+
+                    b.HasOne("PRM393API.Models.User", "User")
+                        .WithMany("AnnouncementReads")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_AR_Users");
+
+                    b.Navigation("Announcement");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PRM393API.Models.AnnouncementTarget", b =>
@@ -1284,6 +1347,8 @@ namespace PRM393API.Migrations
 
             modelBuilder.Entity("PRM393API.Models.Announcement", b =>
                 {
+                    b.Navigation("AnnouncementReads");
+
                     b.Navigation("AnnouncementTargets");
                 });
 
@@ -1351,6 +1416,8 @@ namespace PRM393API.Migrations
 
             modelBuilder.Entity("PRM393API.Models.User", b =>
                 {
+                    b.Navigation("AnnouncementReads");
+
                     b.Navigation("Announcements");
 
                     b.Navigation("AttendanceRecordRecordedByNavigations");

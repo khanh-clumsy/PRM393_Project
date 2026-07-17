@@ -50,10 +50,11 @@ public class AnnouncementRepository(Prm393dbContext db) : IAnnouncementRepositor
         {
             AnnouncementId = announcement.AnnouncementId,
             ClassId = classId,
-        });
+        }).ToList();
         db.AnnouncementTargets.AddRange(targets);
         await db.SaveChangesAsync();
 
+        announcement.AnnouncementTargets = targets;
         return announcement;
     }
 

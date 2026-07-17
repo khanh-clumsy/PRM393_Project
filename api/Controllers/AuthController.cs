@@ -28,6 +28,20 @@ public class AuthController(IAuthService service) : ControllerBase
     }
 
     [HttpPost("forgot-password")]
-    public IActionResult ForgotPassword([FromBody] ForgotPasswordDto dto) =>
-        Ok(new { message = "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi." });
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        var result = await service.ForgotPasswordAsync(dto);
+        return result == ForgotPasswordResult.EmailFailed
+            ? StatusCode(503, new { message = "Không thể gửi email lúc này. Vui lòng thử lại sau." })
+            : Ok(new { message = "Nếu email hợp lệ, mã đặt lại mật khẩu đã được gửi." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var result = await service.ResetPasswordAsync(dto);
+        return result == ResetPasswordResult.Success
+            ? Ok(new { message = "Đặt lại mật khẩu thành công." })
+            : BadRequest(new { message = "Mã xác nhận không hợp lệ hoặc đã hết hạn." });
+    }
 }

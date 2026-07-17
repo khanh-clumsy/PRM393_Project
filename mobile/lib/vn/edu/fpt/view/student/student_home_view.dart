@@ -6,6 +6,7 @@ import '../../core/utils/relative_time.dart';
 import '../../widgets/quick_actions.dart';
 import '../../widgets/news_card.dart';
 import '../../widgets/student_welcome_app_bar.dart';
+import 'announcement_detail_view.dart';
 import 'notifications_view.dart';
 
 class StudentHomeView extends StatefulWidget {
@@ -30,14 +31,18 @@ class _StudentHomeViewState extends State<StudentHomeView> {
     final userController = Get.find<UserController>();
 
     return Obx(() {
-      final newsList = _feedCtrl.feedItems.take(3).map((a) {
+      final items = _feedCtrl.feedItems.take(3).toList();
+      final newsList = items.map((a) {
         final excerpt = a.content.length > 120 ? '${a.content.substring(0, 120)}...' : a.content;
-        return NewsItemData(
-          id: '${a.announcementId}',
-          title: a.title,
-          excerpt: excerpt,
-          timeAgo: formatRelativeTimeVi(a.createdAt),
-          tag: a.announcementType,
+        return (
+          model: a,
+          data: NewsItemData(
+            id: '${a.announcementId}',
+            title: a.title,
+            excerpt: excerpt,
+            timeAgo: formatRelativeTimeVi(a.createdAt),
+            tag: a.announcementType,
+          ),
         );
       }).toList();
 
@@ -98,7 +103,20 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                     ),
                   )
                 else
-                  ...newsList.map((news) => NewsCard(news: news)),
+                  ...newsList.map((news) => NewsCard(
+                        news: news.data,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AnnouncementDetailView(
+                                announcement: news.model,
+                                feedController: _feedCtrl,
+                              ),
+                            ),
+                          );
+                        },
+                      )),
                 const SizedBox(height: 12),
               ],
             ),

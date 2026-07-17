@@ -47,6 +47,12 @@ desktop.ini
 *.swp
 *~
 
+# ===== Local agent workspaces =====
+.claude/
+.superpowers/
+.ssuperpowerss/
+docs/superpowers/
+
 # ===== React Admin Web =====
 web/node_modules/
 web/dist/

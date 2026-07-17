@@ -9,7 +9,7 @@ internal enum IntegrationSeedMode
 }
 
 /// <summary>
-/// Dữ liệu mẫu tương đương seed migration — dùng cho integration tests map MOBILE_TEST_MATRIX.
+/// Dữ liệu mẫu tương đương seed migration — dùng cho integration tests map docs/tests/MOBILE_TEST_MATRIX.
 /// </summary>
 internal static class IntegrationScenarioSeed
 {

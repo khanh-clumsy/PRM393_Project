@@ -137,11 +137,18 @@ public class GradeRepository(Prm393dbContext db) : IGradeRepository
         }
 
         // Calculate Yearly Average for each subject: (Sem1 + Sem2*2) / 3
-        var allSubjects = semesters.SelectMany(s => s.Subjects).Select(s => s.SubjectId).Distinct();
-        foreach (var subjectId in allSubjects)
+        // ToList() trước — tránh "Collection was modified" khi cập nhật Subjects trong vòng lặp.
+        var allSubjectIds = semesters
+            .SelectMany(s => s.Subjects)
+            .Select(s => s.SubjectId)
+            .Distinct()
+            .ToList();
+
+        foreach (var subjectId in allSubjectIds)
         {
-            var sem1Subject = semesters.OrderBy(s => s.SemesterName).FirstOrDefault()?.Subjects.FirstOrDefault(s => s.SubjectId == subjectId);
-            var sem2Subject = semesters.OrderBy(s => s.SemesterName).LastOrDefault()?.Subjects.FirstOrDefault(s => s.SubjectId == subjectId);
+            var ordered = semesters.OrderBy(s => s.SemesterName).ToList();
+            var sem1Subject = ordered.FirstOrDefault()?.Subjects.FirstOrDefault(s => s.SubjectId == subjectId);
+            var sem2Subject = ordered.LastOrDefault()?.Subjects.FirstOrDefault(s => s.SubjectId == subjectId);
 
             if (sem1Subject?.OverallScore != null && sem2Subject?.OverallScore != null)
             {

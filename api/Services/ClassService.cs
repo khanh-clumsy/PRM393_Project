@@ -19,6 +19,12 @@ public class ClassService(IClassRepository repo) : IClassService
         return list.Select(ToDto);
     }
 
+    public async Task<IEnumerable<ClassDto>> GetByHomeroomTeacherAsync(int teacherId)
+    {
+        var list = await repo.GetByHomeroomTeacherAsync(teacherId);
+        return list.Select(ToDto);
+    }
+
     public async Task<ClassDto?> GetByIdAsync(int id)
     {
         var cls = await repo.GetByIdAsync(id);

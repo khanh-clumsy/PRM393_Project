@@ -8,7 +8,8 @@ namespace PRM393API.Services;
 public class StudentRequestService(
     IStudentRequestRepository repo,
     IParentStudentRepository parentStudentRepo,
-    ITeachingAssignmentRepository teachingAssignmentRepo) : IStudentRequestService
+    ITeachingAssignmentRepository teachingAssignmentRepo,
+    IClassRepository classRepo) : IStudentRequestService
 {
     public async Task<StudentRequestDto?> GetByIdAsync(int id)
     {
@@ -24,7 +25,10 @@ public class StudentRequestService(
 
     public async Task<IEnumerable<StudentRequestDto>> GetPendingForTeacherAsync(int teacherId)
     {
-        var classIds = (await teachingAssignmentRepo.GetByTeacherAsync(teacherId)).Select(ta => ta.ClassId).Distinct().ToList();
+        // GV dạy lớp (TeachingAssignments) ∪ GVCN (HomeroomTeacherId)
+        var taught = (await teachingAssignmentRepo.GetByTeacherAsync(teacherId)).Select(ta => ta.ClassId);
+        var homeroom = (await classRepo.GetByHomeroomTeacherAsync(teacherId)).Select(c => c.ClassId);
+        var classIds = taught.Concat(homeroom).Distinct().ToList();
         return (await repo.GetPendingByClassIdsAsync(classIds)).Select(ToDto);
     }
 
@@ -85,7 +89,14 @@ public class StudentRequestService(
         return updated is null ? null : ToDto(updated);
     }
 
-    public async Task<bool> DeleteAsync(int id) => await repo.DeleteAsync(id);
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var existing = await repo.GetByIdAsync(id);
+        if (existing is null) return false;
+        if (!existing.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Chỉ hủy được đơn đang chờ duyệt.");
+        return await repo.DeleteAsync(id);
+    }
 
     private static StudentRequestDto ToDto(StudentRequest r) =>
         new(r.StudentRequestId, r.StudentId, r.Student?.FullName, r.RequestedBy, r.RequestedByNavigation?.FullName,

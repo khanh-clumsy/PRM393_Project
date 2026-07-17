@@ -261,7 +261,7 @@ export default function StudentClassPage() {
         }
       />
 
-      <div style={{ display: 'grid', gap: 16, maxWidth: 640, marginBottom: 24 }}>
+      <div className="ui-filters">
         <div className="ui-field">
           <label htmlFor="sc-year-filter">Năm học</label>
           <select
@@ -281,7 +281,6 @@ export default function StudentClassPage() {
               years.map((y) => (
                 <option key={y.academicYearId} value={y.academicYearId}>
                   {y.yearName}
-                  {y.isActive ? ' (đang dùng)' : ''}
                 </option>
               ))
             )}
@@ -413,11 +412,6 @@ export default function StudentClassPage() {
                 </option>
               ))}
             </select>
-            {availableStudents.length === 0 && (
-              <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                Không còn học sinh khả dụng (đã phân lớp trong năm hoặc đã có trong lớp này).
-              </p>
-            )}
           </div>
         </form>
       </Modal>

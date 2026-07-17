@@ -4,7 +4,7 @@ using PRM393API.Tests.Helpers;
 namespace PRM393API.Tests.Integration;
 
 /// <summary>
-/// Integration tests map các luồng trong docs/MOBILE_TEST_MATRIX.md.
+/// Integration tests map các luồng trong docs/tests/MOBILE_TEST_MATRIX.md.
 /// Chạy service + repository thật trên InMemory DB.
 /// </summary>
 public class MobileTestMatrixIntegrationTests : IDisposable

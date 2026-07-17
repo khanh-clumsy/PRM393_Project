@@ -19,6 +19,17 @@ Kịch bản QA cho phạm vi **Mobile Completion Sprint** (Batch 2–5): TKB, p
 - [x] **0.3** Mobile `flutter run` (debug) — màn login có panel **Đăng nhập nhanh (dev)**
 - [x] **0.4** Emulator Android → API `10.0.2.2:5088` — login không báo lỗi kết nối
 
+### TC-AUTH01 · Quên mật khẩu qua email
+
+|                |                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Màn hình**   | Login → Quên mật khẩu → `forgot_password_view.dart`                                                                                                     |
+| **Bước**       | 1. Bấm **Quên mật khẩu?** 2. Nhập email hợp lệ 3. Bấm **Gửi mã** 4. Nhập OTP 6 số, mật khẩu mới, nhập lại mật khẩu 5. Bấm **Đặt lại mật khẩu**          |
+| **Kỳ vọng**    | Gửi mã thành công chuyển sang bước nhập OTP; reset thành công quay về login; đăng nhập mật khẩu cũ thất bại, mật khẩu mới thành công                   |
+| **Error path** | Email rỗng/sai định dạng bị chặn; OTP sai/hết hạn báo lỗi chung; mật khẩu dưới 8 ký tự hoặc nhập lại không khớp bị chặn; refresh token cũ bị thu hồi |
+
+- [ ] **Pass · TC-AUTH01**
+
 
 
 ### Tài khoản test
@@ -292,25 +303,22 @@ Phạm vi: Batch 2 (TKB `by-teacher`), Batch 3 (điểm danh, nhập điểm, ta
 | --------- | ------------------------------------------------------------ |
 | Danh sách | Mở DS HS (STT, tên, mã) — `teacher_class_students_view.dart` |
 | Điểm danh | Mở flow điểm danh                                            |
-| Nhập điểm | Mở nhập điểm pre-select đúng lớp-môn-HK                      |
 
 
 - [x] **Pass · TC-T03**
 
 
 
-### TC-T04 · Nhập điểm
+### TC-T04 · Nhập điểm — **N/A (UI đã gỡ)**
 
 
-|                |                                                                                                                                                |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Màn hình**   | `teacher_grade_entry_view.dart` (chỉ từ tab Lớp)                                                                                               |
-| **Bước**       | 1. Tab Lớp → Nhập điểm 2. Kiểm tra dropdown đã chọn sẵn 3. Chọn loại điểm (KT miệng, 15 phút, 1 tiết…) 4. Nhập điểm + nhận xét 5. Lưu → reload |
-| **Kỳ vọng**    | Lưu thành công; comment gửi API; max điểm theo loại                                                                                            |
-| **Error path** | Điểm âm/vượt max → client chặn; nút Lưu disable khi `isSaving`                                                                                 |
+|              |                                                                 |
+| ------------ | --------------------------------------------------------------- |
+| **Ghi chú**  | UI `teacher_grade_entry_*` đã xoá khỏi mobile; endpoint `/api/grade/*` vẫn giữ |
+| **Kỳ vọng**  | Card lớp chỉ còn **Danh sách** + **Điểm danh** — không nút Nhập điểm |
 
 
-- [x] **Pass · TC-T04**
+- [x] **N/A · TC-T04**
 
 
 
@@ -321,8 +329,8 @@ Phạm vi: Batch 2 (TKB `by-teacher`), Batch 3 (điểm danh, nhập điểm, ta
 | -------------- | ------------------------------------------- |
 | **Màn hình**   | `teacher_home_view.dart`                    |
 | **Kỳ vọng**    | Có: TKB, Điểm danh, Lớp học của tôi         |
-| **Không có**   | Bài tập                                     |
-| **Ghi chú UI** | "Nhập điểm và quản lý lớp: vào tab Lớp học" |
+| **Không có**   | Bài tập; nút/luồng Nhập điểm trên UI        |
+| **Ghi chú UI** | Lớp học của tôi: danh sách + điểm danh      |
 
 
 - [x] **Pass · TC-T05**
@@ -523,8 +531,8 @@ Chạy **1 lần** theo thứ tự sau để verify dữ liệu xuyên suốt c�
 ### Batch 3 — Điểm danh & điểm số
 
 - [x] **B3-1** Điểm danh GV full flow *(Teacher)*
-- [x] **B3-2** Tab Lớp + shortcut 3 nút *(Teacher)*
-- [x] **B3-3** Nhập điểm từ tab Lớp *(Teacher)*
+- [x] **B3-2** Tab Lớp + shortcut Danh sách / Điểm danh *(Teacher)*
+- [x] **B3-3** Nhập điểm từ tab Lớp *(Teacher)* — **N/A (UI đã gỡ)**
 - [x] **B3-4** Xem điểm + GK/CK tiếng Việt *(Student)*
 - [x] **B3-5** attendanceRate (có mặt + muộn) *(Student)*
 - [x] **B3-6** Xem điểm/điểm danh con *(Parent)*
@@ -561,7 +569,7 @@ Các module sau **chưa hoàn thiện** theo [MOBILE_PROGRESS.md](./MOBILE_PROGR
 Smoke check scope removal:
 
 - [ ] Student home and quick actions do not show Bài tập.
-- [ ] Teacher home does not show Bài tập; teacher can still open Lớp học của tôi → Nhập điểm.
+- [ ] Teacher home does not show Bài tập; không còn nút/luồng Nhập điểm trên UI (endpoint grade giữ nguyên).
 
 ---
 

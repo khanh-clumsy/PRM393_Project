@@ -7,6 +7,7 @@ class AnnouncementModel {
   final String priority;
   final String createdAt;
   final List<int?> targetClassIds;
+  final bool isRead;
 
   AnnouncementModel({
     required this.announcementId,
@@ -17,6 +18,7 @@ class AnnouncementModel {
     required this.priority,
     required this.createdAt,
     required this.targetClassIds,
+    this.isRead = false,
   });
 
   factory AnnouncementModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,21 @@ class AnnouncementModel {
       priority: json['priority'] as String,
       createdAt: json['createdAt'] as String,
       targetClassIds: (json['targetClassIds'] as List<dynamic>?)?.map((e) => e as int?).toList() ?? [],
+      isRead: json['isRead'] as bool? ?? false,
+    );
+  }
+
+  AnnouncementModel copyWith({bool? isRead}) {
+    return AnnouncementModel(
+      announcementId: announcementId,
+      authorId: authorId,
+      title: title,
+      content: content,
+      announcementType: announcementType,
+      priority: priority,
+      createdAt: createdAt,
+      targetClassIds: targetClassIds,
+      isRead: isRead ?? this.isRead,
     );
   }
 
@@ -42,6 +59,7 @@ class AnnouncementModel {
       'priority': priority,
       'createdAt': createdAt,
       'targetClassIds': targetClassIds,
+      'isRead': isRead,
     };
   }
 }

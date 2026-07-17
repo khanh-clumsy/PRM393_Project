@@ -29,7 +29,7 @@ class TeacherLeaveReviewController extends GetxController with SubmitGuardMixin 
             .toList();
       }
     } on DioException catch (e) {
-      errorMessage.value = ApiErrorHelper.messageFrom(e, fallback: 'Khong tai duoc don cho duyet.');
+      errorMessage.value = ApiErrorHelper.messageFrom(e, fallback: 'Không tải được đơn chờ duyệt.');
     } finally {
       isLoading.value = false;
     }
@@ -48,7 +48,7 @@ class TeacherLeaveReviewController extends GetxController with SubmitGuardMixin 
         });
         await fetchPending();
       } on DioException catch (e) {
-        Get.snackbar('Loi', ApiErrorHelper.messageFrom(e, fallback: 'Khong cap nhat duoc don.'));
+        Get.snackbar('Lỗi', ApiErrorHelper.messageFrom(e, fallback: 'Không cập nhật được đơn.'));
       }
     });
   }

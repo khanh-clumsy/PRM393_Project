@@ -19,7 +19,7 @@ class _TeacherClassAnnouncementViewState extends State<TeacherClassAnnouncementV
   late final TeacherClassesController _classesCtrl;
   late final AnnouncementController _announcementCtrl;
   TeachingAssignmentModel? _selectedAssignment;
-  String _priority = 'Normal';
+  String _priority = 'normal';
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _TeacherClassAnnouncementViewState extends State<TeacherClassAnnouncementV
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
       appBar: AppBar(
-        title: const Text('Dang thong bao lop', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('Đăng thông báo lớp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -66,40 +66,45 @@ class _TeacherClassAnnouncementViewState extends State<TeacherClassAnnouncementV
                 children: [
                   DropdownButtonFormField<TeachingAssignmentModel>(
                     value: _selectedAssignment,
+                    isExpanded: true,
                     decoration: const InputDecoration(
-                      labelText: 'Lop',
+                      labelText: 'Lớp',
                       border: OutlineInputBorder(),
                     ),
                     items: assignments
                         .map(
                           (a) => DropdownMenuItem(
                             value: a,
-                            child: Text('${a.className ?? 'Lop ${a.classId}'} - ${a.subjectName ?? 'Mon hoc'}'),
+                            child: Text(
+                              '${a.className ?? 'Lớp ${a.classId}'} - ${a.subjectName ?? 'Môn học'}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         )
                         .toList(),
                     onChanged: (value) => setState(() => _selectedAssignment = value),
-                    validator: (value) => value == null ? 'Vui long chon lop' : null,
+                    validator: (value) => value == null ? 'Vui lòng chọn lớp' : null,
                   ),
                   const SizedBox(height: 14),
                   TextFormField(
                     controller: _titleCtrl,
-                    decoration: const InputDecoration(labelText: 'Tieu de', border: OutlineInputBorder()),
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Vui long nhap tieu de' : null,
+                    decoration: const InputDecoration(labelText: 'Tiêu đề', border: OutlineInputBorder()),
+                    validator: (value) => value == null || value.trim().isEmpty ? 'Vui lòng nhập tiêu đề' : null,
                   ),
                   const SizedBox(height: 14),
                   TextFormField(
                     controller: _contentCtrl,
-                    decoration: const InputDecoration(labelText: 'Noi dung', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(labelText: 'Nội dung', border: OutlineInputBorder()),
                     minLines: 5,
                     maxLines: 8,
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Vui long nhap noi dung' : null,
+                    validator: (value) => value == null || value.trim().isEmpty ? 'Vui lòng nhập nội dung' : null,
                   ),
                   const SizedBox(height: 14),
                   SegmentedButton<String>(
                     segments: const [
-                      ButtonSegment(value: 'Normal', label: Text('Binh thuong'), icon: Icon(Icons.info_outline)),
-                      ButtonSegment(value: 'Urgent', label: Text('Khan'), icon: Icon(Icons.priority_high_rounded)),
+                      ButtonSegment(value: 'normal', label: Text('Bình thường'), icon: Icon(Icons.info_outline)),
+                      ButtonSegment(value: 'urgent', label: Text('Khẩn cấp'), icon: Icon(Icons.priority_high_rounded)),
                     ],
                     selected: {_priority},
                     onSelectionChanged: (values) => setState(() => _priority = values.first),
@@ -111,7 +116,7 @@ class _TeacherClassAnnouncementViewState extends State<TeacherClassAnnouncementV
                       icon: _announcementCtrl.isSubmitting.value
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.send_rounded),
-                      label: const Text('Dang thong bao'),
+                      label: const Text('Đăng thông báo'),
                     ),
                   ),
                 ],
@@ -131,7 +136,7 @@ class _TeacherClassAnnouncementViewState extends State<TeacherClassAnnouncementV
     await _announcementCtrl.createAnnouncement(
       _titleCtrl.text.trim(),
       _contentCtrl.text.trim(),
-      'Class',
+      'class',
       _priority,
       [assignment.classId],
     );

@@ -280,7 +280,7 @@ export default function TeachingAssignmentPage() {
         }
       />
 
-      <div style={{ display: 'grid', gap: 16, maxWidth: 640, marginBottom: 24 }}>
+      <div className="ui-filters">
         <div className="ui-field">
           <label htmlFor="ta-year-filter">Năm học</label>
           <select
@@ -298,7 +298,6 @@ export default function TeachingAssignmentPage() {
               lookup.academicYears.map((y) => (
                 <option key={y.academicYearId} value={y.academicYearId}>
                   {y.yearName}
-                  {y.isActive ? ' (đang dùng)' : ''}
                 </option>
               ))
             )}
@@ -440,11 +439,6 @@ export default function TeachingAssignmentPage() {
                 </option>
               ))}
             </select>
-            {availableSubjects.length === 0 && (
-              <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                Không còn môn học khả dụng cho lớp và học kỳ này.
-              </p>
-            )}
           </div>
           <div className="ui-field">
             <label htmlFor="ta-teacher">Giáo viên *</label>

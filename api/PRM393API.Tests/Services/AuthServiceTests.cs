@@ -10,12 +10,12 @@ namespace PRM393API.Tests.Services;
 public class AuthServiceTests
 {
     private readonly Mock<IAuthRepository> _authRepo = new();
-    private readonly Mock<IUserRepository> _userRepo = new();
+    private readonly FakeEmailService _email = new();
     private readonly AuthService _sut;
 
     public AuthServiceTests()
     {
-        _sut = new AuthService(_authRepo.Object, _userRepo.Object, TestDataFactory.CreateJwtHelper());
+        _sut = new AuthService(_authRepo.Object, TestDataFactory.CreateJwtHelper(), _email);
     }
 
     [Fact]
@@ -113,5 +113,92 @@ public class AuthServiceTests
 
         Assert.Null(result);
         _authRepo.Verify(r => r.RevokeRefreshTokenAsync(It.IsAny<RefreshToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ValidActiveUser_SetsOtpAndSendsEmail()
+    {
+        var user = TestDataFactory.CreateUser(isActive: true);
+        user.Email = "student@fschool.edu.vn";
+        _authRepo.Setup(r => r.GetByEmailAsync("student@fschool.edu.vn")).ReturnsAsync(user);
+
+        var result = await _sut.ForgotPasswordAsync(new ForgotPasswordDto(" Student@FSchool.edu.vn "));
+
+        Assert.Equal(ForgotPasswordResult.Success, result);
+        Assert.NotNull(user.PasswordResetCode);
+        Assert.Equal(6, user.PasswordResetCode!.Length);
+        Assert.True(user.PasswordResetCode.All(char.IsDigit));
+        Assert.True(user.PasswordResetCodeExpiresAt > DateTime.UtcNow);
+        Assert.Equal(1, _email.SendCount);
+        Assert.Equal("student@fschool.edu.vn", _email.LastToEmail);
+        Assert.Equal(user.PasswordResetCode, _email.LastCode);
+        _authRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_UnknownOrPlaceholderEmail_ReturnsSuccessWithoutSending()
+    {
+        _authRepo.Setup(r => r.GetByEmailAsync("missing+1@invalid.local"))
+            .ReturnsAsync(new User { Email = "missing+1@invalid.local", IsActive = true });
+
+        var unknown = await _sut.ForgotPasswordAsync(new ForgotPasswordDto("nobody@fschool.edu.vn"));
+        var placeholder = await _sut.ForgotPasswordAsync(new ForgotPasswordDto("missing+1@invalid.local"));
+
+        Assert.Equal(ForgotPasswordResult.Success, unknown);
+        Assert.Equal(ForgotPasswordResult.Success, placeholder);
+        Assert.Equal(0, _email.SendCount);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_SmtpFails_ClearsOtpAndReturnsEmailFailed()
+    {
+        var user = TestDataFactory.CreateUser(isActive: true);
+        user.Email = "student@fschool.edu.vn";
+        _email.ShouldThrow = true;
+        _authRepo.Setup(r => r.GetByEmailAsync("student@fschool.edu.vn")).ReturnsAsync(user);
+
+        var result = await _sut.ForgotPasswordAsync(new ForgotPasswordDto("student@fschool.edu.vn"));
+
+        Assert.Equal(ForgotPasswordResult.EmailFailed, result);
+        Assert.Null(user.PasswordResetCode);
+        Assert.Null(user.PasswordResetCodeExpiresAt);
+        _authRepo.Verify(r => r.SaveChangesAsync(), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ResetPassword_InvalidCodeOrWeakPassword_DoesNotChangePassword()
+    {
+        var user = TestDataFactory.CreateUser(isActive: true);
+        user.Email = "student@fschool.edu.vn";
+        user.PasswordResetCode = "123456";
+        user.PasswordResetCodeExpiresAt = DateTime.UtcNow.AddMinutes(5);
+        _authRepo.Setup(r => r.GetByEmailAsync("student@fschool.edu.vn")).ReturnsAsync(user);
+
+        var wrongCode = await _sut.ResetPasswordAsync(new ResetPasswordDto("student@fschool.edu.vn", "999999", "newpassword"));
+        var weak = await _sut.ResetPasswordAsync(new ResetPasswordDto("student@fschool.edu.vn", "123456", "short"));
+
+        Assert.Equal(ResetPasswordResult.InvalidOrExpired, wrongCode);
+        Assert.Equal(ResetPasswordResult.InvalidOrExpired, weak);
+        Assert.True(BCrypt.Net.BCrypt.Verify(TestDataFactory.DefaultPassword, user.PasswordHash));
+        _authRepo.Verify(r => r.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ValidCode_ChangesPasswordClearsOtpAndRevokesTokens()
+    {
+        var user = TestDataFactory.CreateUser(isActive: true);
+        user.Email = "student@fschool.edu.vn";
+        user.PasswordResetCode = "123456";
+        user.PasswordResetCodeExpiresAt = DateTime.UtcNow.AddMinutes(5);
+        _authRepo.Setup(r => r.GetByEmailAsync("student@fschool.edu.vn")).ReturnsAsync(user);
+
+        var result = await _sut.ResetPasswordAsync(new ResetPasswordDto(" Student@Fschool.edu.vn ", "123456", "newpassword"));
+
+        Assert.Equal(ResetPasswordResult.Success, result);
+        Assert.True(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash));
+        Assert.Null(user.PasswordResetCode);
+        Assert.Null(user.PasswordResetCodeExpiresAt);
+        _authRepo.Verify(r => r.RevokeAllRefreshTokensAsync(user.UserId), Times.Once);
+        _authRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
     }
 }

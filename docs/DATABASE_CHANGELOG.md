@@ -36,3 +36,11 @@ Nhằm đáp ứng đúng nghiệp vụ quản lý trường THPT thực tế v�
   - Sửa đổi bảng `Timetables` để lưu tiết học thực tế theo từng ngày dương lịch cụ thể (thay `DayOfWeek`, `EffectiveFrom`, `EffectiveTo` bằng cột `Date` kiểu `DATE`, thêm `Status` và `Note`).
   - Sửa đổi bảng `AttendanceRecords` để bỏ cột `AttendanceDate` (ngày điểm danh trùng với ngày học trong `Timetables`), cập nhật ràng buộc duy nhất thành `UNIQUE (TimetableId, StudentId)`.
   - Hỗ trợ cơ chế tự động sinh lịch học hàng loạt cho học kỳ từ lịch tuần mẫu trên Backend.
+
+## 7. Khôi phục mật khẩu qua Email
+- **Vấn đề ban đầu:** `Users.Email` cho phép null và chưa unique, trong khi luồng quên mật khẩu cần định danh tài khoản bằng email.
+- **Giải pháp áp dụng:**
+  - Chuyển `Users.Email` thành `NOT NULL` và thêm unique index `UQ_Users_Email`.
+  - Thêm `Users.PasswordResetCode` và `Users.PasswordResetCodeExpiresAt` để lưu một OTP 6 số đang hoạt động cho mỗi tài khoản.
+  - Migration chuẩn hóa email bằng trim/lowercase; email null, rỗng hoặc trùng được đổi thành `missing+{UserId}@invalid.local`.
+  - Email placeholder `@invalid.local` không được dùng để gửi OTP.

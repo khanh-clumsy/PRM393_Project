@@ -9,4 +9,8 @@ public interface IAuthRepository
     Task<RefreshToken?> GetRefreshTokenAsync(string token);
     Task<RefreshToken> CreateRefreshTokenAsync(RefreshToken token);
     Task RevokeRefreshTokenAsync(RefreshToken token);
+    Task<User?> GetByEmailAsync(string email);
+    Task SaveChangesAsync();
+    // Đánh dấu revoked toàn bộ refresh token của user; service lưu cùng thay đổi mật khẩu.
+    Task RevokeAllRefreshTokensAsync(int userId);
 }

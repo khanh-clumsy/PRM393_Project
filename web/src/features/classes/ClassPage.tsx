@@ -245,7 +245,8 @@ export default function ClassPage() {
         }
       />
 
-      <div className="ui-field" style={{ maxWidth: 320, marginBottom: 24 }}>
+      <div className="ui-filters">
+        <div className="ui-field">
         <label htmlFor="class-year-filter">Lọc theo năm học</label>
         <select
           id="class-year-filter"
@@ -262,11 +263,11 @@ export default function ClassPage() {
             years.map((y) => (
               <option key={y.academicYearId} value={y.academicYearId}>
                 {y.yearName}
-                {y.isActive ? ' (đang dùng)' : ''}
               </option>
             ))
           )}
         </select>
+        </div>
       </div>
 
       {loading && (
@@ -364,11 +365,6 @@ export default function ClassPage() {
                 </option>
               ))}
             </select>
-            {editing && (
-              <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                Để giữ GVCN hiện tại, không đổi lựa chọn. API không hỗ trợ xóa GVCN qua null.
-              </p>
-            )}
           </div>
         </form>
       </Modal>

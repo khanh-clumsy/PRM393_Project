@@ -3,7 +3,8 @@ import 'package:get/get.dart' hide Response;
 import '../storage/local_storage.dart';
 
 class ApiClient {
-  static const String _baseUrl = 'http://10.0.2.2:5088'; // Android emulator → localhost:5088
+  static const String _baseUrl =
+      'http://10.0.2.2:5088'; // Android emulator → localhost:5088
 
   static final Dio _dio = Dio(
     BaseOptions(
@@ -15,21 +16,21 @@ class ApiClient {
   );
 
   static void init() {
-    _dio.interceptors.add(LogInterceptor(
-      request: true,
-      requestHeader: true,
-      requestBody: true,
-      responseHeader: true,
-      responseBody: true,
-      error: true,
-    ));
+    _dio.interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestHeader: false,
+        requestBody: false,
+        responseHeader: false,
+        responseBody: false,
+        error: true,
+      ),
+    );
 
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final isPublic = options.path.contains('/api/auth/login') ||
-              options.path.contains('/api/auth/forgot-password') ||
-              options.path.contains('/api/auth/refresh');
+          final isPublic = _isPublicAuthPath(options.path);
 
           if (!isPublic) {
             final token = await LocalStorage.getAccessToken();
@@ -40,7 +41,8 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
-          if (e.response?.statusCode == 401 && !e.requestOptions.path.contains('/api/auth/refresh')) {
+          if (e.response?.statusCode == 401 &&
+              !_isPublicAuthPath(e.requestOptions.path)) {
             final refreshed = await _tryRefreshToken();
             if (refreshed) {
               // Retry request với token mới
@@ -58,6 +60,12 @@ class ApiClient {
       ),
     );
   }
+
+  static bool _isPublicAuthPath(String path) =>
+      path.contains('/api/auth/login') ||
+      path.contains('/api/auth/forgot-password') ||
+      path.contains('/api/auth/reset-password') ||
+      path.contains('/api/auth/refresh');
 
   static Future<bool> _tryRefreshToken() async {
     final refreshToken = await LocalStorage.getRefreshToken();

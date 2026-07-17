@@ -107,7 +107,7 @@ public class TimetableServiceTests : IDisposable
             new Class { ClassId = 1, ClassName = "10A1", AcademicYearId = 1 },
             new Class { ClassId = 2, ClassName = "10A2", AcademicYearId = 1 });
         _db.Subjects.Add(new Subject { SubjectId = 1, SubjectCode = "M1", SubjectName = "Toán" });
-        _db.Users.Add(new User { UserId = 3, Username = "gv1", FullName = "GV Test", RoleId = 2, PhoneNumber = "0900000003", PasswordHash = "x" });
+        _db.Users.Add(new User { UserId = 3, Username = "gv1", FullName = "GV Test", Email = "gv1@fschool.edu.vn", RoleId = 2, PhoneNumber = "0900000003", PasswordHash = "x" });
         var ta1 = new TeachingAssignment { TeacherId = 3, ClassId = 1, SubjectId = 1, SemesterId = 1 };
         var ta2 = new TeachingAssignment { TeacherId = 3, ClassId = 2, SubjectId = 1, SemesterId = 2 };
         _db.TeachingAssignments.AddRange(ta1, ta2);
@@ -161,6 +161,144 @@ public class TimetableServiceTests : IDisposable
         var result = await _sut.GetWeeklyByClassAsync(1, new DateOnly(2025, 10, 8));
         Assert.Empty(result);
         _repo.Verify(r => r.GetWeeklyByClassAsync(1, monday, monday.AddDays(6)), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetWeeklyByStudentAsync_WhenDateHasNoAcademicContext_UsesClassWithWeeklySchedule()
+    {
+        _db.AcademicYears.Add(new AcademicYear
+        {
+            AcademicYearId = 1,
+            YearName = "2025-2026",
+            StartDate = new DateOnly(2025, 9, 1),
+            EndDate = new DateOnly(2026, 5, 31),
+            IsActive = true,
+        });
+        _db.Classes.Add(new Class { ClassId = 1, ClassName = "10A1", AcademicYearId = 1 });
+        _db.Users.Add(new User
+        {
+            UserId = 6,
+            Username = "student01",
+            FullName = "Nguyễn Thành Đạt",
+            Email = "student01@fschool.edu.vn",
+            RoleId = 4,
+            PhoneNumber = "0900000006",
+            PasswordHash = "x",
+        });
+        _db.StudentClasses.Add(new StudentClass { StudentId = 6, ClassId = 1 });
+        await _db.SaveChangesAsync();
+
+        var targetDate = new DateOnly(2026, 7, 8);
+        var monday = new DateOnly(2026, 7, 6);
+        var timetable = TestDataFactory.CreateTimetable();
+        timetable.TeachingAssignment = new TeachingAssignment
+        {
+            ClassId = 1,
+            Subject = new Subject { SubjectName = "Toán" },
+            Teacher = new User { FullName = "GV Test" },
+            Class = new Class { ClassName = "10A1" },
+        };
+        timetable.Slot = new TimetableSlot
+        {
+            SlotName = "Tiết 1",
+            StartTime = new TimeOnly(7, 0),
+            EndTime = new TimeOnly(7, 45),
+        };
+        timetable.Date = targetDate;
+
+        _academicContext
+            .Setup(a => a.GetStudentEnrollmentAtDateAsync(6, targetDate))
+            .ReturnsAsync(new StudentEnrollmentAtDateDto(targetDate, null, null, null));
+        _repo.Setup(r => r.GetWeeklyByClassAsync(1, monday, monday.AddDays(6)))
+            .ReturnsAsync(new[] { timetable });
+
+        var result = await _sut.GetWeeklyByStudentAsync(6, targetDate);
+
+        Assert.NotNull(result);
+        Assert.Equal(1, result!.Enrollment!.ClassId);
+        Assert.Single(result.Slots);
+    }
+
+    [Fact]
+    public async Task GetWeeklyByStudentAsync_WhenAcademicContextClassHasNoSlots_UsesClassWithWeeklySchedule()
+    {
+        _db.AcademicYears.AddRange(
+            new AcademicYear
+            {
+                AcademicYearId = 1,
+                YearName = "2025-2026",
+                StartDate = new DateOnly(2025, 9, 1),
+                EndDate = new DateOnly(2026, 5, 31),
+                IsActive = false,
+            },
+            new AcademicYear
+            {
+                AcademicYearId = 4,
+                YearName = "2026-2027",
+                StartDate = new DateOnly(2026, 7, 12),
+                EndDate = new DateOnly(2027, 4, 8),
+                IsActive = true,
+            });
+        _db.Classes.AddRange(
+            new Class { ClassId = 1, ClassName = "10A1", AcademicYearId = 1 },
+            new Class { ClassId = 5, ClassName = "12A2", AcademicYearId = 4 });
+        _db.Users.Add(new User
+        {
+            UserId = 6,
+            Username = "student01",
+            FullName = "Nguyễn Thành Đạt",
+            Email = "student01@fschool.edu.vn",
+            RoleId = 4,
+            PhoneNumber = "0900000006",
+            PasswordHash = "x",
+        });
+        _db.StudentClasses.AddRange(
+            new StudentClass { StudentClassId = 1, StudentId = 6, ClassId = 1 },
+            new StudentClass { StudentClassId = 10, StudentId = 6, ClassId = 5 });
+        var ta = new TeachingAssignment { TeachingAssignmentId = 1, TeacherId = 3, ClassId = 1, SubjectId = 1, SemesterId = 1 };
+        _db.TeachingAssignments.Add(ta);
+        _db.Timetables.Add(new Timetable
+        {
+            TimetableId = 1,
+            TeachingAssignmentId = 1,
+            Date = new DateOnly(2026, 7, 14),
+            SlotId = 1,
+            Status = 1,
+        });
+        await _db.SaveChangesAsync();
+
+        var targetDate = new DateOnly(2026, 7, 14);
+        var weekStart = new DateOnly(2026, 7, 13);
+        var wrongEnrollment = new StudentEnrollmentDto(10, 6, "Nguyễn Thành Đạt", "student01", 5, "12A2", 4, "2026-2027");
+        var timetable = TestDataFactory.CreateTimetable();
+        timetable.TimetableId = 1;
+        timetable.TeachingAssignment = new TeachingAssignment
+        {
+            ClassId = 1,
+            Subject = new Subject { SubjectName = "Toán" },
+            Teacher = new User { FullName = "GV Test" },
+            Class = new Class { ClassName = "10A1" },
+        };
+        timetable.Slot = new TimetableSlot
+        {
+            SlotName = "Tiết 1",
+            StartTime = new TimeOnly(7, 0),
+            EndTime = new TimeOnly(7, 45),
+        };
+        timetable.Date = targetDate;
+
+        _academicContext
+            .Setup(a => a.GetStudentEnrollmentAtDateAsync(6, targetDate))
+            .ReturnsAsync(new StudentEnrollmentAtDateDto(targetDate, null, null, wrongEnrollment));
+        _repo.Setup(r => r.GetWeeklyByClassAsync(1, weekStart, weekStart.AddDays(6)))
+            .ReturnsAsync(new[] { timetable });
+
+        var result = await _sut.GetWeeklyByStudentAsync(6, targetDate);
+
+        Assert.NotNull(result);
+        Assert.Equal(1, result!.Enrollment!.ClassId);
+        Assert.Equal("10A1", result.Enrollment.ClassName);
+        Assert.Single(result.Slots);
     }
 
     [Fact]

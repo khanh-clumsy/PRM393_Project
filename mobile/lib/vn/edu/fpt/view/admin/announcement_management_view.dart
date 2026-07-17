@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/announcement_controller.dart';
+import '../../core/utils/relative_time.dart';
 import '../../models/announcement_model.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_dialog_actions.dart';
@@ -8,6 +9,28 @@ import 'package:intl/intl.dart';
 
 class AnnouncementManagementView extends StatelessWidget {
   const AnnouncementManagementView({super.key});
+
+  static String _priorityLabel(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'urgent':
+        return 'Khẩn cấp';
+      case 'high':
+        return 'Cao';
+      default:
+        return 'Bình thường';
+    }
+  }
+
+  static Color _priorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'urgent':
+        return Colors.red;
+      case 'high':
+        return Colors.orange;
+      default:
+        return Colors.green;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,12 +74,14 @@ class AnnouncementManagementView extends StatelessWidget {
           itemCount: controller.announcements.length,
           itemBuilder: (context, index) {
             final announcement = controller.announcements[index];
-            final date = DateTime.tryParse(announcement.createdAt);
-            final dateStr = date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : announcement.createdAt;
+            String dateStr;
+            try {
+              dateStr = DateFormat('dd/MM/yyyy HH:mm').format(parseApiDateTime(announcement.createdAt));
+            } catch (_) {
+              dateStr = announcement.createdAt;
+            }
             
-            Color priorityColor = Colors.green;
-            if (announcement.priority.toLowerCase() == 'urgent') priorityColor = Colors.red;
-            if (announcement.priority.toLowerCase() == 'high') priorityColor = Colors.orange;
+            final priorityColor = _priorityColor(announcement.priority);
 
             return Card(
               color: Colors.white,
@@ -81,7 +106,7 @@ class AnnouncementManagementView extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            announcement.priority.toUpperCase(),
+                            _priorityLabel(announcement.priority),
                             style: TextStyle(color: priorityColor, fontWeight: FontWeight.bold, fontSize: 10),
                           ),
                         ),
@@ -141,39 +166,124 @@ class AnnouncementManagementView extends StatelessWidget {
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(isEditing ? 'Sửa Bảng tin' : 'Tạo Bảng tin', style: const TextStyle(fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Tiêu đề',
-                    filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Tiêu đề',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: contentController,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    labelText: 'Nội dung',
-                    filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: contentController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: 'Nội dung',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                if (!isEditing) ...[
-                  const Text('Loại thông báo:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  if (!isEditing) ...[
+                    const Text('Loại thông báo:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF5F5F5),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      value: selectedType,
+                      selectedItemBuilder: (context) {
+                        return const [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Thông báo chung',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Thông báo lớp',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ];
+                      },
+                      items: const [
+                        DropdownMenuItem(value: 'global', child: Text('Thông báo chung')),
+                        DropdownMenuItem(value: 'class', child: Text('Thông báo lớp')),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          selectedType = val!;
+                          if (selectedType == 'global') {
+                            selectedClassIds.clear();
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    if (selectedType == 'class') ...[
+                      const Text('Chọn lớp nhận thông báo:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Container(
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: controller.classes.map((cls) {
+                              final isSelected = selectedClassIds.contains(cls.classId);
+                              return CheckboxListTile(
+                                title: Text(
+                                  cls.className,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                value: isSelected,
+                                onChanged: (val) {
+                                  setState(() {
+                                    if (val == true) {
+                                      selectedClassIds.add(cls.classId);
+                                    } else {
+                                      selectedClassIds.remove(cls.classId);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ],
+                  const Text('Mức độ ưu tiên:', style: TextStyle(fontWeight: FontWeight.bold)),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF5F5F5),
@@ -181,76 +291,48 @@ class AnnouncementManagementView extends StatelessWidget {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
-                    value: selectedType,
+                    value: selectedPriority,
+                    selectedItemBuilder: (context) {
+                      return const [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Bình thường',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Cao',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Khẩn cấp',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ];
+                    },
                     items: const [
-                      DropdownMenuItem(value: 'global', child: Text('Thông báo chung (Toàn trường)')),
-                      DropdownMenuItem(value: 'class', child: Text('Thông báo lớp (Chọn lớp)')),
+                      DropdownMenuItem(value: 'normal', child: Text('Bình thường')),
+                      DropdownMenuItem(value: 'high', child: Text('Cao')),
+                      DropdownMenuItem(value: 'urgent', child: Text('Khẩn cấp')),
                     ],
                     onChanged: (val) {
                       setState(() {
-                        selectedType = val!;
-                        if (selectedType == 'global') {
-                          selectedClassIds.clear();
-                        }
+                        selectedPriority = val!;
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
-                  if (selectedType == 'class') ...[
-                    const Text('Chọn lớp nhận thông báo:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ListView.builder(
-                        itemCount: controller.classes.length,
-                        itemBuilder: (context, index) {
-                          final cls = controller.classes[index];
-                          final isSelected = selectedClassIds.contains(cls.classId);
-                          return CheckboxListTile(
-                            title: Text(cls.className),
-                            value: isSelected,
-                            onChanged: (val) {
-                              setState(() {
-                                if (val == true) {
-                                  selectedClassIds.add(cls.classId);
-                                } else {
-                                  selectedClassIds.remove(cls.classId);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
                 ],
-                const Text('Mức độ ưu tiên:', style: TextStyle(fontWeight: FontWeight.bold)),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  ),
-                  value: selectedPriority,
-                  items: const [
-                    DropdownMenuItem(value: 'normal', child: Text('Bình thường (Normal)')),
-                    DropdownMenuItem(value: 'high', child: Text('Cao (High)')),
-                    DropdownMenuItem(value: 'urgent', child: Text('Khẩn cấp (Urgent)')),
-                  ],
-                  onChanged: (val) {
-                    setState(() {
-                      selectedPriority = val!;
-                    });
-                  },
-                ),
-              ],
+              ),
             ),
           ),
           actions: [

@@ -29,10 +29,14 @@ class StudentRequestModel {
     required this.createdAt,
   });
 
-  String get statusLabelVi => switch (status) {
-        'Approved' => 'Da duyet',
-        'Rejected' => 'Tu choi',
-        _ => 'Cho duyet',
+  bool get isPending => status.toLowerCase() == 'pending';
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isRejected => status.toLowerCase() == 'rejected';
+
+  String get statusLabelVi => switch (status.toLowerCase()) {
+        'approved' => 'Đã duyệt',
+        'rejected' => 'Từ chối',
+        _ => 'Chờ duyệt',
       };
 
   factory StudentRequestModel.fromJson(Map<String, dynamic> json) {

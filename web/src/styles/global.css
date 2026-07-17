@@ -205,23 +205,95 @@ select {
 }
 
 .ui-field input,
-.ui-field textarea {
+.ui-field textarea,
+.ui-field select,
+select.ui-select {
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   outline: none;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* Checkbox: không áp width 100% / padding của input thường */
+.ui-field input[type='checkbox'] {
+  width: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  accent-color: var(--color-brand);
+  cursor: pointer;
+}
+
+.ui-field__checkbox {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  width: fit-content;
+}
+
+.ui-field__checkbox input[type='checkbox'] {
+  flex-shrink: 0;
 }
 
 .ui-field input:focus,
-.ui-field textarea:focus {
+.ui-field textarea:focus,
+.ui-field select:focus,
+select.ui-select:focus {
   border-color: var(--color-brand);
   box-shadow: 0 0 0 3px var(--color-brand-light);
 }
 
+.ui-field input[type='checkbox']:focus {
+  border-color: transparent;
+  box-shadow: none;
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Dropdown đồng bộ: mũi tên custom, chiều cao giống input */
+.ui-field select,
+select.ui-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
 .ui-field input:disabled,
-.ui-field textarea:disabled {
-  background: #f3f4f6;
+.ui-field textarea:disabled,
+.ui-field select:disabled,
+select.ui-select:disabled {
+  background-color: #f3f4f6;
+  color: var(--color-text-muted);
   cursor: not-allowed;
+  opacity: 1;
+}
+
+/* Hàng lọc năm/kỳ/lớp dùng chung */
+.ui-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  max-width: 900px;
+  margin-bottom: 24px;
+}
+
+.ui-filters .ui-field {
+  margin-bottom: 0;
 }
 
 /* --- Page header --- */
@@ -416,6 +488,31 @@ select {
   background: var(--color-sidebar-active);
   color: #fff;
   font-weight: 500;
+}
+
+.admin-sidebar__footer {
+  padding: 12px 8px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-sidebar__logout {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  color: #fca5a5;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-sidebar__logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fecaca;
 }
 
 .admin-main {

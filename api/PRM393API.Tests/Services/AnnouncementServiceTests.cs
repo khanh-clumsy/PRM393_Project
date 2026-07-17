@@ -9,16 +9,23 @@ namespace PRM393API.Tests.Services;
 public class AnnouncementServiceTests
 {
     private readonly Mock<IAnnouncementRepository> _repo = new();
+    private readonly Mock<IAnnouncementReadRepository> _readRepo = new();
     private readonly Mock<IStudentClassRepository> _studentClassRepo = new();
     private readonly Mock<IParentStudentRepository> _parentStudentRepo = new();
     private readonly Mock<ITeachingAssignmentRepository> _teachingAssignmentRepo = new();
     private readonly AnnouncementService _sut;
 
-    public AnnouncementServiceTests() => _sut = new AnnouncementService(
-        _repo.Object,
-        _studentClassRepo.Object,
-        _parentStudentRepo.Object,
-        _teachingAssignmentRepo.Object);
+    public AnnouncementServiceTests()
+    {
+        _readRepo.Setup(r => r.GetReadAnnouncementIdsAsync(It.IsAny<int>(), It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync([]);
+        _sut = new AnnouncementService(
+            _repo.Object,
+            _readRepo.Object,
+            _studentClassRepo.Object,
+            _parentStudentRepo.Object,
+            _teachingAssignmentRepo.Object);
+    }
 
     private static Announcement Sample() => new()
     {
@@ -38,12 +45,31 @@ public class AnnouncementServiceTests
     public async Task CreateAsync_SetsIsDeletedFalseAndPassesTargetClassIds()
     {
         var targetIds = new List<int?> { 1, 2 };
-        _repo.Setup(r => r.CreateAsync(It.IsAny<Announcement>(), targetIds))
+        _repo.Setup(r => r.CreateAsync(It.IsAny<Announcement>(), It.IsAny<List<int?>>()))
             .ReturnsAsync((Announcement a, List<int?> _) => a);
         var dto = new CreateAnnouncementDto(1, "Mới", "Chi tiết", "Class", "High", targetIds);
         var result = await _sut.CreateAsync(dto);
-        _repo.Verify(r => r.CreateAsync(It.Is<Announcement>(a => !a.IsDeleted), targetIds), Times.Once);
+        _repo.Verify(r => r.CreateAsync(
+            It.Is<Announcement>(a => !a.IsDeleted && a.AnnouncementType == "class" && a.Priority == "high"),
+            It.Is<List<int?>>(ids => ids.SequenceEqual(targetIds))), Times.Once);
         Assert.Equal("Mới", result.Title);
+    }
+
+    [Fact]
+    public async Task CreateAsync_GlobalWithoutTargets_AddsNullClassTarget()
+    {
+        _repo.Setup(r => r.CreateAsync(It.IsAny<Announcement>(), It.IsAny<List<int?>>()))
+            .ReturnsAsync((Announcement a, List<int?> ids) =>
+            {
+                a.AnnouncementTargets = ids.Select(id => new AnnouncementTarget { ClassId = id }).ToList();
+                return a;
+            });
+
+        await _sut.CreateAsync(new CreateAnnouncementDto(1, "Toàn trường", "Nội dung", "global", "normal", []));
+
+        _repo.Verify(r => r.CreateAsync(
+            It.IsAny<Announcement>(),
+            It.Is<List<int?>>(ids => ids.Count == 1 && ids[0] == null)), Times.Once);
     }
 
     [Fact]

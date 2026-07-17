@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/announcement_feed_controller.dart';
 import '../../core/utils/relative_time.dart';
 import '../../models/announcement_model.dart';
+import 'announcement_detail_view.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -20,6 +21,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
     super.initState();
     _feedCtrl = Get.put(AnnouncementFeedController(), tag: 'notifications_feed');
     _feedCtrl.loadFeed();
+  }
+
+  void _openDetail(AnnouncementModel item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AnnouncementDetailView(
+          announcement: item,
+          feedController: _feedCtrl,
+        ),
+      ),
+    );
   }
 
   @override
@@ -39,6 +52,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF212121), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          Obx(() {
+            if (_feedCtrl.unreadCount == 0) return const SizedBox.shrink();
+            return TextButton(
+              onPressed: _feedCtrl.markAllRead,
+              child: const Text('Đọc hết', style: TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.w600)),
+            );
+          }),
+        ],
       ),
       body: SafeArea(
         child: Obx(() => _buildAnnouncementList()),
@@ -62,83 +84,76 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Widget _buildAnnouncementTile(AnnouncementModel item) {
     final urgent = item.priority.toLowerCase() == 'urgent';
-    return _buildBaseTile(
-      title: item.title,
-      description: item.content,
-      timeAgo: formatRelativeTimeVi(item.createdAt),
-      icon: _announcementIcon(item),
-      iconBackground: urgent ? const Color(0xFFFFEBEE) : const Color(0xFFFFF3E0),
-      iconColor: urgent ? const Color(0xFFC62828) : const Color(0xFFD84315),
-      highlight: urgent,
-    );
-  }
-
-  Widget _buildBaseTile({
-    required String title,
-    required String description,
-    required String timeAgo,
-    required IconData icon,
-    required Color iconBackground,
-    required Color iconColor,
-    required bool highlight,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: highlight ? const Color(0xFFFFF8F5) : Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade50.withValues(alpha: 0.8)),
+    final unread = _feedCtrl.isUnread(item.announcementId);
+    return InkWell(
+      onTap: () => _openDetail(item),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: unread
+              ? (urgent ? const Color(0xFFFFF8F5) : const Color(0xFFFFFBF7))
+              : Colors.white,
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade50.withValues(alpha: 0.8)),
+          ),
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: iconBackground, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: highlight ? FontWeight.bold : FontWeight.w600,
-                    color: const Color(0xFF212121),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.4),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  timeAgo,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: highlight ? const Color(0xFFD84315) : Colors.grey.shade400,
-                    fontWeight: highlight ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (highlight)
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Container(
-              margin: const EdgeInsets.only(top: 6),
-              width: 7,
-              height: 7,
-              decoration: const BoxDecoration(color: Color(0xFFD84315), shape: BoxShape.circle),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: urgent ? const Color(0xFFFFEBEE) : const Color(0xFFFFF3E0),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _announcementIcon(item),
+                color: urgent ? const Color(0xFFC62828) : const Color(0xFFD84315),
+                size: 20,
+              ),
             ),
-        ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: unread || urgent ? FontWeight.bold : FontWeight.w600,
+                      color: const Color(0xFF212121),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.content,
+                    style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.4),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    formatRelativeTimeVi(item.createdAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: urgent ? const Color(0xFFD84315) : Colors.grey.shade400,
+                      fontWeight: urgent ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (unread)
+              Container(
+                margin: const EdgeInsets.only(top: 6, left: 8),
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(color: Color(0xFFE65100), shape: BoxShape.circle),
+              ),
+          ],
+        ),
       ),
     );
   }

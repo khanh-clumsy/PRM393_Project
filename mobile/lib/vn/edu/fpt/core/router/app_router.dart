@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
+import '../../view/auth/forgot_password_view.dart';
 import '../../view/auth/login_view.dart';
 import '../../view/student/student_main_view.dart';
 import '../../view/teacher/teacher_main_view.dart';
@@ -28,6 +29,7 @@ import '../auth/role_context.dart';
 class AppPages {
   static final routes = [
     GetPage(name: '/login', page: () => const LoginPage()),
+    GetPage(name: '/forgot-password', page: () => const ForgotPasswordView()),
     GetPage(name: '/student', page: () => const StudentMainView()),
     GetPage(
       name: '/teacher',

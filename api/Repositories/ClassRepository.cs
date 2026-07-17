@@ -12,6 +12,9 @@ public class ClassRepository(Prm393dbContext db) : IClassRepository
     public async Task<IEnumerable<Class>> GetByAcademicYearAsync(int academicYearId) =>
         await db.Classes.Where(c => c.AcademicYearId == academicYearId).ToListAsync();
 
+    public async Task<IEnumerable<Class>> GetByHomeroomTeacherAsync(int teacherId) =>
+        await db.Classes.Where(c => c.HomeroomTeacherId == teacherId).ToListAsync();
+
     public async Task<Class?> GetByIdAsync(int id) =>
         await db.Classes.FindAsync(id);
 
