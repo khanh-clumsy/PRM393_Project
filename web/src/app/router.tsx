@@ -7,7 +7,7 @@ import ClassPage from '../features/classes/ClassPage'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import DepartmentPage from '../features/departments/DepartmentPage'
 import RankPage from '../features/ranks/RankPage'
-import PlaceholderPage from '../features/shared/PlaceholderPage'
+import AnnouncementPage from '../features/announcements/AnnouncementPage'
 import SlotPage from '../features/slots/SlotPage'
 import TimetablePage from '../features/timetables/TimetablePage'
 import SemesterPage from '../features/semesters/SemesterPage'
@@ -38,7 +38,7 @@ export default function AppRouter() {
           <Route path="timetables" element={<TimetablePage />} />
           <Route path="student-classes" element={<StudentClassPage />} />
           <Route path="parent-student" element={<ParentStudentPage />} />
-          <Route path="announcements" element={<PlaceholderPage />} />
+          <Route path="announcements" element={<AnnouncementPage />} />
           <Route path="account" element={<AccountPage />} />
         </Route>
       </Route>
