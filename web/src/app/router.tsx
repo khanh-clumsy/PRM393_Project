@@ -11,6 +11,8 @@ import PlaceholderPage from '../features/shared/PlaceholderPage'
 import SlotPage from '../features/slots/SlotPage'
 import SemesterPage from '../features/semesters/SemesterPage'
 import SubjectPage from '../features/subjects/SubjectPage'
+import ParentStudentPage from '../features/parent-students/ParentStudentPage'
+import StudentClassPage from '../features/student-classes/StudentClassPage'
 import UserPage from '../features/users/UserPage'
 import AdminLayout from '../layouts/AdminLayout'
 
@@ -32,8 +34,8 @@ export default function AppRouter() {
           <Route path="slots" element={<SlotPage />} />
           <Route path="teaching-assignments" element={<PlaceholderPage />} />
           <Route path="timetables" element={<PlaceholderPage />} />
-          <Route path="student-classes" element={<PlaceholderPage />} />
-          <Route path="parent-student" element={<PlaceholderPage />} />
+          <Route path="student-classes" element={<StudentClassPage />} />
+          <Route path="parent-student" element={<ParentStudentPage />} />
           <Route path="announcements" element={<PlaceholderPage />} />
           <Route path="account" element={<AccountPage />} />
         </Route>
