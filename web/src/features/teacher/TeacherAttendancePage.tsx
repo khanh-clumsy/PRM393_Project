@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
 import PageHeader from '../../components/ui/PageHeader'
@@ -7,7 +8,7 @@ import { useAuth } from '../../core/auth/AuthContext'
 import {
   createAttendanceBulk,
   fetchAttendanceByTimetable,
-  fetchClassRoster,
+  fetchClassStudents,
   fetchTeacherWeeklyTimetable,
   updateAttendanceBulk,
 } from './api'
@@ -18,22 +19,59 @@ const STATUS_OPTIONS: Array<{ value: AttendanceStatusCode; label: string }> = [
   { value: 'P', label: 'Có mặt' },
   { value: 'A', label: 'Vắng' },
   { value: 'L', label: 'Muộn' },
-  { value: 'E', label: 'Có phép' },
 ]
 
 function todayInput() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function formatVietnameseDate(value: string) {
+  const [year, month, day] = value.split('-')
+  if (!year || !month || !day) return value
+  return `${day}/${month}/${year}`
+}
+
+function parseVietnameseDate(value: string) {
+  const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!match) return null
+
+  const [, dayValue, monthValue, yearValue] = match
+  const day = Number(dayValue)
+  const month = Number(monthValue)
+  const year = Number(yearValue)
+  const parsed = new Date(year, month - 1, day)
+
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null
+  }
+
+  return `${yearValue}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function normalizeUiStatus(status: AttendanceStatusCode): AttendanceStatusCode {
+  return status === 'E' ? 'A' : status
+}
+
 export default function TeacherAttendancePage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const teacherId = user?.id
-  const [date, setDate] = useState(todayInput)
+  const timetableIdParam = searchParams.get('timetableId') ?? ''
+  const initialDate = searchParams.get('date') ?? todayInput()
+  const initialTimetableId = Number(timetableIdParam)
+  const [date, setDate] = useState(initialDate)
+  const [dateInput, setDateInput] = useState(formatVietnameseDate(initialDate))
   const [lessons, setLessons] = useState<TimetableLesson[]>([])
-  const [selectedTimetableId, setSelectedTimetableId] = useState<number | ''>('')
+  const [selectedTimetableId, setSelectedTimetableId] = useState<number | ''>(
+    Number.isFinite(initialTimetableId) && initialTimetableId > 0 ? initialTimetableId : '',
+  )
   const [entries, setEntries] = useState<TeacherAttendanceEntry[]>([])
   const [loadingLessons, setLoadingLessons] = useState(false)
-  const [loadingRoster, setLoadingRoster] = useState(false)
+  const [loadingStudents, setLoadingStudents] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +80,6 @@ export default function TeacherAttendancePage() {
     () => lessons.find((lesson) => lesson.timetableId === selectedTimetableId),
     [lessons, selectedTimetableId],
   )
-  const isToday = date === todayInput()
 
   useEffect(() => {
     if (!teacherId) return
@@ -58,7 +95,9 @@ export default function TeacherAttendancePage() {
         const sameDay = data.filter((lesson) => lesson.date.slice(0, 10) === date)
         if (ignore) return
         setLessons(sameDay)
-        setSelectedTimetableId(sameDay[0]?.timetableId ?? '')
+        const requestedTimetableId = Number(timetableIdParam)
+        const requestedLesson = sameDay.find((lesson) => lesson.timetableId === requestedTimetableId)
+        setSelectedTimetableId(requestedLesson?.timetableId ?? sameDay[0]?.timetableId ?? '')
       } catch (err) {
         if (!ignore) setError(err instanceof Error ? err.message : 'Không thể tải tiết dạy.')
       } finally {
@@ -70,7 +109,7 @@ export default function TeacherAttendancePage() {
     return () => {
       ignore = true
     }
-  }, [date, teacherId])
+  }, [date, teacherId, timetableIdParam])
 
   useEffect(() => {
     if (!selectedLesson) {
@@ -80,23 +119,30 @@ export default function TeacherAttendancePage() {
     const lesson = selectedLesson
 
     let ignore = false
-    async function loadRoster() {
-      setLoadingRoster(true)
+    async function loadStudents() {
+      setLoadingStudents(true)
       setError(null)
       try {
-        const [roster, attendance] = await Promise.all([
-          fetchClassRoster(lesson.classId),
+        const [students, attendance] = await Promise.all([
+          fetchClassStudents(lesson.classId),
           fetchAttendanceByTimetable(lesson.timetableId),
         ])
-        if (!ignore) setEntries(buildAttendanceEntries(roster, attendance))
+        if (!ignore) {
+          setEntries(
+            buildAttendanceEntries(students, attendance).map((entry) => ({
+              ...entry,
+              status: normalizeUiStatus(entry.status),
+            })),
+          )
+        }
       } catch (err) {
-        if (!ignore) setError(err instanceof Error ? err.message : 'Không thể tải roster điểm danh.')
+        if (!ignore) setError(err instanceof Error ? err.message : 'Không thể tải danh sách điểm danh.')
       } finally {
-        if (!ignore) setLoadingRoster(false)
+        if (!ignore) setLoadingStudents(false)
       }
     }
 
-    void loadRoster()
+    void loadStudents()
     return () => {
       ignore = true
     }
@@ -113,7 +159,7 @@ export default function TeacherAttendancePage() {
   }
 
   async function save() {
-    if (!selectedLesson || !teacherId || !isToday) return
+    if (!selectedLesson || !teacherId) return
 
     setSaving(true)
     setError(null)
@@ -145,8 +191,13 @@ export default function TeacherAttendancePage() {
       }
 
       const attendance = await fetchAttendanceByTimetable(selectedLesson.timetableId)
-      const roster = await fetchClassRoster(selectedLesson.classId)
-      setEntries(buildAttendanceEntries(roster, attendance))
+      const students = await fetchClassStudents(selectedLesson.classId)
+      setEntries(
+        buildAttendanceEntries(students, attendance).map((entry) => ({
+          ...entry,
+          status: normalizeUiStatus(entry.status),
+        })),
+      )
       setMessage('Đã lưu điểm danh.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu điểm danh.')
@@ -156,27 +207,27 @@ export default function TeacherAttendancePage() {
   }
 
   const columns: DataTableColumn<TeacherAttendanceEntry>[] = [
+    { key: 'order', header: 'STT', render: (_row, index) => index + 1 },
     { key: 'studentCode', header: 'Mã HS', render: (row) => row.studentCode ?? '-' },
     { key: 'studentName', header: 'Họ tên', render: (row) => row.studentName ?? `HS #${row.studentId}` },
     {
       key: 'status',
       header: 'Trạng thái',
       render: (row) => (
-        <select
-          className="ui-select teacher-select-inline"
-          value={row.status}
-          onChange={(event) =>
-            updateEntry(row.studentId, { status: event.target.value as AttendanceStatusCode })
-          }
-          disabled={!isToday}
-          aria-label={`Trạng thái ${row.studentName ?? row.studentId}`}
-        >
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          <div className="teacher-radio-group" role="radiogroup" aria-label={`Trạng thái ${row.studentName ?? row.studentId}`}>
+            {STATUS_OPTIONS.map((option) => (
+              <label className="teacher-radio" key={option.value}>
+                <input
+                  type="radio"
+                  name={`attendance-status-${row.studentId}`}
+                  value={option.value}
+                  checked={row.status === option.value}
+                  onChange={() => updateEntry(row.studentId, { status: option.value })}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
       ),
     },
     {
@@ -187,7 +238,6 @@ export default function TeacherAttendancePage() {
           className="teacher-input-inline"
           value={row.note}
           onChange={(event) => updateEntry(row.studentId, { note: event.target.value })}
-          disabled={!isToday}
           placeholder="Ghi chú"
         />
       ),
@@ -203,11 +253,11 @@ export default function TeacherAttendancePage() {
     <>
       <PageHeader
         title="Điểm danh"
-        subtitle="Chọn ngày và tiết dạy của giáo viên để cập nhật chuyên cần."
+        subtitle="Cập nhật chuyên cần theo tiết dạy."
         actions={
           <Button
             loading={saving}
-            disabled={!selectedLesson || entries.length === 0 || !isToday}
+            disabled={!selectedLesson || entries.length === 0}
             onClick={save}
           >
             Lưu điểm danh
@@ -220,9 +270,19 @@ export default function TeacherAttendancePage() {
           <label htmlFor="attendance-date">Ngày</label>
           <input
             id="attendance-date"
-            type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
+            value={dateInput}
+            onChange={(event) => {
+              const nextInput = event.target.value
+              setDateInput(nextInput)
+
+              const nextDate = parseVietnameseDate(nextInput)
+              if (!nextDate) return
+
+              setDate(nextDate)
+              setSearchParams({ date: nextDate })
+            }}
+            placeholder="17/07/2026"
+            inputMode="numeric"
           />
         </div>
         <div className="ui-field">
@@ -230,7 +290,13 @@ export default function TeacherAttendancePage() {
           <select
             id="attendance-slot"
             value={selectedTimetableId}
-            onChange={(event) => setSelectedTimetableId(Number(event.target.value) || '')}
+            onChange={(event) => {
+              const next = Number(event.target.value) || ''
+              setSelectedTimetableId(next)
+              setSearchParams(
+                next ? { date, timetableId: String(next) } : { date },
+              )
+            }}
           >
             <option value="">Chọn tiết</option>
             {lessons.map((lesson) => (
@@ -242,9 +308,6 @@ export default function TeacherAttendancePage() {
         </div>
       </div>
 
-      {!isToday && (
-        <p className="teacher-alert">Theo mobile, giáo viên chỉ được lưu điểm danh trong ngày hôm nay.</p>
-      )}
       {message && <p className="teacher-success">{message}</p>}
       {error && <p className="teacher-alert">{error}</p>}
 
@@ -254,12 +317,12 @@ export default function TeacherAttendancePage() {
             {item.label}: {item.count}
           </span>
         ))}
-        <Button size="sm" variant="secondary" disabled={!isToday || entries.length === 0} onClick={() => markAll('P')}>
+        <Button size="sm" variant="secondary" disabled={entries.length === 0} onClick={() => markAll('P')}>
           Tất cả có mặt
         </Button>
       </div>
 
-      {loadingLessons || loadingRoster ? (
+      {loadingLessons || loadingStudents ? (
         <div className="state-panel">
           <Spinner />
           <p className="state-panel__message">Đang tải điểm danh...</p>

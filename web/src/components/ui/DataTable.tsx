@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 export type DataTableColumn<T> = {
   key: string
   header: string
-  render?: (row: T) => ReactNode
+  render?: (row: T, index: number) => ReactNode
   className?: string
 }
 
@@ -44,12 +44,12 @@ export default function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
+          {data.map((row, index) => (
             <tr key={rowKey(row)}>
               {columns.map((col) => (
                 <td key={col.key} className={col.className}>
                   {col.render
-                    ? col.render(row)
+                    ? col.render(row, index)
                     : String((row as Record<string, unknown>)[col.key] ?? '')}
                 </td>
               ))}

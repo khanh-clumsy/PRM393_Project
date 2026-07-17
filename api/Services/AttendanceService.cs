@@ -180,7 +180,7 @@ public class AttendanceService(IAttendanceRepository repo, ITimetableRepository 
         var timetable = await timetableRepo.GetDetailAsync(timetableId);
         if (timetable?.TeachingAssignment?.TeacherId != teacherId)
         {
-            throw new UnauthorizedAccessException("Teacher can only record attendance for assigned timetable slots.");
+            throw new UnauthorizedAccessException("Giáo viên chỉ được điểm danh tiết dạy của mình.");
         }
     }
 

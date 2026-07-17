@@ -1,6 +1,6 @@
 import RequireRole from './RequireRole'
 
-/** Route guard: yêu cầu đăng nhập và vai trò Admin */
+/** Chặn truy cập nếu không phải quản trị viên. */
 export default function RequireAdmin() {
   return <RequireRole allow={['Admin']} />
 }

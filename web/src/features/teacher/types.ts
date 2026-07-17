@@ -63,7 +63,7 @@ export type CreateAnnouncementPayload = {
   authorId: number
   title: string
   content: string
-  announcementType: 'Class'
+  announcementType: 'class' | 'Class'
   priority: string
   targetClassIds: number[]
 }

@@ -137,5 +137,5 @@ public class GradeController(IGradeService service) : ControllerBase
         User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
     private ObjectResult ForbidTeacherLegacyEndpoint() =>
-        StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must use scoped class grade endpoints." });
+        StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem bảng điểm theo lớp và môn được phân công." });
 }

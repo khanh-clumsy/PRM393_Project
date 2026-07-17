@@ -29,7 +29,7 @@ public class AttendanceController(IAttendanceService service) : ControllerBase
     public async Task<IActionResult> GetByStudent(int studentId)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must view attendance by assigned timetable." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem điểm danh theo tiết dạy được phân công." });
 
         return Ok(await service.GetByStudentAsync(studentId));
     }
@@ -38,7 +38,7 @@ public class AttendanceController(IAttendanceService service) : ControllerBase
     public async Task<IActionResult> GetStudentAttendanceSummary(int studentId, int semesterId)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must view attendance by assigned timetable." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem điểm danh theo tiết dạy được phân công." });
 
         var summary = await service.GetStudentAttendanceSummaryAsync(studentId, semesterId);
         return Ok(summary);
@@ -61,7 +61,7 @@ public class AttendanceController(IAttendanceService service) : ControllerBase
     public async Task<IActionResult> GetByStudentAndDate(int studentId, DateOnly date)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must view attendance by assigned timetable." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem điểm danh theo tiết dạy được phân công." });
 
         return Ok(await service.GetByStudentAndDateAsync(studentId, date));
     }

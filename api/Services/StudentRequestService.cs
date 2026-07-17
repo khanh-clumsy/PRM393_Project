@@ -97,7 +97,7 @@ public class StudentRequestService(
         var classIds = await GetTeacherClassIdsAsync(teacherId);
         if (!await repo.StudentHasClassAsync(existing.StudentId, classIds))
         {
-            throw new UnauthorizedAccessException("Teacher can only review leave requests for assigned or homeroom classes.");
+            throw new UnauthorizedAccessException("Giáo viên chỉ được duyệt đơn xin nghỉ của lớp đang dạy hoặc lớp chủ nhiệm.");
         }
 
         return await ReviewAsync(id, dto with { ReviewedBy = teacherId });

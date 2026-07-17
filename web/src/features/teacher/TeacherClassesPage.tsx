@@ -4,18 +4,39 @@ import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { useAuth } from '../../core/auth/AuthContext'
-import { fetchClassRoster, fetchTeacherClasses } from './api'
-import type { StudentClass, TeacherClass } from './types'
-import { getRoleLabel } from './utils'
+import {
+  fetchClassStudents,
+  fetchTeacherAcademicYears,
+  fetchTeacherAssignments,
+  fetchTeacherHomeroomClasses,
+  fetchTeacherSemesters,
+} from './api'
+import type { AcademicYear } from '../academic-years/types'
+import type { Semester } from '../semesters/types'
+import type { SchoolClass, StudentClass, TeacherClass, TeachingAssignment } from './types'
+import {
+  getAssignmentsForSemester,
+  getPreferredAcademicYearId,
+  getRoleLabel,
+  getSemestersForYear,
+  mergeTeacherClasses,
+  sortAcademicYears,
+} from './utils'
 
 export default function TeacherClassesPage() {
   const { user } = useAuth()
   const teacherId = user?.id
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
+  const [semesters, setSemesters] = useState<Semester[]>([])
+  const [assignments, setAssignments] = useState<TeachingAssignment[]>([])
+  const [homeroomClasses, setHomeroomClasses] = useState<SchoolClass[]>([])
+  const [yearId, setYearId] = useState<number | ''>('')
+  const [semesterId, setSemesterId] = useState<number | ''>('')
   const [classes, setClasses] = useState<TeacherClass[]>([])
   const [selectedClassId, setSelectedClassId] = useState<number | ''>('')
-  const [roster, setRoster] = useState<StudentClass[]>([])
+  const [students, setStudents] = useState<StudentClass[]>([])
   const [loading, setLoading] = useState(true)
-  const [rosterLoading, setRosterLoading] = useState(false)
+  const [studentsLoading, setStudentsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -27,10 +48,24 @@ export default function TeacherClassesPage() {
       setLoading(true)
       setError(null)
       try {
-        const data = await fetchTeacherClasses(id)
+        const [assignmentData, homeroomData, yearData, semesterData] = await Promise.all([
+          fetchTeacherAssignments(id),
+          fetchTeacherHomeroomClasses(id),
+          fetchTeacherAcademicYears(),
+          fetchTeacherSemesters(),
+        ])
         if (ignore) return
-        setClasses(data)
-        setSelectedClassId(data[0]?.classId ?? '')
+
+        const sortedYears = sortAcademicYears(yearData)
+        const defaultYear = getPreferredAcademicYearId(sortedYears)
+        const defaultSemester = getSemestersForYear(semesterData, defaultYear)[0]?.semesterId ?? ''
+
+        setAssignments(assignmentData)
+        setHomeroomClasses(homeroomData)
+        setAcademicYears(sortedYears)
+        setSemesters(semesterData)
+        setYearId(defaultYear)
+        setSemesterId(defaultSemester)
       } catch (err) {
         if (!ignore) setError(err instanceof Error ? err.message : 'Không thể tải lớp.')
       } finally {
@@ -44,26 +79,63 @@ export default function TeacherClassesPage() {
     }
   }, [teacherId])
 
+  const filteredSemesters = useMemo(
+    () => getSemestersForYear(semesters, yearId),
+    [semesters, yearId],
+  )
+
+  const filteredAssignments = useMemo(
+    () => getAssignmentsForSemester(assignments, semesterId),
+    [assignments, semesterId],
+  )
+
+  const filteredHomeroomClasses = useMemo(
+    () =>
+      yearId === ''
+        ? []
+        : homeroomClasses.filter((cls) => cls.academicYearId === yearId),
+    [homeroomClasses, yearId],
+  )
+
+  useEffect(() => {
+    const nextSemester = filteredSemesters[0]?.semesterId ?? ''
+    setSemesterId((current) =>
+      current !== '' && filteredSemesters.some((semester) => semester.semesterId === current)
+        ? current
+        : nextSemester,
+    )
+  }, [filteredSemesters])
+
+  useEffect(() => {
+    const nextClasses = mergeTeacherClasses(filteredAssignments, filteredHomeroomClasses)
+    setClasses(nextClasses)
+    setSelectedClassId((current) =>
+      current !== '' && nextClasses.some((cls) => cls.classId === current)
+        ? current
+        : nextClasses[0]?.classId ?? '',
+    )
+  }, [filteredAssignments, filteredHomeroomClasses])
+
   useEffect(() => {
     if (!selectedClassId) {
-      setRoster([])
+      setStudents([])
       return
     }
 
     let ignore = false
-    async function loadRoster() {
-      setRosterLoading(true)
+    async function loadStudents() {
+      setStudentsLoading(true)
       try {
-        const data = await fetchClassRoster(Number(selectedClassId))
-        if (!ignore) setRoster(data)
+        const data = await fetchClassStudents(Number(selectedClassId))
+        if (!ignore) setStudents(data)
       } catch {
-        if (!ignore) setRoster([])
+        if (!ignore) setStudents([])
       } finally {
-        if (!ignore) setRosterLoading(false)
+        if (!ignore) setStudentsLoading(false)
       }
     }
 
-    void loadRoster()
+    void loadStudents()
     return () => {
       ignore = true
     }
@@ -75,6 +147,7 @@ export default function TeacherClassesPage() {
   )
 
   const classColumns: DataTableColumn<TeacherClass>[] = [
+    { key: 'order', header: 'STT', render: (_row, index) => index + 1 },
     { key: 'className', header: 'Lớp' },
     {
       key: 'role',
@@ -98,13 +171,14 @@ export default function TeacherClassesPage() {
           variant={row.classId === selectedClassId ? 'primary' : 'secondary'}
           onClick={() => setSelectedClassId(row.classId)}
         >
-          Xem roster
+          Xem danh sách
         </Button>
       ),
     },
   ]
 
-  const rosterColumns: DataTableColumn<StudentClass>[] = [
+  const studentColumns: DataTableColumn<StudentClass>[] = [
+    { key: 'order', header: 'STT', render: (_row, index) => index + 1 },
     { key: 'studentCode', header: 'Mã học sinh', render: (row) => row.studentCode ?? '-' },
     { key: 'studentName', header: 'Họ tên', render: (row) => row.studentName ?? `HS #${row.studentId}` },
   ]
@@ -113,7 +187,7 @@ export default function TeacherClassesPage() {
     <>
       <PageHeader
         title="Lớp của tôi"
-        subtitle="Hợp lớp giảng dạy và lớp chủ nhiệm; lớp GVCN luôn xem được roster."
+        subtitle="Lớp giảng dạy và lớp chủ nhiệm."
       />
 
       {loading ? (
@@ -127,33 +201,69 @@ export default function TeacherClassesPage() {
           <p className="state-panel__message">{error}</p>
         </div>
       ) : (
-        <div className="teacher-split">
-          <section>
+        <>
+          <div className="ui-filters">
+            <div className="ui-field">
+              <label htmlFor="class-year">Năm học</label>
+              <select
+                id="class-year"
+                value={yearId}
+                onChange={(event) => setYearId(Number(event.target.value) || '')}
+              >
+                <option value="">Chọn năm học</option>
+                {academicYears.map((year) => (
+                  <option key={year.academicYearId} value={year.academicYearId}>
+                    {year.yearName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="ui-field">
+              <label htmlFor="class-semester">Học kỳ</label>
+              <select
+                id="class-semester"
+                value={semesterId}
+                onChange={(event) => setSemesterId(Number(event.target.value) || '')}
+                disabled={yearId === ''}
+              >
+                <option value="">Chọn học kỳ</option>
+                {filteredSemesters.map((semester) => (
+                  <option key={semester.semesterId} value={semester.semesterId}>
+                    {semester.semesterName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="teacher-split">
+            <section>
             <DataTable
               columns={classColumns}
               data={classes}
               rowKey={(row) => row.classId}
               emptyMessage="Chưa có lớp giảng dạy hoặc chủ nhiệm."
             />
-          </section>
+            </section>
 
-          <section className="teacher-section teacher-section--flush">
-            <h2>Roster {selectedClass ? `· ${selectedClass.className}` : ''}</h2>
-            {rosterLoading ? (
+            <section className="teacher-section teacher-section--flush">
+            <h2>Danh sách học sinh {selectedClass ? `· ${selectedClass.className}` : ''}</h2>
+            {studentsLoading ? (
               <div className="state-panel">
                 <Spinner />
-                <p className="state-panel__message">Đang tải roster...</p>
+                <p className="state-panel__message">Đang tải danh sách học sinh...</p>
               </div>
             ) : (
               <DataTable
-                columns={rosterColumns}
-                data={roster}
+                columns={studentColumns}
+                data={students}
                 rowKey={(row) => row.studentClassId}
                 emptyMessage="Chưa có học sinh trong lớp."
               />
             )}
-          </section>
-        </div>
+            </section>
+          </div>
+        </>
       )}
     </>
   )

@@ -15,7 +15,7 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     public async Task<IActionResult> GetById(int id)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must use scoped leave request endpoints." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem đơn xin nghỉ của lớp được phân quyền." });
 
         var result = await service.GetByIdAsync(id);
         return result is null ? NotFound() : Ok(result);
@@ -25,7 +25,7 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     public async Task<IActionResult> GetByStudent(int studentId)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must use scoped leave request endpoints." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem đơn xin nghỉ của lớp được phân quyền." });
 
         return Ok(await service.GetByStudentAsync(studentId));
     }
@@ -43,7 +43,7 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     public async Task<IActionResult> Create([FromBody] CreateStudentRequestDto dto)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher cannot create leave requests." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên không được tạo đơn xin nghỉ." });
 
         try
         {
@@ -88,7 +88,7 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     public async Task<IActionResult> Delete(int id)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher cannot delete leave requests." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên không được xóa đơn xin nghỉ." });
 
         try
         {

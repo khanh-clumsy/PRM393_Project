@@ -30,7 +30,7 @@ type AuthProviderProps = {
   children: ReactNode
 }
 
-/** Cung cấp session đăng nhập web cho Admin và Giáo viên */
+/** Cung cấp phiên đăng nhập web cho quản trị viên và giáo viên. */
 export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate()
   const [user, setUser] = useState<UserDto | null>(() =>
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const result = await loginApi(phoneNumber, password)
 
-        // Chỉ cho phép Admin và Teacher dùng web portal.
+        // Chỉ cho phép quản trị viên và giáo viên dùng web.
         if (!isAllowedWebRole(result.user.roleName)) {
           tokenStorage.clear()
           setUser(null)

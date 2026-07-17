@@ -85,14 +85,14 @@ public class AnnouncementService(
         {
             if (type != "class")
             {
-                throw new UnauthorizedAccessException("Teacher can only create class announcements.");
+                throw new UnauthorizedAccessException("Giáo viên chỉ được đăng thông báo cho lớp.");
             }
 
             var teacherClassIds = await GetTeacherScopedClassIdsAsync(currentUserId);
             var requestedClassIds = targetClassIds.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
             if (requestedClassIds.Count == 0 || requestedClassIds.Any(id => !teacherClassIds.Contains(id)))
             {
-                throw new UnauthorizedAccessException("Teacher can only target assigned or homeroom classes.");
+                throw new UnauthorizedAccessException("Giáo viên chỉ được gửi thông báo cho lớp đang dạy hoặc lớp chủ nhiệm.");
             }
         }
 

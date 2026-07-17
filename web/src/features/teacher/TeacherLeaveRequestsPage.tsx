@@ -18,7 +18,6 @@ export default function TeacherLeaveRequestsPage() {
   const { user } = useAuth()
   const reviewerId = user?.id
   const [requests, setRequests] = useState<StudentRequest[]>([])
-  const [reviewNote, setReviewNote] = useState('')
   const [loading, setLoading] = useState(true)
   const [reviewingId, setReviewingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -50,10 +49,9 @@ export default function TeacherLeaveRequestsPage() {
       await reviewLeaveRequest(requestId, {
         status,
         reviewedBy: reviewerId,
-        reviewNote: reviewNote.trim() || null,
+        reviewNote: null,
       })
       setMessage(status === 'Approved' ? 'Đã duyệt đơn xin nghỉ.' : 'Đã từ chối đơn xin nghỉ.')
-      setReviewNote('')
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể xử lý đơn.')
@@ -63,6 +61,7 @@ export default function TeacherLeaveRequestsPage() {
   }
 
   const columns: DataTableColumn<StudentRequest>[] = [
+    { key: 'order', header: 'STT', render: (_row, index) => index + 1 },
     { key: 'studentName', header: 'Học sinh', render: (row) => row.studentName ?? `HS #${row.studentId}` },
     { key: 'requestedByName', header: 'Người gửi', render: (row) => row.requestedByName ?? `User #${row.requestedBy}` },
     { key: 'leaveDate', header: 'Ngày nghỉ', render: (row) => row.leaveDate.slice(0, 10) },
@@ -99,18 +98,6 @@ export default function TeacherLeaveRequestsPage() {
         title="Đơn xin nghỉ"
         subtitle="Xem các đơn chờ duyệt thuộc lớp giáo viên phụ trách và phản hồi."
       />
-
-      <div className="teacher-form-panel teacher-form-panel--compact">
-        <div className="ui-field">
-          <label htmlFor="review-note">Ghi chú phản hồi</label>
-          <input
-            id="review-note"
-            value={reviewNote}
-            onChange={(event) => setReviewNote(event.target.value)}
-            placeholder="Tuỳ chọn"
-          />
-        </div>
-      </div>
 
       {message && <p className="teacher-success">{message}</p>}
       {error && <p className="teacher-alert">{error}</p>}

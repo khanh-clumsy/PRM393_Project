@@ -5,14 +5,14 @@ import { useAuth } from '../../core/auth/AuthContext'
 import { roleHomePath } from '../../core/auth/roles'
 import './login.css'
 
-/** Trang đăng nhập web cho Admin và Giáo viên */
+/** Trang đăng nhập web cho quản trị viên và giáo viên. */
 export default function LoginPage() {
   const { login, isLoading, isAuthenticated, user } = useAuth()
   const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // Đã đăng nhập → chuyển về đúng portal theo vai trò.
+  // Đã đăng nhập thì chuyển về đúng khu vực theo vai trò.
   if (isAuthenticated && user) {
     return <Navigate to={roleHomePath(user.roleName)} replace />
   }
@@ -48,7 +48,7 @@ export default function LoginPage() {
             FS
           </div>
           <h1>FSchool Web</h1>
-          <p>Đăng nhập bằng tài khoản Admin hoặc Giáo viên</p>
+          <p>Đăng nhập bằng tài khoản quản trị viên hoặc giáo viên</p>
         </header>
 
         <form className="login-page__form" onSubmit={handleSubmit} noValidate>

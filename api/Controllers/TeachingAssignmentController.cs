@@ -28,7 +28,7 @@ public class TeachingAssignmentController(ITeachingAssignmentService service) : 
     public async Task<IActionResult> GetByTeacher(int teacherId)
     {
         if (IsTeacherRequestingAnotherTeacher(teacherId))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher can only view own teaching assignments." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem phân công giảng dạy của mình." });
 
         return Ok(await service.GetByTeacherAsync(teacherId));
     }

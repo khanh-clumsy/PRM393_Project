@@ -87,12 +87,12 @@ public class GradeService(IGradeRepository repo, ITeachingAssignmentRepository t
         var assignment = await teachingAssignmentRepo.GetByIdAsync(teachingAssignmentId);
         if (assignment is null)
         {
-            throw new ArgumentException("Teaching assignment not found.", nameof(teachingAssignmentId));
+            throw new ArgumentException("Không tìm thấy phân công giảng dạy.", nameof(teachingAssignmentId));
         }
 
         if (assignment.TeacherId != teacherId)
         {
-            throw new UnauthorizedAccessException("Teacher can only enter grades for assigned classes.");
+            throw new UnauthorizedAccessException("Giáo viên chỉ được nhập điểm cho lớp và môn được phân công.");
         }
     }
 

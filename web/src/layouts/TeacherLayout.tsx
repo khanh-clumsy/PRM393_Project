@@ -18,7 +18,7 @@ export default function TeacherLayout() {
     <div className="admin-layout teacher-layout">
       <aside className="admin-sidebar teacher-sidebar">
         <div className="admin-sidebar__brand">
-          FPT <span>Teacher</span>
+          FPT <span>Giáo viên</span>
         </div>
         <nav className="admin-sidebar__nav" aria-label="Menu giáo viên">
           {TEACHER_NAV.map((item) => (

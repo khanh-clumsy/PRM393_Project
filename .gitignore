@@ -29,6 +29,7 @@ api/.idea/
 *.DotSettings.user
 
 # Secrets — never commit
+api/appsettings.Development.json
 api/appsettings.Production.json
 api/secrets.json
 .env

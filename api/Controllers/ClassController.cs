@@ -33,7 +33,7 @@ public class ClassController(IClassService service) : ControllerBase
     public async Task<IActionResult> GetByHomeroom(int teacherId)
     {
         if (IsTeacherRequestingAnotherTeacher(teacherId))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher can only view own homeroom classes." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem lớp chủ nhiệm của mình." });
 
         return Ok(await service.GetByHomeroomTeacherAsync(teacherId));
     }

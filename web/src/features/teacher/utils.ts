@@ -1,3 +1,5 @@
+import type { AcademicYear } from '../academic-years/types'
+import type { Semester } from '../semesters/types'
 import type {
   AttendanceRecord,
   AttendanceStatusCode,
@@ -8,6 +10,55 @@ import type {
   TeacherClass,
   TeachingAssignment,
 } from './types'
+
+export function getAcademicYearSortKey(year: AcademicYear) {
+  const parsed = Date.parse(year.startDate)
+  if (!Number.isNaN(parsed)) return parsed
+
+  const match = year.yearName.match(/^(\d{4})/)
+  return match ? Number(match[1]) : year.academicYearId
+}
+
+export function sortAcademicYears(years: AcademicYear[]) {
+  return [...years].sort((a, b) => getAcademicYearSortKey(a) - getAcademicYearSortKey(b))
+}
+
+export function getPreferredAcademicYearId(years: AcademicYear[]) {
+  if (years.length === 0) return ''
+  const sorted = sortAcademicYears(years)
+  const active = sorted.filter((year) => year.isActive)
+  return (active.at(-1) ?? sorted.at(-1))?.academicYearId ?? ''
+}
+
+export function getSemestersForYear(semesters: Semester[], academicYearId: number | '') {
+  if (academicYearId === '') return []
+  return semesters
+    .filter((semester) => semester.academicYearId === academicYearId)
+    .sort((a, b) => b.semesterId - a.semesterId)
+}
+
+export function dedupeAssignments(assignments: TeachingAssignment[]) {
+  const byClassSubject = new Map<string, TeachingAssignment>()
+
+  for (const assignment of assignments) {
+    const key = `${assignment.classId}_${assignment.subjectId}`
+    const existing = byClassSubject.get(key)
+    if (!existing || assignment.semesterId > existing.semesterId) {
+      byClassSubject.set(key, assignment)
+    }
+  }
+
+  return [...byClassSubject.values()].sort((a, b) => {
+    const classCompare = (a.className ?? '').localeCompare(b.className ?? '', 'vi')
+    if (classCompare !== 0) return classCompare
+    return (a.subjectName ?? '').localeCompare(b.subjectName ?? '', 'vi')
+  })
+}
+
+export function getAssignmentsForSemester(assignments: TeachingAssignment[], semesterId: number | '') {
+  if (semesterId === '') return []
+  return dedupeAssignments(assignments.filter((assignment) => assignment.semesterId === semesterId))
+}
 
 export function mergeTeacherClasses(
   taughtAssignments: TeachingAssignment[],
@@ -85,12 +136,12 @@ export function getAttendanceStatusLabel(status: string) {
 }
 
 export function buildAttendanceEntries(
-  roster: StudentClass[],
+  students: StudentClass[],
   records: AttendanceRecord[],
 ): TeacherAttendanceEntry[] {
   const recordsByStudent = new Map(records.map((record) => [record.studentId, record]))
 
-  return roster.map((student) => {
+  return students.map((student) => {
     const record = recordsByStudent.get(student.studentId)
     return {
       ...student,

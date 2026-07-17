@@ -44,7 +44,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     public async Task<IActionResult> GetWeeklyByTeacher(int teacherId, [FromQuery] DateOnly? date)
     {
         if (IsTeacherRequestingAnotherTeacher(teacherId))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher can only view own timetable." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem thời khóa biểu của mình." });
 
         var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         return Ok(await service.GetWeeklyByTeacherAsync(teacherId, target));
@@ -58,7 +58,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     public async Task<IActionResult> GetWeeklyByStudent(int studentId, [FromQuery] DateOnly? date)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must view timetable by own teacher route." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem thời khóa biểu theo tài khoản của mình." });
 
         var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var result = await service.GetWeeklyByStudentAsync(studentId, target);

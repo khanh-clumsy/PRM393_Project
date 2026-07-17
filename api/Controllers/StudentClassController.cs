@@ -18,7 +18,7 @@ public class StudentClassController(
     public async Task<IActionResult> GetByClass(int classId)
     {
         if (User.IsInRole("Teacher") && !await IsTeacherScopedToClassAsync(classId))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher can only view rosters for assigned or homeroom classes." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem danh sách học sinh của lớp đang dạy hoặc lớp chủ nhiệm." });
 
         return Ok(await service.GetByClassAsync(classId));
     }
@@ -27,7 +27,7 @@ public class StudentClassController(
     public async Task<IActionResult> GetByStudent(int studentId)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must view rosters by scoped class." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem danh sách học sinh theo lớp được phân quyền." });
 
         return Ok(await service.GetByStudentAsync(studentId));
     }
@@ -40,7 +40,7 @@ public class StudentClassController(
     public async Task<IActionResult> GetEnrollmentAtDate(int studentId, [FromQuery] DateOnly? date)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must view rosters by scoped class." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên chỉ được xem danh sách học sinh theo lớp được phân quyền." });
 
         var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         return Ok(await service.GetEnrollmentAtDateAsync(studentId, target));
@@ -50,7 +50,7 @@ public class StudentClassController(
     public async Task<IActionResult> Create([FromBody] CreateStudentClassDto dto)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher cannot change student class assignments." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên không được thay đổi phân lớp học sinh." });
 
         try
         {
@@ -71,7 +71,7 @@ public class StudentClassController(
     public async Task<IActionResult> Delete(int id)
     {
         if (User.IsInRole("Teacher"))
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher cannot change student class assignments." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Giáo viên không được thay đổi phân lớp học sinh." });
 
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();

@@ -23,7 +23,7 @@ function ForbiddenPage() {
   )
 }
 
-/** Route guard dùng chung cho Admin và Teacher portal. */
+/** Chặn truy cập sai khu vực theo vai trò đăng nhập. */
 export default function RequireRole({ allow }: RequireRoleProps) {
   const { isAuthenticated, user } = useAuth()
 

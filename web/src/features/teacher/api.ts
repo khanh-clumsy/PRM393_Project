@@ -1,5 +1,8 @@
 import { apiRequest } from '../../core/api/client'
+import type { AcademicYear } from '../academic-years/types'
 import type { SchoolClass } from '../classes/types'
+import type { Semester } from '../semesters/types'
+import type { TimetableSlot } from '../slots/types'
 import type { StudentClass } from '../student-classes/types'
 import type { TeachingAssignment } from '../teaching-assignments/types'
 import type { TimetableLesson } from '../timetables/types'
@@ -16,6 +19,18 @@ import type {
   TeacherClass,
 } from './types'
 import { mergeTeacherClasses } from './utils'
+
+export function fetchTeacherAcademicYears() {
+  return apiRequest<AcademicYear[]>('/api/academicyear')
+}
+
+export function fetchTeacherSemesters() {
+  return apiRequest<Semester[]>('/api/semester')
+}
+
+export function fetchTeacherSlots() {
+  return apiRequest<TimetableSlot[]>('/api/timetableslot')
+}
 
 export async function fetchTeacherAssignments(teacherId: number) {
   return apiRequest<TeachingAssignment[]>(`/api/teachingassignment/by-teacher/${teacherId}`)
@@ -34,7 +49,7 @@ export async function fetchTeacherClasses(teacherId: number): Promise<TeacherCla
   return mergeTeacherClasses(assignments, homeroomClasses)
 }
 
-export function fetchClassRoster(classId: number) {
+export function fetchClassStudents(classId: number) {
   return apiRequest<StudentClass[]>(`/api/studentclass/by-class/${classId}`)
 }
 
