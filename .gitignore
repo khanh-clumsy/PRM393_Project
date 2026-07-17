@@ -46,3 +46,9 @@ desktop.ini
 *.suo
 *.swp
 *~
+
+# ===== React Admin Web =====
+web/node_modules/
+web/dist/
+web/.env
+web/.env.local
