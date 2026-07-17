@@ -89,6 +89,20 @@ public class StudentRequestService(
         return updated is null ? null : ToDto(updated);
     }
 
+    public async Task<StudentRequestDto?> ReviewForTeacherAsync(int id, ReviewStudentRequestDto dto, int teacherId)
+    {
+        var existing = await repo.GetByIdAsync(id);
+        if (existing is null) return null;
+
+        var classIds = await GetTeacherClassIdsAsync(teacherId);
+        if (!await repo.StudentHasClassAsync(existing.StudentId, classIds))
+        {
+            throw new UnauthorizedAccessException("Teacher can only review leave requests for assigned or homeroom classes.");
+        }
+
+        return await ReviewAsync(id, dto with { ReviewedBy = teacherId });
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         var existing = await repo.GetByIdAsync(id);
@@ -101,4 +115,11 @@ public class StudentRequestService(
     private static StudentRequestDto ToDto(StudentRequest r) =>
         new(r.StudentRequestId, r.StudentId, r.Student?.FullName, r.RequestedBy, r.RequestedByNavigation?.FullName,
             r.LeaveDate, r.Reason, r.AttachmentUrl, r.Status, r.ReviewedBy, r.ReviewedAt, r.ReviewNote, r.CreatedAt);
+
+    private async Task<List<int>> GetTeacherClassIdsAsync(int teacherId)
+    {
+        var taught = (await teachingAssignmentRepo.GetByTeacherAsync(teacherId)).Select(ta => ta.ClassId);
+        var homeroom = (await classRepo.GetByHomeroomTeacherAsync(teacherId)).Select(c => c.ClassId);
+        return taught.Concat(homeroom).Distinct().ToList();
+    }
 }

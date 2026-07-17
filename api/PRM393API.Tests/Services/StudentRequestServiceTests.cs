@@ -92,6 +92,37 @@ public class StudentRequestServiceTests
     }
 
     [Fact]
+    public async Task ReviewForTeacherAsync_StudentOutsideTeacherClasses_ThrowsUnauthorizedAccessException()
+    {
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(Sample());
+        _teachingAssignmentRepo.Setup(r => r.GetByTeacherAsync(3))
+            .ReturnsAsync([new TeachingAssignment { TeacherId = 3, ClassId = 101 }]);
+        _classRepo.Setup(r => r.GetByHomeroomTeacherAsync(3))
+            .ReturnsAsync(Array.Empty<Class>());
+        _repo.Setup(r => r.StudentHasClassAsync(10, It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 101 }))))
+            .ReturnsAsync(false);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _sut.ReviewForTeacherAsync(1, new ReviewStudentRequestDto("Approved", 999, "OK"), 3));
+    }
+
+    [Fact]
+    public async Task ReviewForTeacherAsync_StudentInHomeroomClass_UsesCurrentTeacherAsReviewer()
+    {
+        _repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(Sample());
+        _classRepo.Setup(r => r.GetByHomeroomTeacherAsync(3))
+            .ReturnsAsync([new Class { ClassId = 55, ClassName = "10A1", AcademicYearId = 1, HomeroomTeacherId = 3 }]);
+        _repo.Setup(r => r.StudentHasClassAsync(10, It.Is<IEnumerable<int>>(ids => ids.Contains(55))))
+            .ReturnsAsync(true);
+        _repo.Setup(r => r.ReviewAsync(1, It.IsAny<StudentRequest>()))
+            .ReturnsAsync((int _, StudentRequest r) => r);
+
+        var result = await _sut.ReviewForTeacherAsync(1, new ReviewStudentRequestDto("Approved", 999, "OK"), 3);
+
+        Assert.Equal(3, result!.ReviewedBy);
+    }
+
+    [Fact]
     public async Task ReviewAsync_NotFound_ReturnsNull()
     {
         _repo.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((StudentRequest?)null);

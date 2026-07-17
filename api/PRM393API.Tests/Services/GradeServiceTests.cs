@@ -9,9 +9,10 @@ namespace PRM393API.Tests.Services;
 public class GradeServiceTests
 {
     private readonly Mock<IGradeRepository> _repo = new();
+    private readonly Mock<ITeachingAssignmentRepository> _teachingAssignmentRepo = new();
     private readonly GradeService _sut;
 
-    public GradeServiceTests() => _sut = new GradeService(_repo.Object);
+    public GradeServiceTests() => _sut = new GradeService(_repo.Object, _teachingAssignmentRepo.Object);
 
     private static Grade Sample() => new()
     {
@@ -61,6 +62,31 @@ public class GradeServiceTests
         _repo.Setup(r => r.SaveBulkGradesAsync(dtos)).Returns(Task.CompletedTask);
         await _sut.SaveBulkGradesAsync(dtos);
         _repo.Verify(r => r.SaveBulkGradesAsync(dtos), Times.Once);
+    }
+
+    [Fact]
+    public async Task SaveBulkGradesByTypeAsync_TeacherWithoutAssignment_ThrowsUnauthorizedAccessException()
+    {
+        _teachingAssignmentRepo.Setup(r => r.GetByIdAsync(5))
+            .ReturnsAsync(new TeachingAssignment { TeachingAssignmentId = 5, TeacherId = 99, ClassId = 1 });
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _sut.SaveBulkGradesByTypeAsync(new BulkGradeByTypeDto(5, 1, []), 3));
+
+        _repo.Verify(r => r.SaveBulkGradesByTypeAsync(It.IsAny<BulkGradeByTypeDto>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveBulkGradesByTypeAsync_TeacherWithAssignment_DelegatesToRepo()
+    {
+        var dto = new BulkGradeByTypeDto(5, 1, [new StudentScoreDto(10, 8m, null)]);
+        _teachingAssignmentRepo.Setup(r => r.GetByIdAsync(5))
+            .ReturnsAsync(new TeachingAssignment { TeachingAssignmentId = 5, TeacherId = 3, ClassId = 1 });
+        _repo.Setup(r => r.SaveBulkGradesByTypeAsync(dto, 3)).Returns(Task.CompletedTask);
+
+        await _sut.SaveBulkGradesByTypeAsync(dto, 3);
+
+        _repo.Verify(r => r.SaveBulkGradesByTypeAsync(dto, 3), Times.Once);
     }
 
     [Fact]

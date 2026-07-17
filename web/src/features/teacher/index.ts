@@ -1,0 +1,8 @@
+export { default as TeacherDashboardPage } from './TeacherDashboardPage'
+export { default as TeacherClassesPage } from './TeacherClassesPage'
+export { default as TeacherTimetablePage } from './TeacherTimetablePage'
+export { default as TeacherAttendancePage } from './TeacherAttendancePage'
+export { default as TeacherGradesPage } from './TeacherGradesPage'
+export { default as TeacherAnnouncementsPage } from './TeacherAnnouncementsPage'
+export { default as TeacherLeaveRequestsPage } from './TeacherLeaveRequestsPage'
+export { default as TeacherClassSummariesPage } from './TeacherClassSummariesPage'

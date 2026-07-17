@@ -5,7 +5,7 @@ using PRM393API.Services.Interfaces;
 
 namespace PRM393API.Services;
 
-public class GradeService(IGradeRepository repo) : IGradeService
+public class GradeService(IGradeRepository repo, ITeachingAssignmentRepository teachingAssignmentRepo) : IGradeService
 {
     public async Task<GradeDto?> GetByIdAsync(int id)
     {
@@ -61,8 +61,40 @@ public class GradeService(IGradeRepository repo) : IGradeService
     public async Task<IEnumerable<StudentGradeByTypeDto>> GetClassGradesByTypeAsync(int teachingAssignmentId, int assessmentTypeId) =>
         await repo.GetClassGradesByTypeAsync(teachingAssignmentId, assessmentTypeId);
 
-    public async Task SaveBulkGradesByTypeAsync(BulkGradeByTypeDto dto, int teacherId) =>
+    public async Task<IEnumerable<StudentGradeByTypeDto>> GetClassGradesByTypeForCurrentUserAsync(
+        int teachingAssignmentId,
+        int assessmentTypeId,
+        int currentUserId,
+        string role)
+    {
+        if (role.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
+        {
+            await EnsureTeacherOwnsAssignmentAsync(teachingAssignmentId, currentUserId);
+        }
+
+        return await GetClassGradesByTypeAsync(teachingAssignmentId, assessmentTypeId);
+    }
+
+    public async Task SaveBulkGradesByTypeAsync(BulkGradeByTypeDto dto, int teacherId)
+    {
+        await EnsureTeacherOwnsAssignmentAsync(dto.TeachingAssignmentId, teacherId);
+
         await repo.SaveBulkGradesByTypeAsync(dto, teacherId);
+    }
+
+    private async Task EnsureTeacherOwnsAssignmentAsync(int teachingAssignmentId, int teacherId)
+    {
+        var assignment = await teachingAssignmentRepo.GetByIdAsync(teachingAssignmentId);
+        if (assignment is null)
+        {
+            throw new ArgumentException("Teaching assignment not found.", nameof(teachingAssignmentId));
+        }
+
+        if (assignment.TeacherId != teacherId)
+        {
+            throw new UnauthorizedAccessException("Teacher can only enter grades for assigned classes.");
+        }
+    }
 
     private static GradeDto ToDto(Grade g) =>
         new(g.GradeId, g.AssessmentId, g.StudentId, g.Score, g.Comment, g.EnteredBy, g.EnteredAt);

@@ -13,6 +13,7 @@ public class AnnouncementServiceTests
     private readonly Mock<IStudentClassRepository> _studentClassRepo = new();
     private readonly Mock<IParentStudentRepository> _parentStudentRepo = new();
     private readonly Mock<ITeachingAssignmentRepository> _teachingAssignmentRepo = new();
+    private readonly Mock<IClassRepository> _classRepo = new();
     private readonly AnnouncementService _sut;
 
     public AnnouncementServiceTests()
@@ -24,7 +25,8 @@ public class AnnouncementServiceTests
             _readRepo.Object,
             _studentClassRepo.Object,
             _parentStudentRepo.Object,
-            _teachingAssignmentRepo.Object);
+            _teachingAssignmentRepo.Object,
+            _classRepo.Object);
     }
 
     private static Announcement Sample() => new()
@@ -70,6 +72,69 @@ public class AnnouncementServiceTests
         _repo.Verify(r => r.CreateAsync(
             It.IsAny<Announcement>(),
             It.Is<List<int?>>(ids => ids.Count == 1 && ids[0] == null)), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateForCurrentUserAsync_TeacherWithScopedClassAnnouncement_UsesJwtAuthor()
+    {
+        _teachingAssignmentRepo.Setup(r => r.GetByTeacherAsync(3))
+            .ReturnsAsync([new TeachingAssignment { TeacherId = 3, ClassId = 101 }]);
+        _classRepo.Setup(r => r.GetByHomeroomTeacherAsync(3))
+            .ReturnsAsync(Array.Empty<Class>());
+        _repo.Setup(r => r.CreateAsync(It.IsAny<Announcement>(), It.IsAny<List<int?>>()))
+            .ReturnsAsync((Announcement a, List<int?> ids) =>
+            {
+                a.AnnouncementTargets = ids.Select(id => new AnnouncementTarget { ClassId = id }).ToList();
+                return a;
+            });
+
+        await _sut.CreateForCurrentUserAsync(
+            new CreateAnnouncementDto(999, "Lớp", "Nội dung", "class", "normal", [101]), 3, "Teacher");
+
+        _repo.Verify(r => r.CreateAsync(
+            It.Is<Announcement>(a => a.AuthorId == 3 && a.AnnouncementType == "class"),
+            It.Is<List<int?>>(ids => ids.SequenceEqual(new int?[] { 101 }))), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateForCurrentUserAsync_TeacherWithHomeroomClassAnnouncement_AllowsTarget()
+    {
+        _teachingAssignmentRepo.Setup(r => r.GetByTeacherAsync(3))
+            .ReturnsAsync(Array.Empty<TeachingAssignment>());
+        _classRepo.Setup(r => r.GetByHomeroomTeacherAsync(3))
+            .ReturnsAsync([new Class { ClassId = 55, ClassName = "10A1", AcademicYearId = 1, HomeroomTeacherId = 3 }]);
+        _repo.Setup(r => r.CreateAsync(It.IsAny<Announcement>(), It.IsAny<List<int?>>()))
+            .ReturnsAsync((Announcement a, List<int?> ids) =>
+            {
+                a.AnnouncementTargets = ids.Select(id => new AnnouncementTarget { ClassId = id }).ToList();
+                return a;
+            });
+
+        await _sut.CreateForCurrentUserAsync(
+            new CreateAnnouncementDto(999, "Lớp", "Nội dung", "class", "normal", [55]), 3, "Teacher");
+
+        _repo.Verify(r => r.CreateAsync(It.IsAny<Announcement>(), It.Is<List<int?>>(ids => ids.Contains(55))), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateForCurrentUserAsync_TeacherWithGlobalAnnouncement_ThrowsUnauthorizedAccessException()
+    {
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _sut.CreateForCurrentUserAsync(
+                new CreateAnnouncementDto(3, "Toàn trường", "Nội dung", "global", "normal", []), 3, "Teacher"));
+    }
+
+    [Fact]
+    public async Task CreateForCurrentUserAsync_TeacherWithUnscopedClass_ThrowsUnauthorizedAccessException()
+    {
+        _teachingAssignmentRepo.Setup(r => r.GetByTeacherAsync(3))
+            .ReturnsAsync([new TeachingAssignment { TeacherId = 3, ClassId = 101 }]);
+        _classRepo.Setup(r => r.GetByHomeroomTeacherAsync(3))
+            .ReturnsAsync(Array.Empty<Class>());
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _sut.CreateForCurrentUserAsync(
+                new CreateAnnouncementDto(3, "Lớp", "Nội dung", "class", "normal", [202]), 3, "Teacher"));
     }
 
     [Fact]

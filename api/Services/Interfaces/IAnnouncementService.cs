@@ -11,6 +11,7 @@ public interface IAnnouncementService
     Task<bool> MarkReadAsync(int userId, int announcementId);
     Task<int> MarkAllReadAsync(int userId, string role);
     Task<AnnouncementDto> CreateAsync(CreateAnnouncementDto dto);
+    Task<AnnouncementDto> CreateForCurrentUserAsync(CreateAnnouncementDto dto, int currentUserId, string role);
     Task<AnnouncementDto?> UpdateAsync(int id, UpdateAnnouncementDto dto);
     Task<bool> DeleteAsync(int id);
 }

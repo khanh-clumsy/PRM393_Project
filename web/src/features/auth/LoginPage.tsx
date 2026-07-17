@@ -2,18 +2,19 @@ import { type FormEvent, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { ApiError } from '../../core/api/client'
 import { useAuth } from '../../core/auth/AuthContext'
+import { roleHomePath } from '../../core/auth/roles'
 import './login.css'
 
-/** Trang đăng nhập Admin web */
+/** Trang đăng nhập web cho Admin và Giáo viên */
 export default function LoginPage() {
-  const { login, isLoading, isAuthenticated, isAdmin } = useAuth()
+  const { login, isLoading, isAuthenticated, user } = useAuth()
   const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // Đã đăng nhập Admin → chuyển vào dashboard
-  if (isAuthenticated && isAdmin) {
-    return <Navigate to="/admin" replace />
+  // Đã đăng nhập → chuyển về đúng portal theo vai trò.
+  if (isAuthenticated && user) {
+    return <Navigate to={roleHomePath(user.roleName)} replace />
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -46,8 +47,8 @@ export default function LoginPage() {
           <div className="login-page__logo" aria-hidden="true">
             FS
           </div>
-          <h1>Quản trị hệ thống</h1>
-          <p>Đăng nhập bằng tài khoản Admin</p>
+          <h1>FSchool Web</h1>
+          <p>Đăng nhập bằng tài khoản Admin hoặc Giáo viên</p>
         </header>
 
         <form className="login-page__form" onSubmit={handleSubmit} noValidate>

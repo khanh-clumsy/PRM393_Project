@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import RequireAdmin from '../core/auth/RequireAdmin'
+import RequireRole from '../core/auth/RequireRole'
 import AccountPage from '../features/account/AccountPage'
 import AcademicYearPage from '../features/academic-years/AcademicYearPage'
 import LoginPage from '../features/auth/LoginPage'
@@ -15,10 +16,21 @@ import SubjectPage from '../features/subjects/SubjectPage'
 import ParentStudentPage from '../features/parent-students/ParentStudentPage'
 import StudentClassPage from '../features/student-classes/StudentClassPage'
 import TeachingAssignmentPage from '../features/teaching-assignments/TeachingAssignmentPage'
+import {
+  TeacherAnnouncementsPage,
+  TeacherAttendancePage,
+  TeacherClassesPage,
+  TeacherClassSummariesPage,
+  TeacherDashboardPage,
+  TeacherGradesPage,
+  TeacherLeaveRequestsPage,
+  TeacherTimetablePage,
+} from '../features/teacher'
 import UserPage from '../features/users/UserPage'
 import AdminLayout from '../layouts/AdminLayout'
+import TeacherLayout from '../layouts/TeacherLayout'
 
-/** Định nghĩa route công khai và khu vực Admin */
+/** Định nghĩa route công khai, khu vực Admin và Teacher portal. */
 export default function AppRouter() {
   return (
     <Routes>
@@ -42,7 +54,20 @@ export default function AppRouter() {
           <Route path="account" element={<AccountPage />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/admin" replace />} />
+      <Route element={<RequireRole allow={['Teacher']} />}>
+        <Route path="/teacher" element={<TeacherLayout />}>
+          <Route index element={<TeacherDashboardPage />} />
+          <Route path="classes" element={<TeacherClassesPage />} />
+          <Route path="timetable" element={<TeacherTimetablePage />} />
+          <Route path="attendance" element={<TeacherAttendancePage />} />
+          <Route path="grades" element={<TeacherGradesPage />} />
+          <Route path="announcements" element={<TeacherAnnouncementsPage />} />
+          <Route path="leave-requests" element={<TeacherLeaveRequestsPage />} />
+          <Route path="class-summaries" element={<TeacherClassSummariesPage />} />
+          <Route path="account" element={<AccountPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }

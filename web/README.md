@@ -1,6 +1,6 @@
 # FSchool Admin Web
 
-React + Vite admin portal cho role Admin. Gọi API tại `http://localhost:5088`.
+React + Vite portal cho Admin và Teacher web. Teacher web nhận nghiệp vụ nhập điểm giáo viên; mobile đã ẩn UI nhập điểm. Gọi API tại `http://localhost:5088`.
 
 ## Chạy local
 

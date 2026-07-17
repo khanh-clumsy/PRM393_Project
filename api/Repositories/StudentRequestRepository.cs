@@ -40,6 +40,12 @@ public class StudentRequestRepository(Prm393dbContext db) : IStudentRequestRepos
             .ToListAsync();
     }
 
+    public async Task<bool> StudentHasClassAsync(int studentId, IEnumerable<int> classIds)
+    {
+        var ids = classIds.Distinct().ToList();
+        return await db.StudentClasses.AnyAsync(sc => sc.StudentId == studentId && ids.Contains(sc.ClassId));
+    }
+
     public async Task<StudentRequest> CreateAsync(StudentRequest request)
     {
         db.StudentRequests.Add(request);

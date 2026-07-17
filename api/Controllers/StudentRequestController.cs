@@ -14,15 +14,24 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
+        if (User.IsInRole("Teacher"))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must use scoped leave request endpoints." });
+
         var result = await service.GetByIdAsync(id);
         return result is null ? NotFound() : Ok(result);
     }
 
     [HttpGet("by-student/{studentId:int}")]
-    public async Task<IActionResult> GetByStudent(int studentId) =>
-        Ok(await service.GetByStudentAsync(studentId));
+    public async Task<IActionResult> GetByStudent(int studentId)
+    {
+        if (User.IsInRole("Teacher"))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must use scoped leave request endpoints." });
+
+        return Ok(await service.GetByStudentAsync(studentId));
+    }
 
     [HttpGet("pending")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetPending() =>
         Ok(await service.GetPendingAsync());
 
@@ -33,6 +42,9 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequestDto dto)
     {
+        if (User.IsInRole("Teacher"))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher cannot create leave requests." });
+
         try
         {
             var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
@@ -50,12 +62,21 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     {
         try
         {
-            var updated = await service.ReviewAsync(id, dto with { ReviewedBy = GetCurrentUserId() });
+            var userId = GetCurrentUserId();
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+            var reviewedDto = dto with { ReviewedBy = userId };
+            var updated = role.Equals("Teacher", StringComparison.OrdinalIgnoreCase)
+                ? await service.ReviewForTeacherAsync(id, reviewedDto, userId)
+                : await service.ReviewAsync(id, reviewedDto);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
@@ -66,6 +87,9 @@ public class StudentRequestController(IStudentRequestService service) : Controll
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (User.IsInRole("Teacher"))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher cannot delete leave requests." });
+
         try
         {
             var deleted = await service.DeleteAsync(id);

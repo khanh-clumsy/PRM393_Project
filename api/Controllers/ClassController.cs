@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRM393API.DTOs;
 using PRM393API.Services.Interfaces;
+using System.Security.Claims;
 
 namespace PRM393API.Controllers;
 
@@ -11,10 +12,12 @@ namespace PRM393API.Controllers;
 public class ClassController(IClassService service) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetAll() =>
         Ok(await service.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetById(int id)
     {
         var cls = await service.GetByIdAsync(id);
@@ -22,14 +25,21 @@ public class ClassController(IClassService service) : ControllerBase
     }
 
     [HttpGet("by-year/{academicYearId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetByYear(int academicYearId) =>
         Ok(await service.GetByAcademicYearAsync(academicYearId));
 
     [HttpGet("by-homeroom/{teacherId:int}")]
-    public async Task<IActionResult> GetByHomeroom(int teacherId) =>
-        Ok(await service.GetByHomeroomTeacherAsync(teacherId));
+    public async Task<IActionResult> GetByHomeroom(int teacherId)
+    {
+        if (IsTeacherRequestingAnotherTeacher(teacherId))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher can only view own homeroom classes." });
+
+        return Ok(await service.GetByHomeroomTeacherAsync(teacherId));
+    }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Create([FromBody] CreateClassDto dto)
     {
         try
@@ -44,6 +54,7 @@ public class ClassController(IClassService service) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateClassDto dto)
     {
         try
@@ -58,9 +69,15 @@ public class ClassController(IClassService service) : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+
+    private bool IsTeacherRequestingAnotherTeacher(int teacherId) =>
+        User.IsInRole("Teacher") &&
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId) &&
+        currentUserId != teacherId;
 }

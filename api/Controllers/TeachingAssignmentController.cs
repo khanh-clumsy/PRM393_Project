@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRM393API.DTOs;
 using PRM393API.Services.Interfaces;
+using System.Security.Claims;
 
 namespace PRM393API.Controllers;
 
@@ -11,10 +12,12 @@ namespace PRM393API.Controllers;
 public class TeachingAssignmentController(ITeachingAssignmentService service) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetAll() =>
         Ok(await service.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetById(int id)
     {
         var ta = await service.GetByIdAsync(id);
@@ -22,18 +25,26 @@ public class TeachingAssignmentController(ITeachingAssignmentService service) : 
     }
 
     [HttpGet("by-teacher/{teacherId:int}")]
-    public async Task<IActionResult> GetByTeacher(int teacherId) =>
-        Ok(await service.GetByTeacherAsync(teacherId));
+    public async Task<IActionResult> GetByTeacher(int teacherId)
+    {
+        if (IsTeacherRequestingAnotherTeacher(teacherId))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher can only view own teaching assignments." });
+
+        return Ok(await service.GetByTeacherAsync(teacherId));
+    }
 
     [HttpGet("by-class/{classId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetByClass(int classId) =>
         Ok(await service.GetByClassAsync(classId));
 
     [HttpGet("by-semester/{semesterId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetBySemester(int semesterId) =>
         Ok(await service.GetBySemesterAsync(semesterId));
 
     [HttpPost]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Create([FromBody] CreateTeachingAssignmentDto dto)
     {
         try
@@ -48,6 +59,7 @@ public class TeachingAssignmentController(ITeachingAssignmentService service) : 
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTeachingAssignmentDto dto)
     {
         try
@@ -62,9 +74,15 @@ public class TeachingAssignmentController(ITeachingAssignmentService service) : 
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+
+    private bool IsTeacherRequestingAnotherTeacher(int teacherId) =>
+        User.IsInRole("Teacher") &&
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId) &&
+        currentUserId != teacherId;
 }

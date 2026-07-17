@@ -9,9 +9,10 @@ namespace PRM393API.Tests.Services;
 public class AttendanceServiceTests
 {
     private readonly Mock<IAttendanceRepository> _repo = new();
+    private readonly Mock<ITimetableRepository> _timetableRepo = new();
     private readonly AttendanceService _sut;
 
-    public AttendanceServiceTests() => _sut = new AttendanceService(_repo.Object);
+    public AttendanceServiceTests() => _sut = new AttendanceService(_repo.Object, _timetableRepo.Object);
 
     private static AttendanceRecord Sample() => new()
     {
@@ -50,6 +51,38 @@ public class AttendanceServiceTests
         _repo.Verify(r => r.BulkCreateAsync(It.Is<IEnumerable<AttendanceRecord>>(records =>
             records.Any(a => a.StudentId == 10 && a.Status == "P") &&
             records.Any(a => a.StudentId == 11 && a.Status == "A"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateForTeacherAsync_IgnoresBodyRecordedByAndUsesCurrentTeacher()
+    {
+        _timetableRepo.Setup(r => r.GetDetailAsync(1))
+            .ReturnsAsync(new Timetable
+            {
+                TimetableId = 1,
+                TeachingAssignment = new TeachingAssignment { TeacherId = 3 }
+            });
+        _repo.Setup(r => r.CreateAsync(It.IsAny<AttendanceRecord>()))
+            .ReturnsAsync((AttendanceRecord a) => a);
+
+        var result = await _sut.CreateForTeacherAsync(new CreateAttendanceDto(1, 10, "Present", null, 999), 3);
+
+        Assert.Equal(3, result.RecordedBy);
+        _repo.Verify(r => r.CreateAsync(It.Is<AttendanceRecord>(a => a.RecordedBy == 3)), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateForTeacherAsync_TeacherWithoutTimetableAssignment_ThrowsUnauthorizedAccessException()
+    {
+        _timetableRepo.Setup(r => r.GetDetailAsync(1))
+            .ReturnsAsync(new Timetable
+            {
+                TimetableId = 1,
+                TeachingAssignment = new TeachingAssignment { TeacherId = 4 }
+            });
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _sut.CreateForTeacherAsync(new CreateAttendanceDto(1, 10, "Present", null, 3), 3));
     }
 
     [Fact]

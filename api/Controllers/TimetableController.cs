@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRM393API.DTOs;
 using PRM393API.Services.Interfaces;
+using System.Security.Claims;
 
 namespace PRM393API.Controllers;
 
@@ -11,10 +12,12 @@ namespace PRM393API.Controllers;
 public class TimetableController(ITimetableService service) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetAll() =>
         Ok(await service.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetById(int id)
     {
         var t = await service.GetByIdAsync(id);
@@ -22,6 +25,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpGet("{id:int}/detail")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetDetail(int id)
     {
         var detail = await service.GetDetailAsync(id);
@@ -29,6 +33,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpGet("weekly/by-class/{classId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetWeeklyByClass(int classId, [FromQuery] DateOnly? date)
     {
         var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -38,6 +43,9 @@ public class TimetableController(ITimetableService service) : ControllerBase
     [HttpGet("weekly/by-teacher/{teacherId:int}")]
     public async Task<IActionResult> GetWeeklyByTeacher(int teacherId, [FromQuery] DateOnly? date)
     {
+        if (IsTeacherRequestingAnotherTeacher(teacherId))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher can only view own timetable." });
+
         var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         return Ok(await service.GetWeeklyByTeacherAsync(teacherId, target));
     }
@@ -49,6 +57,9 @@ public class TimetableController(ITimetableService service) : ControllerBase
     [HttpGet("weekly/by-student/{studentId:int}")]
     public async Task<IActionResult> GetWeeklyByStudent(int studentId, [FromQuery] DateOnly? date)
     {
+        if (User.IsInRole("Teacher"))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Teacher must view timetable by own teacher route." });
+
         var target = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var result = await service.GetWeeklyByStudentAsync(studentId, target);
         return result is null
@@ -57,14 +68,17 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpGet("by-assignment/{teachingAssignmentId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetByAssignment(int teachingAssignmentId) =>
         Ok(await service.GetByAssignmentAsync(teachingAssignmentId));
 
     [HttpGet("by-class/{classId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetByClass(int classId) =>
         Ok(await service.GetByClassAsync(classId));
 
     [HttpPost("generate/{semesterId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Generate(int semesterId, [FromBody] List<TimetableTemplateDto> templates)
     {
         var count = await service.GenerateTimetablesForSemesterAsync(semesterId, templates);
@@ -72,6 +86,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Create([FromBody] CreateTimetableDto dto)
     {
         try
@@ -86,6 +101,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTimetableDto dto)
     {
         var updated = await service.UpdateAsync(id, dto);
@@ -93,6 +109,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await service.DeleteAsync(id);
@@ -100,10 +117,12 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpGet("template/by-class/{classId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetTemplatesByClass(int classId, [FromQuery] int? semesterId) =>
         Ok(await service.GetTemplatesByClassAsync(classId, semesterId));
 
     [HttpPost("template")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> CreateTemplate([FromBody] CreateTimetableTemplateDto dto)
     {
         try
@@ -118,6 +137,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpPut("template/{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> UpdateTemplate(int id, [FromBody] UpdateTimetableTemplateDto dto)
     {
         try
@@ -132,6 +152,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpDelete("template/{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> DeleteTemplate(int id)
     {
         var deleted = await service.DeleteTemplateAsync(id);
@@ -139,6 +160,7 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpPost("generate-from-template/{semesterId:int}/{classId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GenerateFromTemplate(int semesterId, int classId)
     {
         var count = await service.GenerateFromTemplatesAsync(semesterId, classId);
@@ -146,9 +168,15 @@ public class TimetableController(ITimetableService service) : ControllerBase
     }
 
     [HttpPost("clear-generated/{semesterId:int}/{classId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> ClearGenerated(int semesterId, int classId)
     {
         var count = await service.ClearGeneratedTimetablesAsync(semesterId, classId);
         return Ok(new { Count = count });
     }
+
+    private bool IsTeacherRequestingAnotherTeacher(int teacherId) =>
+        User.IsInRole("Teacher") &&
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId) &&
+        currentUserId != teacherId;
 }

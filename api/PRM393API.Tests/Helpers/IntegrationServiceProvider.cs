@@ -61,11 +61,11 @@ internal sealed class IntegrationServiceProvider : IDisposable
         AcademicContext = new AcademicContextService(Db);
         Auth = new AuthService(authRepo, jwt, Email);
         Timetable = new TimetableService(timetableRepo, Db, AcademicContext);
-        Attendance = new AttendanceService(attendanceRepo);
+        Attendance = new AttendanceService(attendanceRepo, timetableRepo);
         ParentStudent = new ParentStudentService(parentStudentRepo);
         Department = new DepartmentService(deptRepo, userRepo, taRepo);
         User = new UserService(userRepo);
-        Grade = new GradeService(gradeRepo);
+        Grade = new GradeService(gradeRepo, taRepo);
         TeachingAssignment = new TeachingAssignmentService(taRepo);
         StudentClass = new StudentClassService(studentClassRepo, classRepo, AcademicContext);
         AcademicYear = new AcademicYearService(yearRepo, semesterRepo);

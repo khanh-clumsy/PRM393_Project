@@ -9,15 +9,16 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { loginApi } from '../../features/auth/api'
 import type { UserDto } from '../../features/auth/types'
+import { ADMIN_ROLE, TEACHER_ROLE, isAllowedWebRole, roleHomePath } from './roles'
 import { tokenStorage } from './tokenStorage'
 
-const ADMIN_ROLE = 'Admin'
-export const NON_ADMIN_ERROR = 'Tài khoản không có quyền Admin web.'
+export const WEB_ACCESS_ERROR = 'Tài khoản không có quyền truy cập web.'
 
 export type AuthContextValue = {
   user: UserDto | null
   isAuthenticated: boolean
   isAdmin: boolean
+  isTeacher: boolean
   isLoading: boolean
   login: (phoneNumber: string, password: string) => Promise<void>
   logout: () => void
@@ -29,7 +30,7 @@ type AuthProviderProps = {
   children: ReactNode
 }
 
-/** Cung cấp session đăng nhập Admin cho toàn app */
+/** Cung cấp session đăng nhập web cho Admin và Giáo viên */
 export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate()
   const [user, setUser] = useState<UserDto | null>(() =>
@@ -43,18 +44,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const result = await loginApi(phoneNumber, password)
 
-        // Chỉ cho phép vai trò Admin vào web quản trị
-        if (result.user.roleName !== ADMIN_ROLE) {
+        // Chỉ cho phép Admin và Teacher dùng web portal.
+        if (!isAllowedWebRole(result.user.roleName)) {
           tokenStorage.clear()
           setUser(null)
-          throw new Error(NON_ADMIN_ERROR)
+          throw new Error(WEB_ACCESS_ERROR)
         }
 
         tokenStorage.setAccessToken(result.accessToken)
         tokenStorage.setRefreshToken(result.refreshToken)
         tokenStorage.setUser(result.user)
         setUser(result.user)
-        navigate('/admin', { replace: true })
+        navigate(roleHomePath(result.user.roleName), { replace: true })
       } finally {
         setIsLoading(false)
       }
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       isAuthenticated: !!tokenStorage.getAccessToken() && user !== null,
       isAdmin: user?.roleName === ADMIN_ROLE,
+      isTeacher: user?.roleName === TEACHER_ROLE,
       isLoading,
       login,
       logout,

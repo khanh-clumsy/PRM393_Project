@@ -12,9 +12,11 @@ namespace PRM393API.Controllers;
 public class AnnouncementController(IAnnouncementService service) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetAll() => Ok(await service.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await service.GetByIdAsync(id);
@@ -22,6 +24,7 @@ public class AnnouncementController(IAnnouncementService service) : ControllerBa
     }
 
     [HttpGet("by-class/{classId:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> GetByClass(int classId) =>
         Ok(await service.GetByClassAsync(classId));
 
@@ -52,11 +55,24 @@ public class AnnouncementController(IAnnouncementService service) : ControllerBa
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAnnouncementDto dto)
     {
-        var created = await service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.AnnouncementId }, created);
+        try
+        {
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+            var created = await service.CreateForCurrentUserAsync(dto, GetCurrentUserId(), role);
+            return CreatedAtAction(nameof(GetById), new { id = created.AnnouncementId }, created);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateAnnouncementDto dto)
     {
         var updated = await service.UpdateAsync(id, dto);
@@ -64,6 +80,7 @@ public class AnnouncementController(IAnnouncementService service) : ControllerBa
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin,HeadOfDept")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await service.DeleteAsync(id);

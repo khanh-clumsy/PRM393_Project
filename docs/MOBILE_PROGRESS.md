@@ -210,7 +210,7 @@ Theo [SRS.md](./SRS.md), các hạng mục sau **chưa có** trên mobile:
 | 4 | Dọn UI: gỡ tab Tin nhắn, hoàn thiện tab Lớp GV | — | 🟡 Thấp |
 | 5 | Push notification (FCM) | Backend + mobile config | 🟡 Thấp |
 
-**Đã loại khỏi scope:** Module Bài tập/Assignments và nộp bài đã được bỏ khỏi sản phẩm. UI nhập điểm giáo viên đã gỡ khỏi mobile (endpoint `/api/grade/*` vẫn giữ).
+**Đã loại khỏi scope:** Module Bài tập/Assignments và nộp bài đã được bỏ khỏi sản phẩm. UI nhập điểm giáo viên đã ẩn trên mobile; nghiệp vụ nhập điểm chuyển sang Teacher web (endpoint `/api/grade/*` vẫn giữ).
 
 ---
 

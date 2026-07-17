@@ -11,5 +11,6 @@ public interface IStudentRequestService
     Task<StudentRequestDto> CreateAsync(CreateStudentRequestDto dto);
     Task<StudentRequestDto> CreateForCurrentUserAsync(CreateStudentRequestDto dto, int currentUserId, string role);
     Task<StudentRequestDto?> ReviewAsync(int id, ReviewStudentRequestDto dto);
+    Task<StudentRequestDto?> ReviewForTeacherAsync(int id, ReviewStudentRequestDto dto, int teacherId);
     Task<bool> DeleteAsync(int id);
 }

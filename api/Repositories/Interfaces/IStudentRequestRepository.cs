@@ -8,6 +8,7 @@ public interface IStudentRequestRepository
     Task<IEnumerable<StudentRequest>> GetByStudentAsync(int studentId);
     Task<IEnumerable<StudentRequest>> GetPendingAsync();
     Task<IEnumerable<StudentRequest>> GetPendingByClassIdsAsync(IEnumerable<int> classIds);
+    Task<bool> StudentHasClassAsync(int studentId, IEnumerable<int> classIds);
     Task<StudentRequest> CreateAsync(StudentRequest request);
     Task<StudentRequest?> ReviewAsync(int id, StudentRequest updated);
     Task<bool> DeleteAsync(int id);

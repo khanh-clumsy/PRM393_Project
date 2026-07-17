@@ -15,5 +15,10 @@ public interface IGradeService
     Task<IEnumerable<StudentGradeEntryDto>> GetClassGradesAsync(int teachingAssignmentId, int assessmentId);
     Task SaveBulkGradesAsync(List<BulkGradeDto> grades);
     Task<IEnumerable<StudentGradeByTypeDto>> GetClassGradesByTypeAsync(int teachingAssignmentId, int assessmentTypeId);
+    Task<IEnumerable<StudentGradeByTypeDto>> GetClassGradesByTypeForCurrentUserAsync(
+        int teachingAssignmentId,
+        int assessmentTypeId,
+        int currentUserId,
+        string role);
     Task SaveBulkGradesByTypeAsync(BulkGradeByTypeDto dto, int teacherId);
 }

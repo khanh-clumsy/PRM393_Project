@@ -10,7 +10,8 @@ public class AnnouncementService(
     IAnnouncementReadRepository readRepo,
     IStudentClassRepository studentClassRepo,
     IParentStudentRepository parentStudentRepo,
-    ITeachingAssignmentRepository teachingAssignmentRepo) : IAnnouncementService
+    ITeachingAssignmentRepository teachingAssignmentRepo,
+    IClassRepository classRepo) : IAnnouncementService
 {
     public async Task<IEnumerable<AnnouncementDto>> GetAllAsync() =>
         (await repo.GetAllAsync()).Select(a => ToDto(a));
@@ -73,6 +74,29 @@ public class AnnouncementService(
         };
         var created = await repo.CreateAsync(entity, targetClassIds);
         return ToDto(created);
+    }
+
+    public async Task<AnnouncementDto> CreateForCurrentUserAsync(CreateAnnouncementDto dto, int currentUserId, string role)
+    {
+        var type = NormalizeType(dto.AnnouncementType);
+        var targetClassIds = NormalizeTargets(type, dto.TargetClassIds);
+
+        if (role.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
+        {
+            if (type != "class")
+            {
+                throw new UnauthorizedAccessException("Teacher can only create class announcements.");
+            }
+
+            var teacherClassIds = await GetTeacherScopedClassIdsAsync(currentUserId);
+            var requestedClassIds = targetClassIds.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+            if (requestedClassIds.Count == 0 || requestedClassIds.Any(id => !teacherClassIds.Contains(id)))
+            {
+                throw new UnauthorizedAccessException("Teacher can only target assigned or homeroom classes.");
+            }
+        }
+
+        return await CreateAsync(dto with { AuthorId = currentUserId, AnnouncementType = type, TargetClassIds = targetClassIds });
     }
 
     private static string NormalizeType(string type) =>
@@ -151,10 +175,17 @@ public class AnnouncementService(
 
         if (role.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
         {
-            return (await teachingAssignmentRepo.GetByTeacherAsync(userId)).Select(ta => ta.ClassId).Distinct().ToList();
+            return await GetTeacherScopedClassIdsAsync(userId);
         }
 
         return [];
+    }
+
+    private async Task<List<int>> GetTeacherScopedClassIdsAsync(int teacherId)
+    {
+        var taught = (await teachingAssignmentRepo.GetByTeacherAsync(teacherId)).Select(ta => ta.ClassId);
+        var homeroom = (await classRepo.GetByHomeroomTeacherAsync(teacherId)).Select(c => c.ClassId);
+        return taught.Concat(homeroom).Distinct().ToList();
     }
 
     private static AnnouncementDto ToDto(Announcement a, bool isRead = false) =>

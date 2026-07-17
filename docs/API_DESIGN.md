@@ -59,7 +59,7 @@ Quản lý đơn xin nghỉ học của học sinh.
 
 ## 4. Module Nghiệp vụ Giáo viên
 
-Điểm danh, nhập điểm trực tiếp và đánh giá tổng kết cuối kỳ/năm.
+Điểm danh, nhập điểm trực tiếp và đánh giá tổng kết cuối kỳ/năm. UI nhập điểm Giáo viên đã ẩn trên mobile; nghiệp vụ nhập điểm chuyển sang Teacher web.
 
 | Method | Endpoint | Quyền truy cập | Mô tả nghiệp vụ / Cấu trúc dữ liệu |
 | :--- | :--- | :--- | :--- |
