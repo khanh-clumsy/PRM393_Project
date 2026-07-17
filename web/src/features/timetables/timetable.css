@@ -1,0 +1,218 @@
+/* Lưới thời khóa biểu — desktop-friendly */
+.timetable-grid-wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.timetable-grid {
+  width: 100%;
+  min-width: 960px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.timetable-grid th,
+.timetable-grid td {
+  border: 1px solid var(--color-border);
+  padding: 0;
+  vertical-align: top;
+}
+
+.timetable-grid th {
+  background: #f9fafb;
+  padding: 10px 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.timetable-grid__slot-col {
+  width: 100px;
+  min-width: 100px;
+  background: #f9fafb;
+  padding: 8px !important;
+}
+
+.timetable-grid__slot-name {
+  font-weight: 600;
+}
+
+.timetable-grid__slot-time,
+.timetable-grid__date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.timetable-cell {
+  width: 100%;
+  min-height: 88px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.timetable-cell:hover {
+  background: #f3f4f6;
+}
+
+.timetable-cell--empty {
+  color: var(--color-text-muted);
+}
+
+.timetable-cell__add {
+  font-size: 12px;
+}
+
+.timetable-lesson {
+  border-radius: var(--radius-md);
+  padding: 6px 8px;
+  border-left: 3px solid var(--color-brand);
+  background: #fff;
+}
+
+.timetable-lesson--normal {
+  border-left-color: #059669;
+}
+
+.timetable-lesson--rescheduled {
+  border-left-color: #d97706;
+  background: #fffbeb;
+}
+
+.timetable-lesson--cancelled {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+  opacity: 0.85;
+}
+
+.timetable-lesson--makeup {
+  border-left-color: #2563eb;
+  background: #eff6ff;
+}
+
+.timetable-lesson__subject {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.timetable-lesson__teacher,
+.timetable-lesson__room {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.timetable-lesson__status {
+  font-size: 11px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.timetable-lesson__badge {
+  font-size: 10px;
+  margin-top: 4px;
+  color: #7c3aed;
+}
+
+.timetable-status-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.timetable-status-select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.timetable-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  max-width: 900px;
+  margin-bottom: 20px;
+}
+
+.timetable-filters .ui-field select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.timetable-mode-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f3f4f6;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+
+.timetable-mode-tabs button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.timetable-mode-tabs button.is-active {
+  background: var(--color-surface);
+  color: var(--color-text-heading);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
+}
+
+.timetable-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.timetable-week-nav__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.timetable-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.timetable-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0 0 16px;
+}
+
+.timetable-hint--warn {
+  color: #b45309;
+}
+
+.timetable-dev-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--color-border-strong);
+}
+
+.timetable-dev-actions__label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
