@@ -1,21 +1,43 @@
-import { Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../core/auth/AuthContext'
+import { ADMIN_NAV } from './adminNav'
 
-/** Layout admin tạm — Task 5 sẽ thay bằng sidebar đầy đủ */
+/** Layout admin — sidebar 15 module + vùng nội dung chính */
 export default function AdminLayout() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
 
   return (
     <div className="admin-layout">
-      <header className="admin-layout__header">
-        <span className="admin-layout__title">Quản trị — {user?.fullName}</span>
-        <button type="button" className="admin-layout__logout" onClick={logout}>
-          Đăng xuất
-        </button>
-      </header>
-      <main className="admin-layout__main">
-        <Outlet />
-      </main>
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar__brand">
+          FPT <span>School</span>
+        </div>
+        <nav className="admin-sidebar__nav" aria-label="Menu quản trị">
+          {ADMIN_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                `admin-sidebar__link${isActive ? ' admin-sidebar__link--active' : ''}`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="admin-main">
+        <header className="admin-topbar">
+          <span className="admin-topbar__user">
+            Xin chào, <strong>{user?.fullName ?? 'Admin'}</strong>
+          </span>
+        </header>
+        <main className="admin-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
