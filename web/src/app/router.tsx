@@ -11,6 +11,7 @@ import PlaceholderPage from '../features/shared/PlaceholderPage'
 import SlotPage from '../features/slots/SlotPage'
 import SemesterPage from '../features/semesters/SemesterPage'
 import SubjectPage from '../features/subjects/SubjectPage'
+import UserPage from '../features/users/UserPage'
 import AdminLayout from '../layouts/AdminLayout'
 
 /** Định nghĩa route công khai và khu vực Admin */
@@ -21,7 +22,7 @@ export default function AppRouter() {
       <Route element={<RequireAdmin />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="users" element={<PlaceholderPage />} />
+          <Route path="users" element={<UserPage />} />
           <Route path="departments" element={<DepartmentPage />} />
           <Route path="academic-years" element={<AcademicYearPage />} />
           <Route path="semesters" element={<SemesterPage />} />
