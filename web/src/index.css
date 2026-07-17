@@ -51,15 +51,50 @@
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
+}
+
+/* Layout admin tạm — Task 5 sẽ thay bằng design system */
+.admin-layout__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.admin-layout__title {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.admin-layout__logout {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.admin-layout__logout:hover {
+  background: #f9fafb;
+}
+
+.admin-layout__main {
+  padding: 24px 20px;
+}
+
+.dashboard-page h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.dashboard-page p {
+  color: #6b7280;
 }
 
 body {
